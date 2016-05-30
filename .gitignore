@@ -1,0 +1,7 @@
+# VIM files
+.*.swp
+.*.swo
+
+# build files
+/build
+core

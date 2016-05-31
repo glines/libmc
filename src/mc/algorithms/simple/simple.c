@@ -1,3 +1,26 @@
+/*
+ * Copyright (c) 2016 Jonathan Glines
+ * Jonathan Glines <jonathan@glines.net>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ */
+
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>  /* XXX */
@@ -39,48 +62,51 @@ void mcSimple_isosurfaceFromField(mcScalarField sf, mcMesh *mesh) {
   unsigned int *cubes = (unsigned int*)malloc(
       sizeof(unsigned int) * (res - 1) * (res - 1) * (res - 1));
   for (int z = 0; z < res - 1; ++z) {
+    /* As the algorithm iterates along the z-axis, a 2-dimesnsional buffer of
+     * the edge interpolation results from the previous slice is kept. This
+     * allows the algorithm to take advantage of slice-to-slice coherence to
+     * reduce the number of interpolation calculations required, as described
+     * in "5.1 Efficiency Enhancements" in the original Marching Cubes paper by
+     * Lorensen. This eliminates four redundant interpolations per voxel cube.
+     *
+     * Incidentally, this enhancement is necessary in order to generate an
+     * indexed mesh that shares vertices among faces.
+     *
+     * NOTE: The Lorensen paper recommends against storing results from the
+     * previous slice. There are two reasons this recommendation can be
+     * ignored: First, computer memory has become much cheaper and more
+     * abundant (the original paper was written in 1987). Second, the memory
+     * requirements can be mitigated with a divide and conquer approach in
+     * which the volume is divided into smaller volumes before the marching
+     * cubes algorithm is applied. This divide and conquer approach lends
+     * itself to parallelism as well.
+     *
+     * TODO: Actually implement this buffer.
+     */
     for (int y = 0; y < res - 1; ++y) {
+      /* As in the z-axis loop, the algorithm keeps a 1-dimensional buffer of
+       * the edge interpolation results from the previous line. This eliminates
+       * three redundant interpolations per voxel cube.
+       */
       for (int x = 0; x < res - 1; ++x) {
+        /* As in the z-axis and y-axis loops, the algorithm keeps a
+         * 0-dimensional buffer of the edge interpolation results from the
+         * previous voxel. This eliminates two redundant interpolations per
+         * voxel cube.
+         */
         int i = x + y * res + z * res * res;
         /* Determine the cube configuration index by iterating over the eight
          * cube vertices */
         unsigned int cube = 0;
         for (unsigned int vertex = 0; vertex < 8; ++vertex) {
-          /* Determine this vertex's position in the cube */
-          unsigned int vertexPosition;
-          /* FIXME: Replace this switch with call to
-           *        mcSimpleVertexRelativePosition() */
-          switch (vertex) {
-            case 0:  /* Origin */
-              vertexPosition = i;
-              break;
-            case 1:  /* X-axis */
-              vertexPosition = i + 1;
-              break;
-            case 2:  /* XY-axis */
-              vertexPosition = i + res + 1;
-              break;
-            case 3:  /* Y-axis */
-              vertexPosition = i + res;
-              break;
-            case 4:  /* Z-axis */
-              vertexPosition = i + res * res;
-              break;
-            case 5:  /* XZ-axis */
-              vertexPosition = i + res * res + 1;
-              break;
-            case 6:  /* XYZ-axis */
-              vertexPosition = i + res * res + res + 1;
-              break;
-            case 7:  /* YZ-axis */
-              vertexPosition = i + res * res + res;
-              break;
-            default:
-              assert(0);
-          }
+          /* Determine this vertex's position in the lattice */
+          unsigned int pos[3];
+          unsigned int latticePos;
+          mcSimpleVertexRelativePosition(vertex, pos);
+          latticePos = i + pos[0] + pos[1] * res + pos[2] * res * res;
           /* Add the bit this vertex contributes to the cube */
-          cube |= (samples[vertexPosition] >= 0.0f ? 1 : 0) << vertex;
-          fprintf(stderr, "sample: %g\n", samples[vertexPosition]);  /* XXX */
+          cube |= (samples[latticePos] >= 0.0f ? 1 : 0) << vertex;
+          fprintf(stderr, "sample: %g\n", samples[latticePos]);  /* XXX */
         }
         fprintf(stderr, "voxel cube: 0x%02x\n", cube);  /* XXX */
         /* Look in the edge table for the edges that intersect the

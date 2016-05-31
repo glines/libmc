@@ -1,6 +1,7 @@
 #include <GL/glew.h>
 #include <SDL.h>
 #include <cmath>
+#include <cstdio>
 #include <cstdlib>
 #include <glm/gtc/quaternion.hpp>
 

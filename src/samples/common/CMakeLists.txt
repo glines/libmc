@@ -11,5 +11,9 @@ add_library(samples_common STATIC
     transformStack.cpp
     )
 
-set_property(TARGET samples_common PROPERTY CXX_STANDARD 11)
-set_property(TARGET samples_common PROPERTY CXX_STANDARD_REQUIRED ON)
+if(DEFINED ENV{EMSCRIPTEN})
+  target_compile_options(samples_common PRIVATE -std=c++11)
+else()
+  set_property(TARGET samples_common PROPERTY CXX_STANDARD 11)
+  set_property(TARGET samples_common PROPERTY CXX_STANDARD_REQUIRED ON)
+endif()

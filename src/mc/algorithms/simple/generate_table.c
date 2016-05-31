@@ -3,7 +3,6 @@
 #include <string.h>
 
 #include "common.h"
-#include "../simple.h"
 
 /*
  * This program generates the edge and triangularization tables needed for
@@ -26,30 +25,18 @@
  * lie on intersected edges.
  */
 
-typedef struct EdgeList {
-  unsigned int edges[12];
-} EdgeList;
-
-typedef struct Triangle {
-  unsigned int edges[3];
-} Triangle;
-
-typedef struct TriangleList {
-  Triangle triangles[4];
-} TriangleList;
-
 void computeEdgeList(
     unsigned int cube,
-    EdgeList *edgeList)
+    mcSimpleEdgeList *edgeList)
 {
     unsigned int vertices[2];
     unsigned int listIndex = 0;
     /* Iterate through all edges */
     for (unsigned int edge = 0; edge < 12; ++edge) {
       /* Determine the two vertex values */
-      mcEdgeVertices(edge, vertices);
-      if (mcVertexValue(vertices[0], cube)
-          != mcVertexValue(vertices[1], cube))
+      mcSimpleEdgeVertices(edge, vertices);
+      if (mcSimpleVertexValue(vertices[0], cube)
+          != mcSimpleVertexValue(vertices[1], cube))
       {
         /* If the vertex values disagree, we have an edge intersection */
         /* Add this edge to the edge list */
@@ -60,10 +47,10 @@ void computeEdgeList(
 
 void computeTriangleList(
     unsigned int cube,
-    TriangleList *triangleList)
+    mcSimpleTriangleList *triangleList)
 {
   int touched[8];
-  int adjacent[3];
+  unsigned int adjacent[3];
   unsigned int closure[8];
   unsigned int closureSize;
   int i;
@@ -80,17 +67,17 @@ void computeTriangleList(
   for (int vertex = 0; vertex < 8; ++vertex) {
     if (touched[vertex])
       continue;
-    if (!mcVertexValue(vertex, cube))
+    if (!mcSimpleVertexValue(vertex, cube))
       continue;
     /* TODO: Traverse the graph of adjacent vertices of interest */
-    mcAdjacentVertices(vertex, adjacent);
+    mcSimpleAdjacentVertices(vertex, adjacent);
     /* TODO: Determine the extent of the intersected edges for this graph */
-    mcVertexClosure(vertex, cube, closure, &closureSize);
+    mcSimpleVertexClosure(vertex, cube, closure, &closureSize);
     /* TODO: Determine the shape */
     switch (closureSize) {
       case 1:
         /* Generate a single triangle using the edges */
-        mcVertexEdges(vertex, triangleList[i].triangles[0].edges);
+        mcSimpleVertexEdges(vertex, triangleList[i].triangles[0].edges);
         break;
       case 2:
         /* TODO: Generate a quad */
@@ -99,9 +86,9 @@ void computeTriangleList(
   }
 }
 
-void printEdgeTable(const EdgeList *edgeTable) {
+void printEdgeTable(const mcSimpleEdgeList *edgeTable) {
   fprintf(stdout,
-      "const EdgeList mcEdgeTable[] = {\n");
+      "const mcSimpleEdgeList mcSimpleEdgeTable[] = {\n");
   for (unsigned int cube = 0; cube <= 0xFF; ++cube) {
     fprintf(stdout,
         "  { .edges = { %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d } },\n",
@@ -116,17 +103,18 @@ void printEdgeTable(const EdgeList *edgeTable) {
         edgeTable[cube].edges[8],
         edgeTable[cube].edges[9],
         edgeTable[cube].edges[10],
-        edgeTable[cube].edges[11],
-        edgeTable[cube].edges[12]
+        edgeTable[cube].edges[11]
         );
   }
   fprintf(stdout,
       "};\n");
 }
 
-void printTriangulationTable(const TriangleList *triangulationTable) {
+void printTriangulationTable(
+    const mcSimpleTriangleList *triangulationTable)
+{
   fprintf(stdout,
-      "const TriangleList mcTriangulationTable[] = {\n");
+      "const mcSimpleTriangleList mcSimpleTriangulationTable[] = {\n");
   for (unsigned int cube = 0; cube <= 0xFF; ++cube) {
     fprintf(stdout,
         "  { .triangles = \n"
@@ -159,12 +147,13 @@ int main(int argc, char **argv) {
   /* TODO: Parse the arguments */
 
   /* Allocate memory for the edge table */
-  EdgeList *edgeTable = (EdgeList*)malloc(sizeof(EdgeList) * 256);
-  memset(edgeTable, -1, sizeof(EdgeList) * 256);
+  mcSimpleEdgeList *edgeTable =
+    (mcSimpleEdgeList*)malloc(sizeof(mcSimpleEdgeList) * 256);
+  memset(edgeTable, -1, sizeof(mcSimpleEdgeList) * 256);
   /* Allocate memory for the triangulization table */
-  TriangleList *triangulationTable =
-    (TriangleList*)malloc(sizeof(TriangleList) * 256);
-  memset(triangulationTable, -1, sizeof(TriangleList) * 256);
+  mcSimpleTriangleList *triangulationTable =
+    (mcSimpleTriangleList*)malloc(sizeof(mcSimpleTriangleList) * 256);
+  memset(triangulationTable, -1, sizeof(mcSimpleTriangleList) * 256);
 
   /* Iterate through all voxel cube configurations */
   for (unsigned int cube = 0; cube <= 0xFF; ++cube) {
@@ -176,8 +165,13 @@ int main(int argc, char **argv) {
     computeTriangleList(cube, &triangulationTable[cube]);
   }
 
+  /* Print the necessary headers */
+  fprintf(stdout, "#include \"common.h\"\n\n");
+
   /* Print the edge table */
   printEdgeTable(edgeTable);
+
+  fprintf(stdout, "\n");
 
   /* Print the triangulation table */
   printTriangulationTable(triangulationTable);

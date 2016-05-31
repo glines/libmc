@@ -1,73 +1,28 @@
 #include <assert.h>
 
-void mcEdgeVertices(unsigned int edge, unsigned int *vertices) {
+void mcSimpleEdgeVertices(unsigned int edge, unsigned int *vertices) {
   typedef struct VertexPair {
-    int vertex[2];
+    int vertices[2];
   } VertexPair;
-  static VertexPair vertexTable[] = {
-    {  /* Edge 0 */
-      .vertex[0] = 0,
-      .vertex[1] = 1,
-    },
-    {  /* Edge 1 */
-      .vertex[0] = 1,
-      .vertex[1] = 2,
-    },
+  static const VertexPair table[] = {
+    { .vertices = { 0, 1 } },  /* Edge 0 */
+    { .vertices = { 1, 2 } },  /* Edge 1 */
+    { .vertices = { 0, 3 } },  /* Edge 3 */
+    { .vertices = { 4, 5 } },  /* Edge 4 */
+    { .vertices = { 5, 6 } },  /* Edge 5 */
+    { .vertices = { 6, 7 } },  /* Edge 6 */
+    { .vertices = { 4, 7 } },  /* Edge 7 */
+    { .vertices = { 0, 4 } },  /* Edge 8 */
+    { .vertices = { 1, 5 } },  /* Edge 9 */
+    { .vertices = { 3, 7 } },  /* Edge 10 */
+    { .vertices = { 2, 6 } },  /* Edge 11 */
   };
-  /* TODO: Replace this with a static table? */
-  switch (edge) {
-    case 0:
-      vertices[0] = 0;
-      vertices[1] = 1;
-      break;
-    case 1:
-      vertices[0] = 1;
-      vertices[1] = 2;
-      break;
-    case 2:
-      vertices[0] = 2;
-      vertices[1] = 3;
-      break;
-    case 3:
-      vertices[0] = 0;
-      vertices[1] = 3;
-      break;
-    case 4:
-      vertices[0] = 4;
-      vertices[1] = 5;
-      break;
-    case 5:
-      vertices[0] = 5;
-      vertices[1] = 6;
-      break;
-    case 6:
-      vertices[0] = 6;
-      vertices[1] = 7;
-      break;
-    case 7:
-      vertices[0] = 4;
-      vertices[1] = 7;
-      break;
-    case 8:
-      vertices[0] = 0;
-      vertices[1] = 4;
-      break;
-    case 9:
-      vertices[0] = 1;
-      vertices[1] = 5;
-      break;
-    case 10:
-      vertices[0] = 3;
-      vertices[1] = 7;
-      break;
-    case 11:
-      vertices[0] = 2;
-      vertices[1] = 6;
-      break;
-  }
+  assert(edge < 12);
+  vertices[0] = table[edge].vertices[0];
+  vertices[1] = table[edge].vertices[1];
 }
 
-void mcVertexEdges(unsigned int vertex, unsigned int *edges) {
+void mcSimpleVertexEdges(unsigned int vertex, unsigned int *edges) {
   typedef struct EdgeTriple {
     int edges[3];
   } EdgeTriple;
@@ -87,7 +42,7 @@ void mcVertexEdges(unsigned int vertex, unsigned int *edges) {
   edges[2] = table[vertex].edges[2];
 }
 
-void mcAdjacentVertices(unsigned int vertex, unsigned int *adjacent) {
+void mcSimpleAdjacentVertices(unsigned int vertex, unsigned int *adjacent) {
   typedef struct VertexTriple {
     int vertices[3];
   } VertexTriple;
@@ -107,11 +62,11 @@ void mcAdjacentVertices(unsigned int vertex, unsigned int *adjacent) {
   adjacent[2] = table[vertex].vertices[2];
 }
 
-int mcVertexValue(unsigned int vertex, unsigned int cube) {
+int mcSimpleVertexValue(unsigned int vertex, unsigned int cube) {
   return (cube & (1 << vertex)) >> vertex;
 }
 
-unsigned int mcVertexIndex(unsigned int x, unsigned int y, unsigned int z) {
+unsigned int mcSimpleVertexIndex(unsigned int x, unsigned int y, unsigned int z) {
   assert((x & ~1) == 0);
   assert((y & ~1) == 0);
   assert((z & ~1) == 0);
@@ -129,7 +84,7 @@ unsigned int mcVertexIndex(unsigned int x, unsigned int y, unsigned int z) {
   return table[i];
 }
 
-void mcVertexClosure(unsigned int vertex, unsigned int cube,
+void mcSimpleVertexClosure(unsigned int vertex, unsigned int cube,
     unsigned int *closure, unsigned int *closureSize)
 {
   unsigned int notVisited[8];
@@ -139,7 +94,7 @@ void mcVertexClosure(unsigned int vertex, unsigned int cube,
   unsigned int adjacent[3];
   int skip;
   int i, j;
-  int vertexValue = mcVertexValue(vertex, cube);
+  int vertexValue = mcSimpleVertexValue(vertex, cube);
 
   notVisited[0] = vertex;
   numNotVisited = 1;
@@ -157,7 +112,7 @@ void mcVertexClosure(unsigned int vertex, unsigned int cube,
     /* Add this vertex to the closure */
     closure[(*closureSize)++] = notVisited[numNotVisited];
     /* Iterate over all adjacent vertices */
-    mcAdjacentVertices(notVisited[numNotVisited], adjacent);
+    mcSimpleAdjacentVertices(notVisited[numNotVisited], adjacent);
     for (i = 0; i < 3; ++i) {
       /* Check if this vertex has already been visited */
       skip = 0;
@@ -170,8 +125,28 @@ void mcVertexClosure(unsigned int vertex, unsigned int cube,
       if (skip)
         continue;
       /* Add alike vertices to the list of not yet visited vertices */
-      if (mcVertexValue(adjacent[i], cube) == vertexValue)
+      if (mcSimpleVertexValue(adjacent[i], cube) == vertexValue)
         notVisited[numNotVisited++] = adjacent[i];
     }
   }
+}
+
+void mcSimpleVertexRelativePosition(unsigned int vertex, unsigned int *pos) {
+  typedef struct Position {
+    unsigned int pos[3];
+  } Position;
+  Position table[8] = {
+    { .pos = { 0, 0, 0 } },  /* vertex 0 */
+    { .pos = { 1, 0, 0 } },  /* vertex 1 */
+    { .pos = { 1, 1, 0 } },  /* vertex 2 */
+    { .pos = { 0, 1, 0 } },  /* vertex 3 */
+    { .pos = { 0, 0, 1 } },  /* vertex 4 */
+    { .pos = { 1, 0, 1 } },  /* vertex 5 */
+    { .pos = { 1, 1, 1 } },  /* vertex 6 */
+    { .pos = { 0, 1, 1 } },  /* vertex 7 */
+  };
+  assert(vertex < 8);
+  pos[0] = table[vertex].pos[0];
+  pos[1] = table[vertex].pos[1];
+  pos[2] = table[vertex].pos[2];
 }

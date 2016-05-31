@@ -1,9 +1,11 @@
 #ifndef MC_MESH_H_
 #define MC_MESH_H_
 
+#include "vector.h"
+
 typedef struct mcVertex {
-  float pos[3];
-  float norm[3];
+  mcVec3 pos;
+  mcVec3 norm;
 } mcVertex;
 
 typedef struct mcFace {
@@ -16,5 +18,22 @@ typedef struct mcMesh {
   mcFace *faces;
   unsigned int numVertices, numFaces;
 } mcMesh;
+
+void mcMesh_init(
+    mcMesh *self);
+
+void mcMesh_destroy(
+    mcMesh *self);
+
+void mcMesh_grow(
+    mcMesh *self);
+
+void mcMesh_addVertex(
+    mcMesh *self,
+    const mcVertex *vertex);
+
+void mcMesh_addFace(
+    mcMesh *self,
+    const mcFace *face);
 
 #endif

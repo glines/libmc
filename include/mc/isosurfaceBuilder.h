@@ -13,12 +13,47 @@ typedef enum mcAlgorithmFlag {
 
 typedef float (*mcScalarField)(float x, float y, float z);
 
+typedef struct mcScalarLattice {
+  float *lattice;
+  unsigned int size[3];
+  float delta[3];
+} mcScalarLattice;
+
+typedef struct mcScalarPoint {
+  float pos[3];
+  float value;
+} mcScalarPoint;
+
+typedef struct mcScalarCloud {
+  mcScalarPoint *cloud;
+  unsigned int size;
+} mcScalarCloud;
+
+typedef struct mcIsosurfaceBuilderInternal mcIsosurfaceBuilderInternal;
+
 typedef struct mcIsosurfaceBuilder {
+  mcIsosurfaceBuilderInternal *internal;
 } mcIsosurfaceBuilder;
 
-const mcMesh *mcIsosurfaceBuilder_buildIsosurface(
+void mcIsosurfaceBuilder_init(
+    mcIsosurfaceBuilder *self);
+
+void mcIsosurfaceBuilder_destroy(
+    mcIsosurfaceBuilder *self);
+
+const mcMesh *mcIsosurfaceBuilder_isosurfaceFromField(
     mcIsosurfaceBuilder *self,
     mcScalarField sf,
+    mcAlgorithmFlag algorithm);
+
+const mcMesh *mcIsosurfaceBuilder_isosurfaceFromLattice(
+    mcIsosurfaceBuilder *self,
+    mcScalarLattice sl,
+    mcAlgorithmFlag algorithm);
+
+const mcMesh *mcIsosurfaceBuilder_isosurfaceFromCloud(
+    mcIsosurfaceBuilder *self,
+    mcScalarCloud sc,
     mcAlgorithmFlag algorithm);
 
 #endif

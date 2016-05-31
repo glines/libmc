@@ -6,5 +6,9 @@ add_library(mcxx
 target_link_libraries(mcxx
     mc
     )
-set_property(TARGET mcxx PROPERTY CXX_STANDARD 11)
-set_property(TARGET mcxx PROPERTY CXX_STANDARD_REQUIRED ON)
+if(DEFINED ENV{EMSCRIPTEN})
+  target_compile_options(mcxx PRIVATE -std=c++11)
+else()
+  set_property(TARGET mcxx PROPERTY CXX_STANDARD 11)
+  set_property(TARGET mcxx PROPERTY CXX_STANDARD_REQUIRED ON)
+endif()

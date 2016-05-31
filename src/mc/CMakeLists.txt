@@ -1,7 +1,17 @@
 add_library(mc
     isosurfaceBuilder.c
-    tables/common.c
     )
-add_dependencies(mc simple.h)
+target_include_directories(mc SYSTEM
+    PUBLIC "${CMAKE_SOURCE_DIR}/include"
+    )
+target_link_libraries(mc
+    mc_algorithms_cubes33
+    mc_algorithms_delaunay
+    mc_algorithms_simple
+    mc_algorithms_snapmc
+    mc_algorithms_surfaceNet
+    mc_common
+    )
 
-add_subdirectory("./tables")
+add_subdirectory("./algorithms")
+add_subdirectory("./common")

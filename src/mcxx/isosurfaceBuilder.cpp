@@ -17,7 +17,7 @@ namespace mc {
       mcAlgorithmFlag algorithm,
       void *args)
   {
-    const mcMesh *m = mcIsosurfaceBuilder_buildIsosurface(
+    const mcMesh *m = mcIsosurfaceBuilder_isosurfaceFromField(
         &m_internal, sf, algorithm);
     Mesh *mesh = new Mesh(m);
     m_meshes.push_back(mesh);

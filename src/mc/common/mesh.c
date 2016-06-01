@@ -24,17 +24,53 @@
 #include <assert.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <mc/mesh.h>
+
+void mcFace_init(
+    mcFace *self,
+    unsigned int numIndices)
+{
+  /* Allocate memory for the indices */
+  /* TODO: This malloc is a prime candidate for a pool allocator */
+  self->indices =
+    (unsigned int *)malloc(sizeof(unsigned int) * numIndices);
+  self->numIndices = numIndices;
+}
+
+void mcFace_copy(
+    mcFace *self,
+    const mcFace *other)
+{
+  /* Allocate memory for the indices and copy them */
+  /* TODO: This malloc is a prime candidate for a pool allocator */
+  self->indices =
+    (unsigned int *)malloc(sizeof(unsigned int) * other->numIndices);
+  memcpy(self->indices, other->indices, sizeof(unsigned int) * other->numIndices);
+  self->numIndices = other->numIndices;
+}
+
+void mcFace_destroy(
+    mcFace *self)
+{
+  free(self->indices);
+}
+
 
 void mcMesh_init(
     mcMesh *self)
 {
+  const unsigned int INIT_SIZE_VERTICES = 1024;
+  const unsigned int INIT_SIZE_FACES = 1024;
+
   /* Initialize an empty mesh. Subsequent calls to mcMesh_grow() will allocate
    * memory for the mesh. */
-  self->vertices = NULL;
+  self->vertices = malloc(sizeof(mcVertex) * INIT_SIZE_VERTICES);
+  self->sizeVertices = INIT_SIZE_VERTICES;
   self->numVertices = 0;
-  self->faces = NULL;
+  self->faces = malloc(sizeof(mcFace) * INIT_SIZE_FACES);
+  self->sizeFaces = INIT_SIZE_FACES;
   self->numFaces = 0;
 }
 
@@ -45,23 +81,52 @@ void mcMesh_destroy(
   free(self->vertices);
 }
 
-void mcMesh_grow(
+void mcMesh_growVertices(
     mcMesh *self)
 {
-  /* TODO */
+  /* Double the size of our vertices buffer */
+  mcVertex *newVertices =
+    (mcVertex*)malloc(sizeof(mcVertex) * self->sizeVertices * 2);
+  memcpy(newVertices, self->vertices, sizeof(mcVertex) * self->sizeVertices);
+  free(self->vertices);
+  self->vertices = newVertices;
+  self->sizeVertices *= 2;
 }
 
-void mcMesh_addVertex(
+void mcMesh_growFaces(
+    mcMesh *self)
+{
+  /* Double the size of our faces buffer */
+  mcFace *newFaces =
+    (mcFace*)malloc(sizeof(mcFace) * self->sizeFaces * 2);
+  memcpy(newFaces, self->faces, sizeof(mcFace) * self->sizeFaces);
+  free(self->faces);
+  self->faces = newFaces;
+  self->sizeFaces *= 2;
+}
+
+unsigned int mcMesh_addVertex(
     mcMesh *self,
     const mcVertex *vertex)
 {
-  /* TODO */
-  assert(0);
+  /* Make sure we have enough memory allocated for this vertex */
+  if (self->numVertices >= self->sizeVertices) {
+    mcMesh_growVertices(self);
+  }
+  /* Add the vertex and increment the vertex index */
+  self->vertices[self->numVertices++] = *vertex;
+  return self->numVertices - 1;
 }
 
 void mcMesh_addFace(
     mcMesh *self,
     const mcFace *face)
 {
-  /* TODO */
+  /* Make sure we have enough memory allocated for this face */
+  if (self->numFaces >= self->sizeFaces) {
+    mcMesh_growFaces(self);
+  }
+  /* Add the face to the mesh */
+  /* TODO: This mcFace_copy can be replaced with mcFace_move */
+  mcFace_copy(&self->faces[self->numFaces++], face);
 }

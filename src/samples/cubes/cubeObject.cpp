@@ -425,7 +425,7 @@ namespace mc {namespace samples { namespace cubes {
     ASSERT_GL_ERROR();
 
     // Draw the points for debugging
-    glPointSize(3.0f);
+    glPointSize(1.0f);
     ASSERT_GL_ERROR();
     glDrawArrays(
         GL_POINTS,  // mode

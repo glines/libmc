@@ -21,6 +21,7 @@
  * IN THE SOFTWARE.
  */
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -73,11 +74,18 @@ void computeTriangleList(
     const mcSimpleEdgeList *edgeList,
     mcSimpleTriangleList *triangleList)
 {
+  typedef struct IncidentLine {
+    unsigned int edges[2];
+    unsigned int face;
+  } IncidentLine;
+  const int MAX_NUM_INCIDENT_LINES = 128;
   int touched[8];
   unsigned int adjacent[3];
   unsigned int closure[8];
   unsigned int closureSize;
   unsigned int numIncidentLines;
+  IncidentLine incidentLines[MAX_NUM_INCIDENT_LINES];
+  unsigned int numTriangles = 0;
   int i;
 
   i = 0;
@@ -101,7 +109,6 @@ void computeTriangleList(
     /* TODO: Determine the extent of the intersected edges for this graph */
     /* FIXME: I want an edge closure, not a vertex closure */
     mcSimpleVertexClosure(vertex, cube, closure, &closureSize);
-    /* TODO: Determine the shape */
     /* TODO: Our triangulation strategy will proceed as follows: 
      * We are given a list of edge intersections from our edge intersection
      * table.
@@ -109,14 +116,15 @@ void computeTriangleList(
      * From these intersections, we build a list of lines from edge to
      * edge that are incident with the surface of the cube.
      *
-     * From this list of lines, we remove two lines whose incident cube faces
-     * are adjacent. We make a triangle with these two lines. If the third line
-     * in the triangle is incident with the surface of the cube, we remove it
-     * from our list of lines. If it is not incident with the surface of the
-     * cube, we add it to a separate list of unused lines.
+     * From this list of lines, we find and remove two incident lines that
+     * share an edge intersection. We make a triangle with these two lines. If
+     * the third line in the triangle is incident with the surface of the cube,
+     * we must remove the third line from our list of incident lines. If it is
+     * not incident with the surface of the cube, we add it to a separate list
+     * of unused lines.
      *
-     * We iterate the previous step until we can find no two lines whose
-     * incident cube faces are adjacent.
+     * We iterate the previous step until we can find no two incident lines
+     * that share an edge intersection.
      *
      * Now we just need to fill the gaps caused by the unused lines. At this
      * point, the unused lines might be coincident (i.e. we have no gap to
@@ -143,11 +151,57 @@ void computeTriangleList(
             break;
         }
         if (shared != -1) {
-          /* TODO: Add this edge pair to the list of incident lines */
+          /* Add this edge pair to the list of incident lines */
+          assert(numIncidentLines < MAX_NUM_INCIDENT_LINES);
+          incidentLines[numIncidentLines].edges[0] = edgeList->edges[i];
+          incidentLines[numIncidentLines].edges[1] = edgeList->edges[j];
+          incidentLines[numIncidentLines].face = shared;
           numIncidentLines += 1;
         }
       }
     }
+    /* Iterate until we can find no longer find two incident lines that share
+     * an edge intersection */
+    int done = 0;
+    do {
+      /* Look for two incident lines that share an edge intersection */
+      int found = 0;
+      for (int i = 0; i < numIncidentLines; ++i) {
+        for (int j = i + 1; j < numIncidentLines; ++j) {
+          for (int k = 0; k < 2; ++k) {
+            for (int l = 0; l < 2; ++l) {
+              if (incidentLines[i].edges[k] == incidentLines[j].edges[l]) {
+                /* Make a triangle from the lines we found */
+                triangleList->triangles[numTriangles].edges[0] = incidentLines[i].edges[(k + 1) % 2];
+                triangleList->triangles[numTriangles].edges[1] = incidentLines[j].edges[(l + 1) % 2];
+                triangleList->triangles[numTriangles].edges[2] = incidentLines[i].edges[k];
+                /* Remove the lines */
+                for (int m = i; m < j - 1; ++m) {
+                  incidentLines[m] = incidentLines[m + 1];
+                }
+                for (int m = j - 1; m < numIncidentLines - 2; ++m) {
+                  incidentLines[m] = incidentLines[m + 2];
+                }
+                numIncidentLines -= 2;
+                /* TODO: Check if the third line created by this triangle is
+                 * incident with the cube. If it is, remove it from the list of
+                 * incident lines. */
+                found = 1;
+                break;
+              }
+            }
+            if (found)
+              break;
+          }
+          if (found)
+            break;
+        }
+        if (found)
+          break;
+      }
+      if (!found)
+        done = 1;
+    } while (!done);
     fprintf(stderr, "cube: 0x%02x, numIncidentLines: %d\n", cube, numIncidentLines);
     numIncidentLines = 0;
     switch (closureSize) {

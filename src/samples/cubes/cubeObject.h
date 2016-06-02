@@ -50,6 +50,7 @@ namespace mc { namespace samples {
         void m_generateDebugPoints(const Mesh *mesh);
 
         static std::shared_ptr<ShaderProgram> m_pointShader();
+        static std::shared_ptr<ShaderProgram> m_wireframeShader();
 
         void m_drawCubeWireframe(
             const glm::mat4 &modelView,

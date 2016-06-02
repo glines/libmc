@@ -146,6 +146,9 @@ namespace mc {namespace samples { namespace cubes {
         points,  // data
         GL_STATIC_DRAW  // usage
         );
+    FORCE_ASSERT_GL_ERROR();
+
+    delete[] points;
   }
 
   std::shared_ptr<ShaderProgram> CubeObject::m_pointShader() {
@@ -163,11 +166,87 @@ namespace mc {namespace samples { namespace cubes {
     return instance;
   }
 
+  std::shared_ptr<ShaderProgram> CubeObject::m_wireframeShader() {
+    static std::shared_ptr<ShaderProgram> instance =
+      std::shared_ptr<ShaderProgram>(
+          new ShaderProgram(
+#ifdef __EMSCRIPTEN__
+            "./assets/shaders/webgl/wireframe.vert",
+            "./assets/shaders/webgl/wireframe.frag"
+#else
+            "./assets/shaders/glsl/wireframe.vert",
+            "./assets/shaders/glsl/wireframe.frag"
+#endif
+            ));
+    return instance;
+  }
+
   void CubeObject::m_drawCubeWireframe(
       const glm::mat4 &modelView,
       const glm::mat4 &projection) const
   {
-    /* TODO */
+    // Use our shader for drawing wireframes
+    std::shared_ptr<ShaderProgram> shader = m_wireframeShader();
+    shader->use();
+
+    // Prepare the uniform values
+    assert(shader->modelViewLocation() != -1);
+    glUniformMatrix4fv(
+        shader->modelViewLocation(),  // location
+        1,  // count
+        0,  // transpose
+        glm::value_ptr(modelView)  // value
+        );
+    ASSERT_GL_ERROR();
+    assert(shader->projectionLocation() != -1);
+    glUniformMatrix4fv(
+        shader->projectionLocation(),  // location
+        1,  // count
+        0,  // transpose
+        glm::value_ptr(projection)  // value
+        );
+    ASSERT_GL_ERROR();
+
+    // Prepare the vertex attributes
+    glBindBuffer(GL_ARRAY_BUFFER, m_cubeWireframeVertices);
+    ASSERT_GL_ERROR();
+    assert(shader->vertPositionLocation() != -1);
+    glEnableVertexAttribArray(shader->vertPositionLocation());
+    ASSERT_GL_ERROR();
+    glVertexAttribPointer(
+        shader->vertPositionLocation(),  // index
+        3,  // size
+        GL_FLOAT,  // type
+        0,  // normalized
+        sizeof(Vertex),  // stride
+        &(((Vertex *)0)->pos[0])  // pointer
+        );
+    ASSERT_GL_ERROR();
+    assert(shader->vertColorLocation() != -1);
+    glEnableVertexAttribArray(shader->vertColorLocation());
+    ASSERT_GL_ERROR();
+    glVertexAttribPointer(
+        shader->vertColorLocation(),  // index
+        3,  // size
+        GL_FLOAT,  // type
+        0,  // normalized
+        sizeof(Vertex),  // stride
+        &(((Vertex *)0)->color[0])  // pointer
+        );
+    ASSERT_GL_ERROR();
+
+    // Draw the wireframe lines
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_cubeWireframeIndices);
+    ASSERT_GL_ERROR();
+    glLineWidth(1.0f);
+    ASSERT_GL_ERROR();
+    glDrawElements(
+        GL_LINES,  // mode
+        MC_SIMPLE_MAX_EDGES * 2,  // count
+        GL_UNSIGNED_INT,  // type
+        0  // indices
+        );
+    ASSERT_GL_ERROR();
   }
 
   void CubeObject::m_drawTriangleWireframe(

@@ -205,8 +205,9 @@ void mcSimple_isosurfaceFromField(
               }
               break;
           }
+          /*
           if (skip)
-            continue;
+            continue; */ /* FIXME: Re-enable this skip once we have more triangles */
           /* Determine the value of each edge vertex */
           mcSimpleEdgeVertices(edge, vertices);
           fprintf(stderr, "edge: %d, vertices: %d, %d\n",

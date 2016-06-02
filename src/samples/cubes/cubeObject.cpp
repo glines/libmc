@@ -113,9 +113,9 @@ namespace mc {namespace samples { namespace cubes {
     */
     for (unsigned int i = 0; i < mesh->numVertices(); ++i) {
       auto vertex = mesh->vertex(i);
-      vertices[i].pos[0] = vertex.pos.x;
-      vertices[i].pos[1] = vertex.pos.y;
-      vertices[i].pos[2] = vertex.pos.z;
+      vertices[i].pos[0] = vertex.pos.x * 2.0f - 1.0f;
+      vertices[i].pos[1] = vertex.pos.y * 2.0f - 1.0f;
+      vertices[i].pos[2] = vertex.pos.z * 2.0f - 1.0f;
       vertices[i].color[0] = 1.0f;
       vertices[i].color[1] = 1.0f;
       vertices[i].color[2] = 1.0f;

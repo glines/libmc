@@ -163,7 +163,7 @@ int main(int argc, char **argv) {
         glm::vec3(0.0f, 0.0f, 0.0f)  // followPoint
         ));
   demo.cubeObject = std::shared_ptr<CubeObject>(
-      new CubeObject(0x07));
+      new CubeObject(0x01));
   demo.scene->addObject(demo.cubeObject);
 
   while (1) {

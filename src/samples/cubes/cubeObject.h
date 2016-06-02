@@ -96,6 +96,11 @@ namespace mc { namespace samples {
             float alpha, bool debug) const;
 
         /**
+         * Returns the index of the cube being represented by this cube object.
+         */
+        unsigned int cube() const { return m_cube; }
+
+        /**
          * Changes the cube being represented by this cube object. Calling this
          * method will change the underlying isosurface.
          */

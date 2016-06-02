@@ -32,7 +32,7 @@ namespace mc { namespace samples {
       const glm::vec3 &followPoint)
     : PerspectiveCamera(fovy, near, far, position, orientation),
       m_followPoint (followPoint),
-      m_arcballRadius(0.5f), m_dragStarted(false)
+      m_arcballRadius(1.0f), m_dragStarted(false)
   {
   }
 
@@ -43,17 +43,17 @@ namespace mc { namespace samples {
     // Arcball control, from [Shoemake 1992]
     glm::vec3 pt;
     // Find the point on the sphere
-    pt.x = (x - 0.5f) / m_arcballRadius;
-    pt.y = (y - 0.5f) / m_arcballRadius;
-    float r = pt.x * pt.x + pt.y * pt.y;
+    pt.x = (x * 2.0f - 1.0f) / m_arcballRadius;
+    pt.z = (y * 2.0f - 1.0f) / m_arcballRadius;
+    float r = pt.x * pt.x + pt.z * pt.z;
     if (r > 1.0) {
       // Correct for clicks outside of the sphere
       float s = 1.0f / sqrt(r);
       pt.x = s * pt.x;
-      pt.y = s * pt.y;
-      pt.z = 0.0f;
+      pt.z = s * pt.z;
+      pt.y = 0.0f;
     } else {
-      pt.z = sqrt(1.0f - r);
+      pt.y = sqrt(1.0f - r);
     }
     return pt;
   }
@@ -93,6 +93,7 @@ namespace mc { namespace samples {
       // Normalize the click coordinates
       float x = float(event.x) / float(windowWidth);
       float y = float(windowHeight - event.y) / float(windowHeight);
+      fprintf(stderr, "x: %g,  y: %g\n", x, y);
       // Update the final arcball position
       m_arcballFinal = m_arcballPosition(x, y);
       // Compute the rotation, from [Shoemake 1992]

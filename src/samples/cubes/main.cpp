@@ -39,7 +39,6 @@ struct demo {
   SDL_Window *window;
   SDL_GLContext glContext;
   int window_width, window_height;
-  unsigned int cube;
   Scene *scene;
   std::shared_ptr<ArcballCamera> camera;
   std::shared_ptr<CubeObject> cubeObject;
@@ -127,12 +126,10 @@ void main_loop() {
       case SDL_KEYDOWN:
         switch (event.key.keysym.scancode) {
           case SDL_SCANCODE_UP:
-            demo.cube = (demo.cube + 1) % 256;
-            demo.cubeObject->setCube(demo.cube);
+            demo.cubeObject->setCube((demo.cubeObject->cube() + 1) % 256);
             break;
           case SDL_SCANCODE_DOWN:
-            demo.cube = (demo.cube - 1) % 256;
-            demo.cubeObject->setCube(demo.cube);
+            demo.cubeObject->setCube((demo.cubeObject->cube() - 1) % 256);
             break;
           case SDL_SCANCODE_SPACE:
             demo.cubeObject->setDrawScalarField(

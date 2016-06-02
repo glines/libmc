@@ -80,23 +80,13 @@ void computeTriangleList(
   } IncidentLine;
   const int MAX_NUM_INCIDENT_LINES = 128;
   int touched[8];
-  unsigned int adjacent[3];
-  unsigned int closure[8];
-  unsigned int closureSize;
   unsigned int numIncidentLines;
   IncidentLine incidentLines[MAX_NUM_INCIDENT_LINES];
-  unsigned int numTriangles = 0;
-  int i;
-
-  i = 0;
+  unsigned int numTriangles;
 
   numIncidentLines = 0;
-
+  numTriangles = 0;
   memset(touched, 0, sizeof(int) * 8);
-
-  /* TODO: Determine which side of the isosurface most of our vertices lie
-   *       (the Hamming weight of cube)
-   */
 
   /* TODO: Iterate through untouched vertices of interest */
   for (int vertex = 0; vertex < 8; ++vertex) {
@@ -104,11 +94,6 @@ void computeTriangleList(
       continue;
     if (!mcSimpleVertexValue(vertex, cube))
       continue;
-    /* TODO: Traverse the graph of adjacent vertices of interest */
-    mcSimpleAdjacentVertices(vertex, adjacent);
-    /* TODO: Determine the extent of the intersected edges for this graph */
-    /* FIXME: I want an edge closure, not a vertex closure */
-    mcSimpleVertexClosure(vertex, cube, closure, &closureSize);
     /* TODO: Our triangulation strategy will proceed as follows: 
      * We are given a list of edge intersections from our edge intersection
      * table.
@@ -186,6 +171,9 @@ void computeTriangleList(
                 /* TODO: Check if the third line created by this triangle is
                  * incident with the cube. If it is, remove it from the list of
                  * incident lines. */
+                /* TODO: If the third line created by this triangle is not
+                 * incident with the cube, then we add that line to a list of
+                 * unused lines. */
                 found = 1;
                 break;
               }
@@ -204,17 +192,6 @@ void computeTriangleList(
     } while (!done);
     fprintf(stderr, "cube: 0x%02x, numIncidentLines: %d\n", cube, numIncidentLines);
     numIncidentLines = 0;
-    switch (closureSize) {
-      case 1:
-        /* Generate a single triangle using the edges */
-        mcSimpleVertexEdges(vertex, triangleList[i].triangles[0].edges);
-        break;
-/*      case 2: */
-        /* TODO: Generate a quad */
-        /* TODO: Determine which edge these vertices share */
-        /* TODO: Generate a quad intersecting the edges that these vertices do
-         * not share */
-    }
   }
 }
 

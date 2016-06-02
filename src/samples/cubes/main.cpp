@@ -125,13 +125,19 @@ void main_loop() {
             demo.window_width, demo.window_height);
         break;
       case SDL_KEYDOWN:
-        if (event.key.keysym.scancode == SDL_SCANCODE_UP) {
-          demo.cube = (demo.cube + 1) % 256;
-          demo.cubeObject->setCube(demo.cube);
-        }
-        else if (event.key.keysym.scancode == SDL_SCANCODE_DOWN) {
-          demo.cube = (demo.cube - 1) % 256;
-          demo.cubeObject->setCube(demo.cube);
+        switch (event.key.keysym.scancode) {
+          case SDL_SCANCODE_UP:
+            demo.cube = (demo.cube + 1) % 256;
+            demo.cubeObject->setCube(demo.cube);
+            break;
+          case SDL_SCANCODE_DOWN:
+            demo.cube = (demo.cube - 1) % 256;
+            demo.cubeObject->setCube(demo.cube);
+            break;
+          case SDL_SCANCODE_SPACE:
+            demo.cubeObject->setDrawScalarField(
+                !demo.cubeObject->isDrawScalarField());
+            break;
         }
         break;
       case SDL_QUIT:

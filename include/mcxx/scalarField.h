@@ -32,7 +32,7 @@ namespace mc {
     public:
       ScalarField();
 
-      virtual float operator()(float x, float y, float z) = 0;
+      virtual float operator()(float x, float y, float z) const = 0;
   };
 }
 

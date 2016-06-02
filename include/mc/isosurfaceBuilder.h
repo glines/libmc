@@ -35,6 +35,8 @@ typedef enum mcAlgorithmFlag {
 } mcAlgorithmFlag;
 
 typedef float (*mcScalarField)(float x, float y, float z);
+typedef float (*mcScalarFieldWithArgs)(
+    float x, float y, float z, const void *args);
 
 typedef struct mcScalarLattice {
   float *lattice;
@@ -67,6 +69,12 @@ void mcIsosurfaceBuilder_destroy(
 const mcMesh *mcIsosurfaceBuilder_isosurfaceFromField(
     mcIsosurfaceBuilder *self,
     mcScalarField sf,
+    mcAlgorithmFlag algorithm);
+
+const mcMesh *mcIsosurfaceBuilder_isosurfaceFromFieldWithArgs(
+    mcIsosurfaceBuilder *self,
+    mcScalarFieldWithArgs sf,
+    const void *args,
     mcAlgorithmFlag algorithm);
 
 const mcMesh *mcIsosurfaceBuilder_isosurfaceFromLattice(

@@ -41,23 +41,14 @@
 void mcSimple_isosurfaceFromLattice(mcScalarLattice sl) {
 }
 
-void mcSimple_isosurfaceFromField(mcScalarField sf, mcMesh *mesh){
+void mcSimple_isosurfaceFromField(
+    mcScalarFieldWithArgs sf, const void *args, mcMesh *mesh)
+{
   /* TODO: Pass the grid resolution as a parameter */
   /* TODO: Support lattice structures that are not perfectly cube */
   /* TODO: Support sub-lattice structures (for divide-and-conquer) */
   int res = 10;
   float delta = 1.0f / (float)res;
-  /* Iterate over the voxel grid to gather samples */
-  float *samples = (float*)malloc(sizeof(float) * res * res * res);
-  float d = 1.0f / (float)res;
-  for (int z = 0; z < res; ++z) {
-    for (int y = 0; y < res; ++y) {
-      for (int x = 0; x < res; ++x) {
-        int i = x + y * res + z * res * res;
-        samples[i] = sf((float)x * d, (float)y * d, (float)z * d);
-      }
-    }
-  }
   /* As the algorithm iterates along the z-axis, a 2-dimesnsional buffer
    * (called prevSlice) of the edge interpolation results from the previous
    * slice is kept. This allows the algorithm to take advantage of
@@ -112,12 +103,17 @@ void mcSimple_isosurfaceFromField(mcScalarField sf, mcMesh *mesh){
         for (unsigned int vertex = 0; vertex < 8; ++vertex) {
           /* Determine this vertex's relative position in the cube */
           unsigned int pos[3];
-          unsigned int latticePos;
+          float sample;
           mcSimpleVertexRelativePosition(vertex, pos);
-          latticePos = i + pos[0] + pos[1] * res + pos[2] * res * res;
+          /* TODO: Many of these sample values can be stored/retrieved from a cache */
+          sample = sf(
+              (x + pos[0]) * delta,
+              (y + pos[1]) * delta,
+              (z + pos[2]) * delta,
+              args);
           /* Add the bit this vertex contributes to the cube */
-          cube |= (samples[latticePos] >= 0.0f ? 1 : 0) << vertex;
-          fprintf(stderr, "sample: %g\n", samples[latticePos]);  /* XXX */
+          cube |= (sample >= 0.0f ? 1 : 0) << vertex;
+          fprintf(stderr, "sample: %g\n", sample);  /* XXX */
         }
         fprintf(stderr, "voxel cube: 0x%02x\n", cube);  /* XXX */
         /* Look in the edge table for the edges that intersect the
@@ -220,13 +216,16 @@ void mcSimple_isosurfaceFromField(mcScalarField sf, mcMesh *mesh){
               );
           for (unsigned int k = 0; k < 2; ++k) {
             unsigned int pos[3];
-            unsigned int index;
             mcSimpleVertexRelativePosition(vertices[k], pos);
-            index = i + pos[0] + res * pos[1] + res * res * pos[2];
-            values[k] = samples[index];
-            latticePos[k].x = x + pos[0] * delta;
-            latticePos[k].y = y + pos[1] * delta;
-            latticePos[k].z = z + pos[2] * delta;
+            /* TODO: Many of these sample values can be stored/retrieved from a cache */
+            latticePos[k].x = (float)(x + pos[0]) * delta;
+            latticePos[k].y = (float)(y + pos[1]) * delta;
+            latticePos[k].z = (float)(z + pos[2]) * delta;
+            values[k] = sf(
+                latticePos[k].x,
+                latticePos[k].y,
+                latticePos[k].z,
+                args);
           }
           fprintf(stderr, "values: %g, %g\n",
               values[0],

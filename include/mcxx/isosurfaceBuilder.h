@@ -37,6 +37,9 @@ namespace mc {
     private:
       mcIsosurfaceBuilder m_internal;
       std::vector<Mesh*> m_meshes;
+
+      static float m_wrapScalarField(
+          float x, float y, float z, const ScalarField *sf);
     public:
       IsosurfaceBuilder();
       ~IsosurfaceBuilder();

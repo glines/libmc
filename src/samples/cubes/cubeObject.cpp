@@ -37,7 +37,7 @@ namespace mc {namespace samples { namespace cubes {
       unsigned int cube,
       const glm::vec3 &position,
       const glm::quat &orientation)
-    : SceneObject(position, orientation)
+    : SceneObject(position, orientation), m_isDrawScalarField(false)
   {
     // Generate a simple cube wireframe and send it to the GL
     glGenBuffers(1, &m_cubeWireframeVertices);
@@ -100,7 +100,60 @@ namespace mc {namespace samples { namespace cubes {
   }
 
   void CubeObject::m_generateTriangleWireframe(const Mesh *mesh) {
-    /* TODO */
+    // Copy the vertices from the mesh
+    Vertex *vertices = new Vertex[mesh->numVertices()];
+    /* TODO: Get this loop working
+    unsigned int i = 0;
+    for (auto vertex : mesh->vertices()) {
+      vertices[i].pos[0] = vertex.x;
+      vertices[i].pos[1] = vertex.y;
+      vertices[i].pos[2] = vertex.z;
+      ++i;
+    }
+    */
+    for (unsigned int i = 0; i < mesh->numVertices(); ++i) {
+      auto vertex = mesh->vertex(i);
+      vertices[i].pos[0] = vertex.pos.x;
+      vertices[i].pos[1] = vertex.pos.y;
+      vertices[i].pos[2] = vertex.pos.z;
+      vertices[i].color[0] = 1.0f;
+      vertices[i].color[1] = 1.0f;
+      vertices[i].color[2] = 1.0f;
+    }
+    // Send the vertices to the GL
+    glBindBuffer(GL_ARRAY_BUFFER, m_triangleWireframeVertices);
+    FORCE_ASSERT_GL_ERROR();
+    glBufferData(
+        GL_ARRAY_BUFFER,  // target
+        sizeof(Vertex) * mesh->numVertices(),  // size
+        vertices,  // data
+        GL_STATIC_DRAW  // usage
+        );
+    FORCE_ASSERT_GL_ERROR();
+    delete[] vertices;
+    // Copy the triangle indices from the mesh
+    unsigned int *indices = new unsigned int[mesh->numFaces() * 3 * 2];
+    for (unsigned int i = 0; i < mesh->numFaces(); ++i) {
+      auto face = mesh->face(i);
+      assert(face.numIndices == 3);
+      for (unsigned int j = 0; j < 3; ++j) {
+        indices[i * 3 * 2 + j * 2] = face.indices[j];
+        indices[i * 3 * 2 + j * 2 + 1] = face.indices[(j + 1) % 3];
+      }
+    }
+    fprintf(stderr, "mesh->numFaces(): %d\n", mesh->numFaces());
+    // Send the triangle indices to the GL
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_triangleWireframeIndices);
+    FORCE_ASSERT_GL_ERROR();
+    glBufferData(
+        GL_ELEMENT_ARRAY_BUFFER,  // target
+        sizeof(unsigned int) * mesh->numFaces() * 3 * 2,  // size
+        indices,  // data
+        GL_STATIC_DRAW  // usage
+        );
+    FORCE_ASSERT_GL_ERROR();
+    delete[] indices;
+    m_numTriangles = mesh->numFaces();
   }
 
   void CubeObject::m_generateDebugPoints(const Mesh *mesh) {
@@ -253,7 +306,68 @@ namespace mc {namespace samples { namespace cubes {
       const glm::mat4 &modelView,
       const glm::mat4 &projection) const
   {
-    /* TODO */
+    // Use our shader for drawing wireframes
+    std::shared_ptr<ShaderProgram> shader = m_wireframeShader();
+    shader->use();
+
+    // Prepare the uniform values
+    assert(shader->modelViewLocation() != -1);
+    glUniformMatrix4fv(
+        shader->modelViewLocation(),  // location
+        1,  // count
+        0,  // transpose
+        glm::value_ptr(modelView)  // value
+        );
+    ASSERT_GL_ERROR();
+    assert(shader->projectionLocation() != -1);
+    glUniformMatrix4fv(
+        shader->projectionLocation(),  // location
+        1,  // count
+        0,  // transpose
+        glm::value_ptr(projection)  // value
+        );
+    ASSERT_GL_ERROR();
+
+    // Prepare the vertex attributes
+    glBindBuffer(GL_ARRAY_BUFFER, m_triangleWireframeVertices);
+    ASSERT_GL_ERROR();
+    assert(shader->vertPositionLocation() != -1);
+    glEnableVertexAttribArray(shader->vertPositionLocation());
+    ASSERT_GL_ERROR();
+    glVertexAttribPointer(
+        shader->vertPositionLocation(),  // index
+        3,  // size
+        GL_FLOAT,  // type
+        0,  // normalized
+        sizeof(Vertex),  // stride
+        &(((Vertex *)0)->pos[0])  // pointer
+        );
+    ASSERT_GL_ERROR();
+    assert(shader->vertColorLocation() != -1);
+    glEnableVertexAttribArray(shader->vertColorLocation());
+    ASSERT_GL_ERROR();
+    glVertexAttribPointer(
+        shader->vertColorLocation(),  // index
+        3,  // size
+        GL_FLOAT,  // type
+        0,  // normalized
+        sizeof(Vertex),  // stride
+        &(((Vertex *)0)->color[0])  // pointer
+        );
+    ASSERT_GL_ERROR();
+
+    // Draw the wireframe lines
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_triangleWireframeIndices);
+    ASSERT_GL_ERROR();
+    glLineWidth(1.0f);
+    ASSERT_GL_ERROR();
+    glDrawElements(
+        GL_LINES,  // mode
+        m_numTriangles * 3 * 2,  // count
+        GL_UNSIGNED_INT,  // type
+        0  // indices
+        );
+    ASSERT_GL_ERROR();
   }
 
   void CubeObject::m_drawDebugPoints(
@@ -333,8 +447,10 @@ namespace mc {namespace samples { namespace cubes {
     // Draw the isosurface triangles
     m_drawTriangleWireframe(modelView, projection);
 
-    // Draw the lattice points and edge intersection points
-    m_drawDebugPoints(modelView, projection);
+    if (m_isDrawScalarField) {
+      // Draw the lattice points and edge intersection points
+      m_drawDebugPoints(modelView, projection);
+    }
   }
 
   void CubeObject::setCube(unsigned int cube) {
@@ -343,19 +459,16 @@ namespace mc {namespace samples { namespace cubes {
     // TODO: (Re-)evaluate the isosurface extraction algorithm, since we have a
     //       new isosurface
     CubeScalarField sf(cube);
-    const Mesh *result = m_builder.buildIsosurface(
+    const Mesh *mesh = m_builder.buildIsosurface(
         sf,
         MC_SIMPLE_MARCHING_CUBES
         );
 
-    // Copy the resulting mesh into m_mesh
-    m_mesh = *result;
-
     // Generate point data to send to the GL for visual debugging
-    m_generateDebugPoints(result);
+    m_generateDebugPoints(mesh);
 
     // Generate triangle wireframe data and send it to the GL
-    m_generateTriangleWireframe(result);
+    m_generateTriangleWireframe(mesh);
   }
 
   CubeObject::CubeScalarField::CubeScalarField(unsigned int cube)
@@ -388,7 +501,7 @@ namespace mc {namespace samples { namespace cubes {
   }
 
   float CubeObject::CubeScalarField::operator()(
-      float x, float y, float z)
+      float x, float y, float z) const
   {
     // A tri-linear interpolation between the cube vertices
     float result = 0.0f;

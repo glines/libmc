@@ -79,9 +79,32 @@ void mcIsosurfaceBuilder_growMeshes(
   assert(self->internal->numMeshes < self->internal->meshesSize);
 }
 
+/**
+ * This method allows us to pass an mcScalarField (without arguments) as an
+ * mcScalarFieldWithArgs.
+ */
+float mcIsosurfaceBuilder_scalarFieldNullArgs(
+    float x, float y, float z, mcScalarField sf)
+{
+  return sf(x, y, z);
+}
+
 const mcMesh *mcIsosurfaceBuilder_isosurfaceFromField(
     mcIsosurfaceBuilder *self,
     mcScalarField sf,
+    mcAlgorithmFlag algorithm)
+{
+  return mcIsosurfaceBuilder_isosurfaceFromFieldWithArgs(
+      self,
+      (mcScalarFieldWithArgs)mcIsosurfaceBuilder_scalarFieldNullArgs,
+      sf,
+      algorithm);
+}
+
+const mcMesh *mcIsosurfaceBuilder_isosurfaceFromFieldWithArgs(
+    mcIsosurfaceBuilder *self,
+    mcScalarFieldWithArgs sf,
+    const void *args,
     mcAlgorithmFlag algorithm)
 {
   /* Initialize a mesh */
@@ -93,7 +116,7 @@ const mcMesh *mcIsosurfaceBuilder_isosurfaceFromField(
   /* TODO: Determine the isosurface generation algorithm to use */
   switch (algorithm) {
     case MC_SIMPLE_MARCHING_CUBES:
-      mcSimple_isosurfaceFromField(sf, mesh);
+      mcSimple_isosurfaceFromField(sf, args, mesh);
       break;
     case MC_ELASTIC_SURFACE_NETS:
       break;

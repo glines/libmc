@@ -44,6 +44,7 @@ namespace mc { namespace samples {
                m_triangleWireframeVertices, m_triangleWireframeIndices,
                m_pointBuffer;
         unsigned int m_numTriangles, m_numPoints;
+        bool m_isDrawScalarField;
 
         void m_generateCubeWireframe();
         void m_generateTriangleWireframe(const Mesh *mesh);
@@ -73,7 +74,7 @@ namespace mc { namespace samples {
           public:
             CubeScalarField(unsigned int cube);
 
-            float operator()(float x, float y, float z);
+            float operator()(float x, float y, float z) const;
         };
       public:
         /**
@@ -99,6 +100,22 @@ namespace mc { namespace samples {
          * method will change the underlying isosurface.
          */
         void setCube(unsigned int cube);
+
+        /**
+         * Returns true if the scalar field is being drawn as a lattice of
+         * points.
+         */
+        bool isDrawScalarField() const {
+          return m_isDrawScalarField;
+        }
+
+        /**
+         * Sets whether or not the scalar field is to be drawn as a lattice of
+         * points.
+         */
+        void setDrawScalarField(bool flag) {
+          m_isDrawScalarField = flag;
+        }
     };
   }
 } }

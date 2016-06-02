@@ -36,6 +36,12 @@ namespace mc {
       Mesh();
       Mesh(const Mesh &mesh);
       Mesh(const mcMesh *mesh);
+
+      unsigned int numVertices() const { return m_internal->numVertices; }
+      const mcVertex &vertex(unsigned int i) const { return m_internal->vertices[i]; }
+
+      unsigned int numFaces() const { return m_internal->numFaces; }
+      const mcFace &face(unsigned int i) const { return m_internal->faces[i]; }
   };
 }
 

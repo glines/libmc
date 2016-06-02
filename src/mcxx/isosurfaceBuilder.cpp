@@ -21,12 +21,13 @@
  * IN THE SOFTWARE.
  */
 
-#include "../../include/mcxx/isosurfaceBuilder.h"
-#include "../../include/mcxx/mesh.h"
-#include "../../include/mcxx/scalarField.h"
+#include <mcxx/isosurfaceBuilder.h>
+#include <mcxx/mesh.h>
+#include <mcxx/scalarField.h>
 
 namespace mc {
   IsosurfaceBuilder::IsosurfaceBuilder() {
+    mcIsosurfaceBuilder_init(&m_internal);
   }
 
   IsosurfaceBuilder::~IsosurfaceBuilder() {
@@ -47,9 +48,24 @@ namespace mc {
     return mesh;
   }
 
+  float IsosurfaceBuilder::m_wrapScalarField(
+      float x, float y, float z, const ScalarField *sf)
+  {
+    return (*sf)(x, y, z);
+  }
+
   const Mesh *IsosurfaceBuilder::buildIsosurface(
       const ScalarField &sf,
       mcAlgorithmFlag algorithm)
   {
+    // Pass the scalar field functor as an argument
+    const mcMesh *m = mcIsosurfaceBuilder_isosurfaceFromFieldWithArgs(
+        &m_internal,
+        (mcScalarFieldWithArgs)IsosurfaceBuilder::m_wrapScalarField,
+         &sf,
+         algorithm);
+    Mesh *mesh = new Mesh(m);
+    m_meshes.push_back(mesh);
+    return mesh;
   }
 }

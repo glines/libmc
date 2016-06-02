@@ -40,12 +40,26 @@ namespace mc { namespace samples {
         IsosurfaceBuilder m_builder;
         Mesh m_mesh;
         unsigned int m_cube;
-        GLuint m_vertexBuffer;
-        unsigned int m_numPoints;
+        GLuint m_cubeWireframeVertices, m_cubeWireframeIndices,
+               m_triangleWireframeVertices, m_triangleWireframeIndices,
+               m_pointBuffer;
+        unsigned int m_numTriangles, m_numPoints;
 
-        void m_generateDebugPoints();
+        void m_generateCubeWireframe();
+        void m_generateTriangleWireframe(const Mesh *mesh);
+        void m_generateDebugPoints(const Mesh *mesh);
 
         static std::shared_ptr<ShaderProgram> m_pointShader();
+
+        void m_drawCubeWireframe(
+            const glm::mat4 &modelView,
+            const glm::mat4 &projection) const;
+        void m_drawTriangleWireframe(
+            const glm::mat4 &modelView,
+            const glm::mat4 &projection) const;
+        void m_drawDebugPoints(
+            const glm::mat4 &modelView,
+            const glm::mat4 &projection) const;
 
         typedef struct Vertex {
           float pos[3];

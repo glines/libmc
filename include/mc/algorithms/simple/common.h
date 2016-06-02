@@ -21,14 +21,14 @@
  * IN THE SOFTWARE.
  */
 
-const unsigned int MC_SIMPLE_MAX_EDGES = 12;
+extern const unsigned int MC_SIMPLE_MAX_EDGES;
 
 typedef struct mcSimpleEdgeList {
-  unsigned int edges[12];
+  int edges[12];
 } mcSimpleEdgeList;
 
 typedef struct mcSimpleTriangle {
-  unsigned int edges[3];
+  int edges[3];
 } mcSimpleTriangle;
 
 typedef struct mcSimpleTriangleList {
@@ -45,9 +45,22 @@ typedef struct mcSimpleTriangleList {
 void mcSimpleEdgeVertices(unsigned int edge, unsigned int *vertices);
 
 /**
+ * This routine determines the two cube faces that the given edge lies on and
+ * returns the indices of those faces in faces.
+ */
+void mcSimpleEdgeFaces(unsigned int edge, unsigned int *faces);
+
+/**
+ * This routine determines the edge that lies between the two given vertices
+ * and returns that edge number. If the line between a and b is not incident to
+ * the cube, or if a and b are the same vertex, then -1 is returned instead.
+ */
+int mcSimpleVerticesToEdge(unsigned int a, unsigned int b);
+
+/**
  * This routine determines the edges connected to a given vertex.
  */
-void mcSimpleVertexEdges(unsigned int vertex, unsigned int *edges);
+void mcSimpleVertexEdges(unsigned int vertex, int *edges);
 
 /**
  * This routine determines the vertices adjacent to the given vertex and
@@ -77,6 +90,16 @@ unsigned int mcSimpleVertexIndex(
  */
 void mcSimpleVertexClosure(unsigned int vertex, unsigned int cube,
     unsigned int *closure, unsigned int *closureSize);
+
+/**
+ * This starts at a vertex and traverses adjacent edges of alike vertices to
+ * find the boundry edges on the cube.
+ *
+ * This is similar to mcSimpleVertexClosure() except instead of returning the
+ * vertices we return the outermost edges.
+ */
+void mcSimpleBoundryEdges(unsigned int vertex, unsigned int cube,
+    unsigned int *edges, unsigned int *numEdges);
 
 /**
  * This routine determines the XYZ-position of the given vertex relative to the

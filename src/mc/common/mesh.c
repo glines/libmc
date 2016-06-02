@@ -77,6 +77,13 @@ void mcMesh_init(
 void mcMesh_destroy(
     mcMesh *self)
 {
+  for (unsigned int i = 0; i < self->numFaces; ++i) {
+    mcFace_destroy(&self->faces[i]);
+  }
+  for (unsigned int i = 0; i < self->numVertices; ++i) {
+    /* mcVertex_destroy(self->vertices[i]); */ /* TODO? */
+  }
+
   free(self->faces);
   free(self->vertices);
 }

@@ -87,7 +87,8 @@ void init_gl() {
 
   // Configure the GL
   glClearColor(0.0, 0.0, 0.0, 0.0);
-  glLineWidth(1.0);
+  glClearDepth(1.0);
+  glDepthFunc(GL_LESS);
   glViewport(0, 0, demo.window_width, demo.window_height);
 }
 
@@ -123,6 +124,16 @@ void main_loop() {
         demo.camera->mouseMotionEvent(event.motion,
             demo.window_width, demo.window_height);
         break;
+      case SDL_KEYDOWN:
+        if (event.key.keysym.scancode == SDL_SCANCODE_UP) {
+          demo.cube = (demo.cube + 1) % 256;
+          demo.cubeObject->setCube(demo.cube);
+        }
+        else if (event.key.keysym.scancode == SDL_SCANCODE_DOWN) {
+          demo.cube = (demo.cube - 1) % 256;
+          demo.cubeObject->setCube(demo.cube);
+        }
+        break;
       case SDL_QUIT:
         exit(EXIT_SUCCESS);
     }
@@ -146,7 +157,7 @@ int main(int argc, char **argv) {
         glm::vec3(0.0f, 0.0f, 0.0f)  // followPoint
         ));
   demo.cubeObject = std::shared_ptr<CubeObject>(
-      new CubeObject(0x05));
+      new CubeObject(0x07));
   demo.scene->addObject(demo.cubeObject);
 
   while (1) {

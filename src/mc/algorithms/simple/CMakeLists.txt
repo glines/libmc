@@ -3,6 +3,9 @@ add_executable(generate_simple_table
     common.c
     generate_table.c
     )
+target_include_directories(generate_simple_table SYSTEM
+    PRIVATE "${CMAKE_SOURCE_DIR}/include"
+    )
 if(DEFINED ENV{EMSCRIPTEN})
   add_custom_target(simple_table.h
       COMMAND node generate_simple_table.js > simple_table.h
@@ -23,8 +26,10 @@ target_link_libraries(mc_algorithms_simple
     mc_common
     )
 add_dependencies(mc_algorithms_simple simple_table.h)
+target_include_directories(mc_algorithms_simple SYSTEM
+    PRIVATE "${CMAKE_SOURCE_DIR}/include"
+    )
 target_include_directories(mc_algorithms_simple
     PRIVATE "${CMAKE_CURRENT_BINARY_DIR}"
     PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}"
-    PRIVATE "${CMAKE_SOURCE_DIR}/include"
     )

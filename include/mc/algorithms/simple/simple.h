@@ -21,9 +21,12 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef MC_ALGORITHMS_SIMPLE_H_
-#define MC_ALGORITHMS_SIMPLE_H_
+#ifndef MC_ALGORITHMS_SIMPLE_SIMPLE_H_
+#define MC_ALGORITHMS_SIMPLE_SIMPLE_H_
 
-#include "simple/simple.h"
+#include <mc/isosurfaceBuilder.h>
+
+void mcSimple_isosurfaceFromLattice(mcScalarLattice sl);
+void mcSimple_isosurfaceFromField(mcScalarField sf, mcMesh *mesh);
 
 #endif

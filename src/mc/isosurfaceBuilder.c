@@ -25,10 +25,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <mc/algorithms/simple.h>
 #include <mc/isosurfaceBuilder.h>
 #include <mc/mesh.h>
-
-#include "algorithms/simple.h"
 
 struct mcIsosurfaceBuilderInternal {
   mcMesh *meshes;
@@ -101,6 +100,7 @@ const mcMesh *mcIsosurfaceBuilder_isosurfaceFromField(
     case MC_SNAP_MARCHING_CUBES:
       break;
   }
+  return mesh;
 }
 
 const mcMesh *mcIsosurfaceBuilder_isosurfaceFromLattice(

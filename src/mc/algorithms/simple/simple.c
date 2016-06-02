@@ -77,8 +77,6 @@ void mcSimple_isosurfaceFromField(mcScalarField sf, mcMesh *mesh){
    * which the volume is divided into smaller volumes before the marching
    * cubes algorithm is applied. This divide and conquer approach lends
    * itself to parallelism as well.
-   *
-   * TODO: Actually use this buffer.
    */
   typedef struct PrevSliceVoxel {
     /* FIXME: These edges should be numbered relative to the prev slice */
@@ -289,6 +287,8 @@ void mcSimple_isosurfaceFromField(mcScalarField sf, mcMesh *mesh){
           fprintf(stderr, "num edges: %d\n", numEdgeIntersections);
           /* FIXME: Re-enable this assertion */
           /* assert(mcSimpleTriangulationTable[cube].triangles[j].edges[0] != -1); */
+          if (mcSimpleTriangulationTable[cube].triangles[j].edges[0] == -1)  /* XXX */
+            break;  /* XXX */
           mcSimpleTriangle triangle =
             mcSimpleTriangulationTable[cube].triangles[j];
           fprintf(stderr, "triangle: %d, %d, %d\n",

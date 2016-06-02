@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "common.h"
+#include <mc/algorithms/simple/common.h>
 
 /*
  * This program generates the edge and triangularization tables needed for
@@ -70,15 +70,19 @@ void computeEdgeList(
 
 void computeTriangleList(
     unsigned int cube,
+    const mcSimpleEdgeList *edgeList,
     mcSimpleTriangleList *triangleList)
 {
   int touched[8];
   unsigned int adjacent[3];
   unsigned int closure[8];
   unsigned int closureSize;
+  unsigned int numIncidentLines;
   int i;
 
   i = 0;
+
+  numIncidentLines = 0;
 
   memset(touched, 0, sizeof(int) * 8);
 
@@ -95,16 +99,67 @@ void computeTriangleList(
     /* TODO: Traverse the graph of adjacent vertices of interest */
     mcSimpleAdjacentVertices(vertex, adjacent);
     /* TODO: Determine the extent of the intersected edges for this graph */
+    /* FIXME: I want an edge closure, not a vertex closure */
     mcSimpleVertexClosure(vertex, cube, closure, &closureSize);
     /* TODO: Determine the shape */
+    /* TODO: Our triangulation strategy will proceed as follows: 
+     * We are given a list of edge intersections from our edge intersection
+     * table.
+     *
+     * From these intersections, we build a list of lines from edge to
+     * edge that are incident with the surface of the cube.
+     *
+     * From this list of lines, we remove two lines whose incident cube faces
+     * are adjacent. We make a triangle with these two lines. If the third line
+     * in the triangle is incident with the surface of the cube, we remove it
+     * from our list of lines. If it is not incident with the surface of the
+     * cube, we add it to a separate list of unused lines.
+     *
+     * We iterate the previous step until we can find no two lines whose
+     * incident cube faces are adjacent.
+     *
+     * Now we just need to fill the gaps caused by the unused lines. At this
+     * point, the unused lines might be coincident (i.e. we have no gap to
+     * fill), or they might form a triangle or a quad.
+     *
+     * TODO: What do do with the separate list of lines?
+     */
+    for (int i = 0; i < MC_SIMPLE_MAX_EDGES && edgeList->edges[i] != -1; ++i) {
+      for (int j = i + 1; j < MC_SIMPLE_MAX_EDGES && edgeList->edges[j] != -1; ++j) {
+        /* TODO: Look for a cube face common to both edges */
+        /* TODO: Move this into mcSimpleEdgesSharedFace() routine */
+        unsigned int faces_i[2], faces_j[2];
+        int shared = -1;
+        mcSimpleEdgeFaces(edgeList->edges[i], faces_i);
+        mcSimpleEdgeFaces(edgeList->edges[j], faces_j);
+        for (int k = 0; k < 2; ++k) {
+          for (int l = 0; l < 2; ++l) {
+            if (faces_i[k] == faces_j[l]) {
+              shared = faces_i[k];
+              break;
+            }
+          }
+          if (shared != -1)
+            break;
+        }
+        if (shared != -1) {
+          /* TODO: Add this edge pair to the list of incident lines */
+          numIncidentLines += 1;
+        }
+      }
+    }
+    fprintf(stderr, "cube: 0x%02x, numIncidentLines: %d\n", cube, numIncidentLines);
+    numIncidentLines = 0;
     switch (closureSize) {
       case 1:
         /* Generate a single triangle using the edges */
         mcSimpleVertexEdges(vertex, triangleList[i].triangles[0].edges);
         break;
-      case 2:
+/*      case 2: */
         /* TODO: Generate a quad */
-        break;
+        /* TODO: Determine which edge these vertices share */
+        /* TODO: Generate a quad intersecting the edges that these vertices do
+         * not share */
     }
   }
 }
@@ -114,7 +169,7 @@ void printEdgeTable(const mcSimpleEdgeList *edgeTable) {
       "const mcSimpleEdgeList mcSimpleEdgeTable[] = {\n");
   for (unsigned int cube = 0; cube <= 0xFF; ++cube) {
     fprintf(stdout,
-        "  { .edges = { %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d } },\n",
+        "  { .edges = { %2d, %2d, %2d, %2d, %2d, %2d, %2d, %2d, %2d, %2d, %2d, %2d } },  /* 0x%02x */\n",
         edgeTable[cube].edges[0],
         edgeTable[cube].edges[1],
         edgeTable[cube].edges[2],
@@ -126,7 +181,8 @@ void printEdgeTable(const mcSimpleEdgeList *edgeTable) {
         edgeTable[cube].edges[8],
         edgeTable[cube].edges[9],
         edgeTable[cube].edges[10],
-        edgeTable[cube].edges[11]
+        edgeTable[cube].edges[11],
+        cube
         );
   }
   fprintf(stdout,
@@ -185,11 +241,11 @@ int main(int argc, char **argv) {
     computeEdgeList(cube, &edgeTable[cube]); 
 
     /* Compute the triangulation list for this configuration */
-    computeTriangleList(cube, &triangulationTable[cube]);
+    computeTriangleList(cube, &edgeTable[cube], &triangulationTable[cube]);
   }
 
   /* Print the necessary headers */
-  fprintf(stdout, "#include \"common.h\"\n\n");
+  fprintf(stdout, "#include <mc/algorithms/simple/common.h>\n\n");
 
   /* Print the edge table */
   printEdgeTable(edgeTable);

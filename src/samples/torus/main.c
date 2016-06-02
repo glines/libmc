@@ -40,12 +40,12 @@ struct demo {
 } demo;
 
 float torus(float x, float y, float z) {
-  float R = 0.75f;
-  float r = 0.25f;
+  float R = 0.25f;
+  float r = 0.10f;
 
-  float a = (R - sqrt(x * x + z * z));
+  float a = (R - sqrt(x * x + y * y));
 
-  return a * a + y * y - r * r;
+  return a * a + z * z - r * r;
 }
 
 void init_sdl() {
@@ -202,6 +202,7 @@ void init_mesh() {
 
   /* Generate the isosurface mesh using libmc */
   mcIsosurfaceBuilder ib;
+  mcIsosurfaceBuilder_init(&ib);
   mesh = mcIsosurfaceBuilder_isosurfaceFromField(
       &ib,  /* self */
       torus,  /* sf */
@@ -213,6 +214,11 @@ void init_mesh() {
     vertices[i].pos[0] = mesh->vertices[i].pos.x;
     vertices[i].pos[1] = mesh->vertices[i].pos.y;
     vertices[i].pos[2] = mesh->vertices[i].pos.z;
+    fprintf(stderr, "mesh->vertices[%d].pos: (%g, %g, %g)\n",
+        i,
+        mesh->vertices[i].pos.x,
+        mesh->vertices[i].pos.y,
+        mesh->vertices[i].pos.z);
   }
   glGenBuffers(1, &demo.vertexBuffer);
   glBindBuffer(GL_ARRAY_BUFFER, demo.vertexBuffer);
@@ -223,9 +229,14 @@ void init_mesh() {
       GL_STATIC_DRAW  /* usage */
       );
   free(vertices);
-  indices = (unsigned int*)malloc(mesh->numFaces * 3);
+  indices = (unsigned int*)malloc(sizeof(mcFace) * mesh->numFaces * 3);
   for (unsigned int i = 0; i < mesh->numFaces; ++i) {
     assert(mesh->faces[i].numIndices == 3);
+    fprintf(stderr, "mesh->faces[%d].indices: (%d, %d, %d)\n",
+        i,
+        mesh->faces[i].indices[0],
+        mesh->faces[i].indices[1],
+        mesh->faces[i].indices[2]);
     for (unsigned int j = 0; j < 3; ++j) {
       indices[i * 3 + j] = mesh->faces[i].indices[j];
     }
@@ -240,7 +251,9 @@ void init_mesh() {
       );
   free(indices);
   demo.numIndices = mesh->numFaces * 3;
-  /* FIXME: Free the mesh */
+  fprintf(stderr, "mesh->numFaces: %d\n", mesh->numFaces);
+  /* Free the isosurface builder (and its mesh) */
+  mcIsosurfaceBuilder_destroy(&ib);
 }
 
 void draw_mesh() {

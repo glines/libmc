@@ -134,6 +134,7 @@ void mcMesh_addFace(
     mcMesh_growFaces(self);
   }
   /* Add the face to the mesh */
-  /* TODO: This mcFace_copy can be replaced with mcFace_move */
+  /* TODO: This mcFace_copy can be replaced with mcFace_move? No... that's a
+   * bad idea. surfaceNet.c relies on this being copied. */
   mcFace_copy(&self->faces[self->numFaces++], face);
 }

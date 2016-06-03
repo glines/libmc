@@ -15,6 +15,19 @@ build-html:
 		emconfigure cmake .. && \
 		emmake make -j $(num_threads)
 
+.PHONY: upload
+upload: build-html
+	export targets=$$( \
+		find build-html/src/samples \
+		-mindepth 1 -maxdepth 1 -type d \
+		-not -name 'CMakeFiles' -and -not -name 'common' \
+		-exec basename '{}' \;) ; \
+	tar cvz -C build-html/src/samples $$targets \
+	| ssh -l glinjona www2.cose.isu.edu ' \
+			rm -rf /home/glinjona/public_html/libmc; \
+			mkdir -p /home/glinjona/public_html/libmc; \
+			cat | tar xvz -C /home/glinjona/public_html/libmc'
+
 .PHONY: clean
 clean:
 	-rm -rf ./build

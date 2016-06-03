@@ -199,14 +199,20 @@ void init_mesh() {
   const mcMesh *mesh;
   Vertex *vertices;
   unsigned int *indices;
+  mcVec3 min, max;
 
   /* Generate the isosurface mesh using libmc */
   mcIsosurfaceBuilder ib;
   mcIsosurfaceBuilder_init(&ib);
+  min.x = min.y = min.z = -1.0f;
+  max.x = max.y = max.z = 1.0f;
   mesh = mcIsosurfaceBuilder_isosurfaceFromField(
       &ib,  /* self */
       torus,  /* sf */
-      MC_SIMPLE_MARCHING_CUBES  /* algorithm */
+      MC_SIMPLE_MARCHING_CUBES,  /* algorithm */
+      10, 10, 10,  /* res */
+      &min,  /* min */
+      &max  /* max */
       );
   /* Send the mesh to the GL */
   vertices = (Vertex*)malloc(sizeof(Vertex) * mesh->numVertices);

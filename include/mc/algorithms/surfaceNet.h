@@ -21,42 +21,9 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef MCXX_ISOSURFACE_BUILDER_H_
-#define MCXX_ISOSURFACE_BUILDER_H_
+#ifndef MC_ALGORITHMS_SURFACE_NET_H_
+#define MC_ALGORITHMS_SURFACE_NET_H_
 
-#include <vector>
-
-extern "C" {
-#include <mc/isosurfaceBuilder.h>
-}
-
-namespace mc {
-  class Mesh;
-  class ScalarField;
-  class Vec3;
-  class IsosurfaceBuilder {
-    private:
-      mcIsosurfaceBuilder m_internal;
-      std::vector<Mesh*> m_meshes;
-
-      static float m_wrapScalarField(
-          float x, float y, float z, const ScalarField *sf);
-    public:
-      IsosurfaceBuilder();
-      ~IsosurfaceBuilder();
-
-      const Mesh *buildIsosurface(
-          mcScalarField sf,
-          mcAlgorithmFlag algorithm,
-          void *args = nullptr
-          );
-
-      const Mesh *buildIsosurface(
-          const ScalarField &sf,
-          mcAlgorithmFlag algorithm,
-          unsigned int x_res, unsigned int y_res, unsigned int z_res,
-          const Vec3 &min, const Vec3 &max);
-  };
-}
+#include "./surfaceNet/surfaceNet.h"
 
 #endif

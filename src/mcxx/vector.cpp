@@ -21,42 +21,12 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef MCXX_ISOSURFACE_BUILDER_H_
-#define MCXX_ISOSURFACE_BUILDER_H_
-
-#include <vector>
-
-extern "C" {
-#include <mc/isosurfaceBuilder.h>
-}
+#include <mcxx/vector.h>
 
 namespace mc {
-  class Mesh;
-  class ScalarField;
-  class Vec3;
-  class IsosurfaceBuilder {
-    private:
-      mcIsosurfaceBuilder m_internal;
-      std::vector<Mesh*> m_meshes;
-
-      static float m_wrapScalarField(
-          float x, float y, float z, const ScalarField *sf);
-    public:
-      IsosurfaceBuilder();
-      ~IsosurfaceBuilder();
-
-      const Mesh *buildIsosurface(
-          mcScalarField sf,
-          mcAlgorithmFlag algorithm,
-          void *args = nullptr
-          );
-
-      const Mesh *buildIsosurface(
-          const ScalarField &sf,
-          mcAlgorithmFlag algorithm,
-          unsigned int x_res, unsigned int y_res, unsigned int z_res,
-          const Vec3 &min, const Vec3 &max);
-  };
+  Vec3::Vec3(float x, float y, float z) {
+    m_internal.x = x;
+    m_internal.y = y;
+    m_internal.z = z;
+  }
 }
-
-#endif

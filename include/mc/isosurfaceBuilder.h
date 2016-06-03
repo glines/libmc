@@ -69,13 +69,17 @@ void mcIsosurfaceBuilder_destroy(
 const mcMesh *mcIsosurfaceBuilder_isosurfaceFromField(
     mcIsosurfaceBuilder *self,
     mcScalarField sf,
-    mcAlgorithmFlag algorithm);
+    mcAlgorithmFlag algorithm,
+    unsigned int x_res, unsigned int y_res, unsigned int z_res,
+    const mcVec3 *min, const mcVec3 *max);
 
 const mcMesh *mcIsosurfaceBuilder_isosurfaceFromFieldWithArgs(
     mcIsosurfaceBuilder *self,
     mcScalarFieldWithArgs sf,
     const void *args,
-    mcAlgorithmFlag algorithm);
+    mcAlgorithmFlag algorithm,
+    unsigned int x_res, unsigned int y_res, unsigned int z_res,
+    const mcVec3 *min, const mcVec3 *max);
 
 const mcMesh *mcIsosurfaceBuilder_isosurfaceFromLattice(
     mcIsosurfaceBuilder *self,

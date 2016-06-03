@@ -32,6 +32,9 @@
 #include "../common/scene.h"
 #include "cubeObject.h"
 
+#define max(a, b) ((a) > (b) ? (a) : (b))
+#define min(a, b) ((a) < (b) ? (a) : (b))
+
 using namespace mc::samples;
 using namespace mc::samples::cubes;
 
@@ -42,6 +45,7 @@ struct demo {
   Scene *scene;
   std::shared_ptr<ArcballCamera> camera;
   std::shared_ptr<CubeObject> cubeObject;
+  int res;
 } demo;
 
 void init_sdl() {
@@ -124,11 +128,27 @@ void main_loop() {
             demo.window_width, demo.window_height);
         break;
       case SDL_KEYDOWN:
+        switch (event.key.keysym.sym) {
+          case SDLK_m:
+            demo.cubeObject->setAlgorithm(MC_SIMPLE_MARCHING_CUBES);
+            break;
+          case SDLK_n:
+            demo.cubeObject->setAlgorithm(MC_ELASTIC_SURFACE_NETS);
+            break;
+        }
         switch (event.key.keysym.scancode) {
           case SDL_SCANCODE_UP:
-            demo.cubeObject->setCube((demo.cubeObject->cube() + 1) % 256);
+            demo.res = min(max(demo.res * 2, 1), 64);
+            demo.cubeObject->setResolution(demo.res, demo.res, demo.res);
             break;
           case SDL_SCANCODE_DOWN:
+            demo.res = min(max(demo.res / 2, 1), 64);
+            demo.cubeObject->setResolution(demo.res, demo.res, demo.res);
+            break;
+          case SDL_SCANCODE_RIGHT:
+            demo.cubeObject->setCube((demo.cubeObject->cube() + 1) % 256);
+            break;
+          case SDL_SCANCODE_LEFT:
             demo.cubeObject->setCube((demo.cubeObject->cube() - 1) % 256);
             break;
           case SDL_SCANCODE_SPACE:
@@ -159,8 +179,9 @@ int main(int argc, char **argv) {
         glm::quat(),  // orientation
         glm::vec3(0.0f, 0.0f, 0.0f)  // followPoint
         ));
+  demo.res = 8;
   demo.cubeObject = std::shared_ptr<CubeObject>(
-      new CubeObject(0x01));
+      new CubeObject(0x01, demo.res, demo.res, demo.res));
   demo.scene->addObject(demo.cubeObject);
 
   while (1) {

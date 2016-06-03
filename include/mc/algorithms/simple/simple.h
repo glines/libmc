@@ -27,7 +27,11 @@
 #include <mc/isosurfaceBuilder.h>
 
 void mcSimple_isosurfaceFromLattice(mcScalarLattice sl);
+
 void mcSimple_isosurfaceFromField(
-    mcScalarFieldWithArgs sf, const void *args, mcMesh *mesh);
+    mcScalarFieldWithArgs sf, const void *args,
+    unsigned int x_res, unsigned int y_res, unsigned int z_res,
+    const mcVec3 *min, const mcVec3 *max,
+    mcMesh *mesh);
 
 #endif

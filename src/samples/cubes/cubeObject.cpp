@@ -28,6 +28,8 @@ extern "C" {
 #include <mc/algorithms/simple/common.h>
 }
 
+#include <mcxx/vector.h>
+
 #include "../common/glError.h"
 #include "../common/shaderProgram.h"
 #include "cubeObject.h"
@@ -35,9 +37,12 @@ extern "C" {
 namespace mc {namespace samples { namespace cubes {
   CubeObject::CubeObject(
       unsigned int cube,
+      unsigned int res_x, unsigned int res_y, unsigned int res_z,
+      mcAlgorithmFlag algorithm,
       const glm::vec3 &position,
       const glm::quat &orientation)
-    : SceneObject(position, orientation), m_isDrawScalarField(false)
+    : SceneObject(position, orientation), m_isDrawScalarField(false),
+      m_resX(res_x), m_resY(res_y), m_resZ(res_z), m_algorithm(algorithm)
   {
     // Generate a simple cube wireframe and send it to the GL
     glGenBuffers(1, &m_cubeWireframeVertices);
@@ -113,9 +118,9 @@ namespace mc {namespace samples { namespace cubes {
     */
     for (unsigned int i = 0; i < mesh->numVertices(); ++i) {
       auto vertex = mesh->vertex(i);
-      vertices[i].pos[0] = vertex.pos.x * 2.0f - 1.0f;
-      vertices[i].pos[1] = vertex.pos.y * 2.0f - 1.0f;
-      vertices[i].pos[2] = vertex.pos.z * 2.0f - 1.0f;
+      vertices[i].pos[0] = vertex.pos.x;
+      vertices[i].pos[1] = vertex.pos.y;
+      vertices[i].pos[2] = vertex.pos.z;
       vertices[i].color[0] = 1.0f;
       vertices[i].color[1] = 1.0f;
       vertices[i].color[2] = 1.0f;
@@ -163,19 +168,19 @@ namespace mc {namespace samples { namespace cubes {
     // TODO: Generate triangle points at edge intersections
 
     // Generate a grid of debugging points and send them to the GL
-    const int w = 20, h = 20, d = 20;
-    Vertex *points = new Vertex[w * h * d];
-    for (int z = 0; z < d; ++z) {
-      for (int y = 0; y < h; ++y) {
-        for (int x = 0; x < w; ++x) {
-          int i = x + y * w + z * w * h;
-          points[i].pos[0] = 2.0f * (float)x / (float)w - 1.0f;
-          points[i].pos[1] = 2.0f * (float)y / (float)h - 1.0f;
-          points[i].pos[2] = 2.0f * (float)z / (float)d - 1.0f;
+    m_numPoints = m_resX * m_resY * m_resZ;
+    Vertex *points = new Vertex[m_numPoints];
+    for (int z = 0; z < m_resZ; ++z) {
+      for (int y = 0; y < m_resY; ++y) {
+        for (int x = 0; x < m_resZ; ++x) {
+          int i = x + y * m_resX + z * m_resX * m_resY;
+          points[i].pos[0] = 2.0f * (float)x / (float)m_resX - 1.0f;
+          points[i].pos[1] = 2.0f * (float)y / (float)m_resY - 1.0f;
+          points[i].pos[2] = 2.0f * (float)z / (float)m_resZ - 1.0f;
           float value = sf(
-              (float)x / (float)w,
-              (float)y / (float)h,
-              (float)z / (float)d);
+              points[i].pos[0],
+              points[i].pos[1],
+              points[i].pos[2]);
           if (value >= 0.0f) {
             points[i].color[0] = 0.0f;
             points[i].color[1] = value;
@@ -190,7 +195,6 @@ namespace mc {namespace samples { namespace cubes {
     }
 
     // Send the points to the GL
-    m_numPoints = w * h * d;
     glBindBuffer(GL_ARRAY_BUFFER, m_pointBuffer);
     FORCE_ASSERT_GL_ERROR();
     glBufferData(
@@ -202,6 +206,23 @@ namespace mc {namespace samples { namespace cubes {
     FORCE_ASSERT_GL_ERROR();
 
     delete[] points;
+  }
+
+  void CubeObject::m_update() {
+    CubeScalarField sf(m_cube);
+    const Mesh *mesh = m_builder.buildIsosurface(
+        sf,  // scalarField
+        m_algorithm,  // algorithm
+        m_resX, m_resY, m_resZ,  // res
+        Vec3(-1.0f, -1.0f, -1.0f),  // min
+        Vec3(1.0f, 1.0f, 1.0f)  // max
+        );
+
+    // Generate point data to send to the GL for visual debugging
+    m_generateDebugPoints(mesh);
+
+    // Generate triangle wireframe data and send it to the GL
+    m_generateTriangleWireframe(mesh);
   }
 
   std::shared_ptr<ShaderProgram> CubeObject::m_pointShader() {
@@ -456,19 +477,26 @@ namespace mc {namespace samples { namespace cubes {
   void CubeObject::setCube(unsigned int cube) {
     m_cube = cube;
 
-    // TODO: (Re-)evaluate the isosurface extraction algorithm, since we have a
-    //       new isosurface
-    CubeScalarField sf(cube);
-    const Mesh *mesh = m_builder.buildIsosurface(
-        sf,
-        MC_SIMPLE_MARCHING_CUBES
-        );
+    // (Re-)evaluate the isosurface extraction algorithm, since we have a new
+    // isosurface
+    m_update();
+  }
 
-    // Generate point data to send to the GL for visual debugging
-    m_generateDebugPoints(mesh);
+  void CubeObject::setAlgorithm(mcAlgorithmFlag algorithm) {
+    m_algorithm = algorithm;
 
-    // Generate triangle wireframe data and send it to the GL
-    m_generateTriangleWireframe(mesh);
+    // Re-evaluate the isosurface, since we have selected a new algorithm
+    m_update();
+  }
+
+  void CubeObject::setResolution(
+      unsigned int x, unsigned int y, unsigned int z)
+  {
+    m_resX = x;
+    m_resY = y;
+    m_resZ = z;
+
+    m_update();
   }
 
   CubeObject::CubeScalarField::CubeScalarField(unsigned int cube)
@@ -503,6 +531,9 @@ namespace mc {namespace samples { namespace cubes {
   float CubeObject::CubeScalarField::operator()(
       float x, float y, float z) const
   {
+    x = (x + 1.0f) / 2.0f;
+    y = (y + 1.0f) / 2.0f;
+    z = (z + 1.0f) / 2.0f;
     // A tri-linear interpolation between the cube vertices
     float result = 0.0f;
     for (unsigned int z_index = 0; z_index <= 1; ++z_index) {

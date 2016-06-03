@@ -44,11 +44,15 @@ namespace mc { namespace samples {
                m_triangleWireframeVertices, m_triangleWireframeIndices,
                m_pointBuffer;
         unsigned int m_numTriangles, m_numPoints;
+        unsigned int m_resX, m_resY, m_resZ;
+        mcAlgorithmFlag m_algorithm;
         bool m_isDrawScalarField;
 
         void m_generateCubeWireframe();
         void m_generateTriangleWireframe(const Mesh *mesh);
         void m_generateDebugPoints(const Mesh *mesh);
+
+        void m_update();
 
         static std::shared_ptr<ShaderProgram> m_pointShader();
         static std::shared_ptr<ShaderProgram> m_wireframeShader();
@@ -83,9 +87,12 @@ namespace mc { namespace samples {
          */
         CubeObject(
             unsigned int cube,
+            unsigned int res_x = 10,
+            unsigned int res_y = 10,
+            unsigned int res_z = 10,
+            mcAlgorithmFlag algorithm = MC_SIMPLE_MARCHING_CUBES,
             const glm::vec3 &position = glm::vec3(0.0f, 0.0f, 0.0f),
-            const glm::quat &orientation = glm::quat()
-            );
+            const glm::quat &orientation = glm::quat());
 
         /**
          * Draws the cube voxel, its vertices, edges, and the triangles that make
@@ -121,6 +128,19 @@ namespace mc { namespace samples {
         void setDrawScalarField(bool flag) {
           m_isDrawScalarField = flag;
         }
+
+        /**
+         * Sets the resolution used with the isosurface extraction algorithm.
+         * Higher resolution gives more detail and generates more triangles.
+         */
+        void setResolution(
+            unsigned int x, unsigned int y, unsigned int z);
+
+        /**
+         * Sets the algorithm used for isosurface extraction. Calling this
+         * method will cause the isosurface mesh to be re-evaluated.
+         */
+        void setAlgorithm(mcAlgorithmFlag algorithm);
     };
   }
 } }

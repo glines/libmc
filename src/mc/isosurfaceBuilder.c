@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include <mc/algorithms/simple.h>
+#include <mc/algorithms/surfaceNet.h>
 #include <mc/isosurfaceBuilder.h>
 #include <mc/mesh.h>
 
@@ -92,20 +93,26 @@ float mcIsosurfaceBuilder_scalarFieldNullArgs(
 const mcMesh *mcIsosurfaceBuilder_isosurfaceFromField(
     mcIsosurfaceBuilder *self,
     mcScalarField sf,
-    mcAlgorithmFlag algorithm)
+    mcAlgorithmFlag algorithm,
+    unsigned int x_res, unsigned int y_res, unsigned int z_res,
+    const mcVec3 *min, const mcVec3 *max)
 {
   return mcIsosurfaceBuilder_isosurfaceFromFieldWithArgs(
       self,
       (mcScalarFieldWithArgs)mcIsosurfaceBuilder_scalarFieldNullArgs,
       sf,
-      algorithm);
+      algorithm,
+      x_res, y_res, z_res,
+      min, max);
 }
 
 const mcMesh *mcIsosurfaceBuilder_isosurfaceFromFieldWithArgs(
     mcIsosurfaceBuilder *self,
     mcScalarFieldWithArgs sf,
     const void *args,
-    mcAlgorithmFlag algorithm)
+    mcAlgorithmFlag algorithm,
+    unsigned int x_res, unsigned int y_res, unsigned int z_res,
+    const mcVec3 *min, const mcVec3 *max)
 {
   /* Initialize a mesh */
   if (self->internal->numMeshes >= self->internal->meshesSize) {
@@ -116,9 +123,18 @@ const mcMesh *mcIsosurfaceBuilder_isosurfaceFromFieldWithArgs(
   /* TODO: Determine the isosurface generation algorithm to use */
   switch (algorithm) {
     case MC_SIMPLE_MARCHING_CUBES:
-      mcSimple_isosurfaceFromField(sf, args, mesh);
+      mcSimple_isosurfaceFromField(
+          sf, args,
+          x_res, y_res, z_res,
+          min, max,
+          mesh);
       break;
     case MC_ELASTIC_SURFACE_NETS:
+      mcSurfaceNet_isosurfaceFromField(
+          sf, args,
+          x_res, y_res, z_res,
+          min, max,
+          mesh);
       break;
     case MC_SNAP_MARCHING_CUBES:
       break;

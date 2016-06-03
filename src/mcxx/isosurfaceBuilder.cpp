@@ -24,6 +24,7 @@
 #include <mcxx/isosurfaceBuilder.h>
 #include <mcxx/mesh.h>
 #include <mcxx/scalarField.h>
+#include <mcxx/vector.h>
 
 namespace mc {
   IsosurfaceBuilder::IsosurfaceBuilder() {
@@ -36,6 +37,7 @@ namespace mc {
     }
   }
 
+  /*
   const Mesh *IsosurfaceBuilder::buildIsosurface(
       mcScalarField sf,
       mcAlgorithmFlag algorithm,
@@ -47,6 +49,7 @@ namespace mc {
     m_meshes.push_back(mesh);
     return mesh;
   }
+  */
 
   float IsosurfaceBuilder::m_wrapScalarField(
       float x, float y, float z, const ScalarField *sf)
@@ -56,14 +59,19 @@ namespace mc {
 
   const Mesh *IsosurfaceBuilder::buildIsosurface(
       const ScalarField &sf,
-      mcAlgorithmFlag algorithm)
+      mcAlgorithmFlag algorithm,
+      unsigned int x_res, unsigned int y_res, unsigned int z_res,
+      const Vec3 &min, const Vec3 &max)
   {
     // Pass the scalar field functor as an argument
     const mcMesh *m = mcIsosurfaceBuilder_isosurfaceFromFieldWithArgs(
         &m_internal,
         (mcScalarFieldWithArgs)IsosurfaceBuilder::m_wrapScalarField,
          &sf,
-         algorithm);
+         algorithm,
+         x_res, y_res, z_res,
+         &min.to_mcVec3(), &max.to_mcVec3()
+         );
     Mesh *mesh = new Mesh(m);
     m_meshes.push_back(mesh);
     return mesh;

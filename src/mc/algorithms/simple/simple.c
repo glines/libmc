@@ -42,13 +42,17 @@ void mcSimple_isosurfaceFromLattice(mcScalarLattice sl) {
 }
 
 void mcSimple_isosurfaceFromField(
-    mcScalarFieldWithArgs sf, const void *args, mcMesh *mesh)
+    mcScalarFieldWithArgs sf, const void *args,
+    unsigned int x_res, unsigned int y_res, unsigned int z_res,
+    const mcVec3 *min, const mcVec3 *max,
+    mcMesh *mesh)
 {
   /* TODO: Pass the grid resolution as a parameter */
   /* TODO: Support lattice structures that are not perfectly cube */
   /* TODO: Support sub-lattice structures (for divide-and-conquer) */
-  int res = 10;
-  float delta = 1.0f / (float)res;
+  float delta_x = fabs(max->x - min->x) / (float)x_res;
+  float delta_y = fabs(max->y - min->y) / (float)y_res;
+  float delta_z = fabs(max->z - min->z) / (float)z_res;
   /* As the algorithm iterates along the z-axis, a 2-dimesnsional buffer
    * (called prevSlice) of the edge interpolation results from the previous
    * slice is kept. This allows the algorithm to take advantage of
@@ -74,7 +78,7 @@ void mcSimple_isosurfaceFromField(
     unsigned int e0, e1, e2, e3;
   } PrevSliceVoxel;
   PrevSliceVoxel *prevSlice =
-    (PrevSliceVoxel*)malloc(sizeof(PrevSliceVoxel) * res * res);
+    (PrevSliceVoxel*)malloc(sizeof(PrevSliceVoxel) * x_res * y_res);
   /* As in the z-axis loop, the algorithm keeps a 1-dimensional buffer (called
    * prevLine) of the edge interpolation results from the previous line. This
    * eliminates on average three redundant interpolations per voxel cube.
@@ -83,7 +87,7 @@ void mcSimple_isosurfaceFromField(
     unsigned int e0, e4, e8, e9;
   } PrevLineVoxel;
   PrevLineVoxel *prevLine =
-    (PrevLineVoxel*)malloc(sizeof(PrevLineVoxel) * res);
+    (PrevLineVoxel*)malloc(sizeof(PrevLineVoxel) * x_res);
   /* As in the z-axis and y-axis loops, the algorithm keeps a 0-dimensional
    * buffer of the edge interpolation results from the previous voxel. This
    * eliminates on average two redundant interpolations per voxel cube.
@@ -93,10 +97,10 @@ void mcSimple_isosurfaceFromField(
   } PrevVoxel;
   PrevVoxel prevVoxel;
   /* Iterate over the sample lattice */
-  for (int z = 0; z < res - 1; ++z) {
-    for (int y = 0; y < res - 1; ++y) {
-      for (int x = 0; x < res - 1; ++x) {
-        int i = x + y * res + z * res * res;
+  for (int z = 0; z < z_res - 1; ++z) {
+    for (int y = 0; y < y_res - 1; ++y) {
+      for (int x = 0; x < x_res - 1; ++x) {
+        int i = x + y * x_res + z * x_res * y_res;
         /* Determine the cube configuration index by iterating over the eight
          * cube vertices */
         unsigned int cube = 0;
@@ -107,9 +111,9 @@ void mcSimple_isosurfaceFromField(
           mcSimpleVertexRelativePosition(vertex, pos);
           /* TODO: Many of these sample values can be stored/retrieved from a cache */
           sample = sf(
-              (x + pos[0]) * delta,
-              (y + pos[1]) * delta,
-              (z + pos[2]) * delta,
+              min->x + (x + pos[0]) * delta_x,
+              min->y + (y + pos[1]) * delta_y,
+              min->z + (z + pos[2]) * delta_z,
               args);
           /* Add the bit this vertex contributes to the cube */
           cube |= (sample >= 0.0f ? 1 : 0) << vertex;
@@ -144,19 +148,19 @@ void mcSimple_isosurfaceFromField(
                 skip = 1;
               }
               else if (z > 0) {
-                vertexIndices[edge] = prevSlice[x + y * res].e0;
+                vertexIndices[edge] = prevSlice[x + y * x_res].e0;
                 skip = 1;
               }
               break;
             case 1:
               if (z > 0) {
-                vertexIndices[edge] = prevSlice[x + y * res].e1;
+                vertexIndices[edge] = prevSlice[x + y * x_res].e1;
                 skip = 1;
               }
               break;
             case 2:
               if (z > 0) {
-                vertexIndices[edge] = prevSlice[x + y * res].e2;
+                vertexIndices[edge] = prevSlice[x + y * x_res].e2;
                 skip = 1;
               }
               break;
@@ -166,7 +170,7 @@ void mcSimple_isosurfaceFromField(
                 skip = 1;
               }
               else if (z > 0) {
-                vertexIndices[edge] = prevSlice[x + y * res].e3;
+                vertexIndices[edge] = prevSlice[x + y * x_res].e3;
                 skip = 1;
               }
               break;
@@ -219,9 +223,9 @@ void mcSimple_isosurfaceFromField(
             unsigned int pos[3];
             mcSimpleVertexRelativePosition(vertices[k], pos);
             /* TODO: Many of these sample values can be stored/retrieved from a cache */
-            latticePos[k].x = (float)(x + pos[0]) * delta;
-            latticePos[k].y = (float)(y + pos[1]) * delta;
-            latticePos[k].z = (float)(z + pos[2]) * delta;
+            latticePos[k].x = min->x + (float)(x + pos[0]) * delta_x;
+            latticePos[k].y = min->y + (float)(y + pos[1]) * delta_y;
+            latticePos[k].z = min->z + (float)(z + pos[2]) * delta_z;
             values[k] = sf(
                 latticePos[k].x,
                 latticePos[k].y,
@@ -253,18 +257,18 @@ void mcSimple_isosurfaceFromField(
               prevLine[x].e0 = vertexIndices[edge];
               break;
             case 4:
-              prevSlice[x + y * res].e0 = vertexIndices[edge];
+              prevSlice[x + y * x_res].e0 = vertexIndices[edge];
               break;
             case 5:
               prevVoxel.e7 = vertexIndices[edge];
-              prevSlice[x + y * res].e1 = vertexIndices[edge];
+              prevSlice[x + y * x_res].e1 = vertexIndices[edge];
               break;
             case 6:
               prevLine[x].e4 = vertexIndices[edge];
-              prevSlice[x + y * res].e2 = vertexIndices[edge];
+              prevSlice[x + y * x_res].e2 = vertexIndices[edge];
               break;
             case 7:
-              prevSlice[x + y * res].e3 = vertexIndices[edge];
+              prevSlice[x + y * x_res].e3 = vertexIndices[edge];
               break;
             case 9:
               prevVoxel.e8 = vertexIndices[edge];

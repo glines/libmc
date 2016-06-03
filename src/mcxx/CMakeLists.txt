@@ -2,6 +2,7 @@ add_library(mcxx
     isosurfaceBuilder.cpp
     mesh.cpp
     scalarField.cpp
+    vector.cpp
     )
 target_link_libraries(mcxx
     mc

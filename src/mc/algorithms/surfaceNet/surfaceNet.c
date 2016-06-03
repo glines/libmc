@@ -192,24 +192,24 @@ void mcSurfaceNet_isosurfaceFromField(
         assert(cube <= 0xff);
         /* Check for surface cubes, i.e. cubes that intersect the isosurface */
         if (cube != 0x00 && cube != 0xff) {
-          mcSurfaceNode *node, *backNeighbor, *bottomNeighbor, *leftNeighbor;
+          mcSurfaceNode *node, *frontNeighbor, *bottomNeighbor, *leftNeighbor;
           /* Create a node for this surface cube */
           node = mcSurfaceNet_getNextNode(&surfaceNet);
           /* Set the node position to the center of the voxel cube */
           node->pos.x = min->x + x * delta_x + delta_x / 2;
           node->pos.y = min->y + y * delta_y + delta_y / 2;
           node->pos.z = min->z + z * delta_z + delta_z / 2;
-          /* There is no old position, so we store it just the same */
+          /* There is no old position yet, so we set it just the same */
           node->oldPos = node->pos;
           /* Store the lattice position of the node */
           node->latticePos[0] = x;
           node->latticePos[1] = y;
           node->latticePos[2] = z;
           /* Attach surface node to neighboring surface nodes */
-          backNeighbor = prevSlice[y * (res_x - 1) + x];
-          if (backNeighbor != NULL) {
+          frontNeighbor = prevSlice[y * (res_x - 1) + x];
+          if (frontNeighbor != NULL) {
             mcSurfaceNode_addNeighbor(
-                node, backNeighbor, MC_SURFACE_NODE_BACK);
+                node, frontNeighbor, MC_SURFACE_NODE_FRONT);
           }
           bottomNeighbor = prevLine[x];
           if (bottomNeighbor != NULL) {
@@ -263,19 +263,19 @@ void mcSurfaceNet_isosurfaceFromField(
         midPoint.z /= (float)numNeighbors;
         /* Restrict the new position to within the voxel cube */
         midPoint.x = max(midPoint.x,
-            (float)node->latticePos[0] * delta_x);
+            min->x + (float)node->latticePos[0] * delta_x);
         midPoint.x = min(midPoint.x,
-            (float)(node->latticePos[0] + 1) * delta_x);
+            min->x + (float)(node->latticePos[0] + 1) * delta_x);
         midPoint.y = max(midPoint.y,
-            (float)node->latticePos[1] * delta_y);
+            min->y + (float)node->latticePos[1] * delta_y);
         midPoint.y = min(midPoint.y,
-            (float)(node->latticePos[1] + 1) * delta_y);
+            min->y + (float)(node->latticePos[1] + 1) * delta_y);
         midPoint.z = max(midPoint.z,
-            (float)node->latticePos[2] * delta_z);
+            min->z + (float)node->latticePos[2] * delta_z);
         midPoint.z = min(midPoint.z,
-            (float)(node->latticePos[2] + 1) * delta_z);
+            min->z + (float)(node->latticePos[2] + 1) * delta_z);
         /* Set the new surface node position */
-        mcSurfaceNode_setPosition(node, &midPoint);
+        mcSurfaceNode_setPosition(node, &midPoint);  /* XXX: uncomment this */
       }
     }
   }
@@ -324,6 +324,18 @@ void mcSurfaceNet_isosurfaceFromField(
       triangle.indices[2] = rightNeighbor->vertexIndex;
       mcMesh_addFace(mesh, &triangle);
     }
+    if (leftNeighbor && backNeighbor) {
+      triangle.indices[0] = node->vertexIndex;
+      triangle.indices[1] = leftNeighbor->vertexIndex;
+      triangle.indices[2] = backNeighbor->vertexIndex;
+      mcMesh_addFace(mesh, &triangle);
+    }
+    if (frontNeighbor && rightNeighbor) {
+      triangle.indices[0] = node->vertexIndex;
+      triangle.indices[1] = frontNeighbor->vertexIndex;
+      triangle.indices[2] = rightNeighbor->vertexIndex;
+      mcMesh_addFace(mesh, &triangle);
+    }
     /* FRONT+TOP and BOTTOM+BACK or FRONT+BOTTOM and TOP+BACK */
     if (frontNeighbor && topNeighbor) {
       triangle.indices[0] = node->vertexIndex;
@@ -337,6 +349,18 @@ void mcSurfaceNet_isosurfaceFromField(
       triangle.indices[2] = backNeighbor->vertexIndex;
       mcMesh_addFace(mesh, &triangle);
     }
+    if (frontNeighbor && bottomNeighbor) {
+      triangle.indices[0] = node->vertexIndex;
+      triangle.indices[1] = frontNeighbor->vertexIndex;
+      triangle.indices[2] = bottomNeighbor->vertexIndex;
+      mcMesh_addFace(mesh, &triangle);
+    }
+    if (topNeighbor && backNeighbor) {
+      triangle.indices[0] = node->vertexIndex;
+      triangle.indices[1] = topNeighbor->vertexIndex;
+      triangle.indices[2] = backNeighbor->vertexIndex;
+      mcMesh_addFace(mesh, &triangle);
+    }
     /* LEFT+TOP and BOTTOM+RIGHT or LEFT+BOTTOM and TOP+RIGHT */
     if (leftNeighbor && topNeighbor) {
       triangle.indices[0] = node->vertexIndex;
@@ -347,6 +371,18 @@ void mcSurfaceNet_isosurfaceFromField(
     if (bottomNeighbor && rightNeighbor) {
       triangle.indices[0] = node->vertexIndex;
       triangle.indices[1] = bottomNeighbor->vertexIndex;
+      triangle.indices[2] = rightNeighbor->vertexIndex;
+      mcMesh_addFace(mesh, &triangle);
+    }
+    if (leftNeighbor && bottomNeighbor) {
+      triangle.indices[0] = node->vertexIndex;
+      triangle.indices[1] = leftNeighbor->vertexIndex;
+      triangle.indices[2] = bottomNeighbor->vertexIndex;
+      mcMesh_addFace(mesh, &triangle);
+    }
+    if (topNeighbor && rightNeighbor) {
+      triangle.indices[0] = node->vertexIndex;
+      triangle.indices[1] = topNeighbor->vertexIndex;
       triangle.indices[2] = rightNeighbor->vertexIndex;
       mcMesh_addFace(mesh, &triangle);
     }

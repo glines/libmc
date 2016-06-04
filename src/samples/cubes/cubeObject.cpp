@@ -25,7 +25,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 extern "C" {
-#include <mc/algorithms/simple/common.h>
+#include <mc/algorithms/common/cube.h>
 }
 
 #include <mcxx/vector.h>
@@ -66,7 +66,7 @@ namespace mc {namespace samples { namespace cubes {
     Vertex vertices[8];
     unsigned int pos[3];
     for (int vertex = 0; vertex < 8; ++vertex) {
-      mcSimpleVertexRelativePosition(vertex, pos);
+      mcCube_vertexRelativePosition(vertex, pos);
       vertices[vertex].pos[0] = pos[0] ? 1.0f : -1.0f;
       vertices[vertex].pos[1] = pos[1] ? 1.0f : -1.0f;
       vertices[vertex].pos[2] = pos[2] ? 1.0f : -1.0f;
@@ -85,10 +85,10 @@ namespace mc {namespace samples { namespace cubes {
         );
     FORCE_ASSERT_GL_ERROR();
     // Iterate over cube edges to make edge lines
-    unsigned int indices[MC_SIMPLE_MAX_EDGES * 2];
-    for (int edge = 0; edge < MC_SIMPLE_MAX_EDGES; ++edge) {
+    unsigned int indices[MC_CUBE_NUM_EDGES * 2];
+    for (int edge = 0; edge < MC_CUBE_NUM_EDGES; ++edge) {
       unsigned int vertices[2];
-      mcSimpleEdgeVertices(edge, vertices);
+      mcCube_edgeVertices(edge, vertices);
       indices[edge * 2] = vertices[0];
       indices[edge * 2 + 1] = vertices[1];
     }
@@ -97,7 +97,7 @@ namespace mc {namespace samples { namespace cubes {
     FORCE_ASSERT_GL_ERROR();
     glBufferData(
         GL_ELEMENT_ARRAY_BUFFER,  /* target */
-        sizeof(unsigned int) * MC_SIMPLE_MAX_EDGES * 2,  /* size */
+        sizeof(unsigned int) * MC_CUBE_NUM_EDGES * 2,  /* size */
         indices,  /* data */
         GL_STATIC_DRAW  /* usage */
         );
@@ -316,7 +316,7 @@ namespace mc {namespace samples { namespace cubes {
     ASSERT_GL_ERROR();
     glDrawElements(
         GL_LINES,  // mode
-        MC_SIMPLE_MAX_EDGES * 2,  // count
+        MC_CUBE_NUM_EDGES * 2,  // count
         GL_UNSIGNED_INT,  // type
         0  // indices
         );
@@ -539,7 +539,7 @@ namespace mc {namespace samples { namespace cubes {
     for (unsigned int z_index = 0; z_index <= 1; ++z_index) {
       for (unsigned int y_index = 0; y_index <= 1; ++y_index) {
         for (unsigned int x_index = 0; x_index <= 1; ++x_index) {
-          unsigned int i = mcSimpleVertexIndex(x_index, y_index, z_index);
+          unsigned int i = mcCube_vertexIndex(x_index, y_index, z_index);
           float value = vertexValue(i, m_cube) ? 1.0f : -1.0f;
           result +=
             (x_index ? x : 1.0f - x) *

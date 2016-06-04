@@ -28,118 +28,15 @@
 
 #include <stdio.h>  /* XXX */
 
-/* FIXME: Move this into mc/algorithms/common.h or something */
-#include <mc/algorithms/simple/common.h>
+#include <mc/algorithms/common/cube.h>
 
+#include <mc/algorithms/common/surfaceNet.h>
 #include <mc/algorithms/surfaceNet/surfaceNet.h>
 #include <mc/vector.h>
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
-
-mcSurfaceNodePos mcSurfaceNodePos_opposite(mcSurfaceNodePos pos) {
-  typedef struct PosPair {
-    mcSurfaceNodePos pos[2];
-  } PosPair;
-  mcSurfaceNodePos table[] = {
-    MC_SURFACE_NODE_BACK,  // FRONT
-    MC_SURFACE_NODE_LEFT,  // RIGHT
-    MC_SURFACE_NODE_BOTTOM,  // TOP
-    MC_SURFACE_NODE_RIGHT,  // LEFT
-    MC_SURFACE_NODE_TOP,  // BOTTOM
-    MC_SURFACE_NODE_FRONT,  // BACK
-  };
-  assert(pos < 6);
-  return table[pos];
-}
-
-void mcSurfaceNode_init(mcSurfaceNode *self) {
-#ifndef NDEBUG
-  /* Set all neighbor pointers to NULL */
-  memset(self->neighbors, 0, sizeof(mcSurfaceNode*) * 6);
-#endif
-}
-
-void mcSurfaceNode_destroy(mcSurfaceNode *self) {
-}
-
-void mcSurfaceNode_addNeighbor(
-    mcSurfaceNode *self, mcSurfaceNode *neighbor, mcSurfaceNodePos pos)
-{
-  mcSurfaceNodePos opposite;
-  assert(self->neighbors[pos] == NULL);
-  self->neighbors[pos] = neighbor;
-  opposite = mcSurfaceNodePos_opposite(pos);
-  assert(neighbor->neighbors[opposite] == NULL);
-  neighbor->neighbors[opposite] = NULL;
-}
-
-void mcSurfaceNode_setPosition(mcSurfaceNode *self, mcVec3 *pos) {
-  /* Record the old position */
-  self->oldPos = self->pos;
-  /* Store the new position */
-  self->pos = *pos;
-}
-
-/* TODO: Maybe MC_SURFACE_NET_NODES_PER_BLOCK should double with each block
- * allocated? That complicates things. */
-const int MC_SURFACE_NET_NODES_PER_BLOCK = 1024;
-const int MC_SURFACE_NET_INIT_POOL_SIZE = 16;
-
-void mcSurfaceNet_init(mcSurfaceNet *self) {
-  self->numNodes = 0;
-  self->numBlocks = 0;
-  self->nodePool = (mcSurfaceNode**)malloc(
-      sizeof(mcSurfaceNode*) * MC_SURFACE_NET_INIT_POOL_SIZE);
-  self->poolSize = MC_SURFACE_NET_INIT_POOL_SIZE;
-}
-
-void mcSurfaceNet_destroy(mcSurfaceNet *self) {
-  for (int i = 0; i < self->numBlocks; ++i) {
-    free(self->nodePool[i]);
-  }
-  free(self->nodePool);
-}
-
-void mcSurfaceNet_growBlockPool(mcSurfaceNet *self) {
-  /* Double the size of the node pool */
-  mcSurfaceNode **newPool = (mcSurfaceNode**)malloc(
-      sizeof(mcSurfaceNode**) * self->poolSize * 2);
-  memcpy(newPool, self->nodePool, sizeof(mcSurfaceNode**) * self->poolSize);
-  free(self->nodePool);
-  self->nodePool = newPool;
-  self->poolSize *= 2;
-}
-
-void mcSurfaceNet_addNodeBlock(mcSurfaceNet *self) {
-  /* Make sure we can reference as many blocks */
-  if (self->numBlocks >= self->poolSize) {
-    mcSurfaceNet_growBlockPool(self);
-  }
-  self->nodePool[self->numBlocks++] = (mcSurfaceNode*)malloc(
-        sizeof(mcSurfaceNode) * MC_SURFACE_NET_NODES_PER_BLOCK);
-}
-
-mcSurfaceNode *mcSurfaceNet_getNode(mcSurfaceNet *self, unsigned int i) {
-  assert(i < self->numNodes);
-  assert(i / MC_SURFACE_NET_NODES_PER_BLOCK < self->numBlocks);
-  return self->nodePool[i / MC_SURFACE_NET_NODES_PER_BLOCK]
-          + i % MC_SURFACE_NET_NODES_PER_BLOCK;
-}
-
-mcSurfaceNode *mcSurfaceNet_getNextNode(mcSurfaceNet *self) {
-  mcSurfaceNode *nextNode;
-  /* Make sure we have a block allocated for this node */
-  if (self->numNodes / MC_SURFACE_NET_NODES_PER_BLOCK >= self->numBlocks) {
-    mcSurfaceNet_addNodeBlock(self);
-  }
-  /* Get the address for the next node in the correct block */
-  nextNode = self->nodePool[self->numNodes / MC_SURFACE_NET_NODES_PER_BLOCK]
-              + self->numNodes % MC_SURFACE_NET_NODES_PER_BLOCK;
-  mcSurfaceNode_init(nextNode);
-  self->numNodes += 1;
-  return nextNode;
-}
+#define squared(a) ((a) * (a))
 
 void mcSurfaceNet_isosurfaceFromField(
     mcScalarFieldWithArgs sf, const void *args,
@@ -148,9 +45,9 @@ void mcSurfaceNet_isosurfaceFromField(
     mcMesh *mesh)
 {
   mcSurfaceNet surfaceNet;
-  float delta_x = fabs(max->x - min->x) / (float)res_x;
-  float delta_y = fabs(max->y - min->y) / (float)res_y;
-  float delta_z = fabs(max->z - min->z) / (float)res_z;
+  float delta_x = fabs(max->x - min->x) / (float)(res_x - 1);
+  float delta_y = fabs(max->y - min->y) / (float)(res_y - 1);
+  float delta_z = fabs(max->z - min->z) / (float)(res_z - 1);
   mcFace triangle;
   /* Initialize the surface net structure */
   mcSurfaceNet_init(&surfaceNet);
@@ -176,7 +73,7 @@ void mcSurfaceNet_isosurfaceFromField(
           /* Determine this vertex's relative position in the cube */
           unsigned int pos[3];
           float sample;
-          mcSimpleVertexRelativePosition(vertex, pos);
+          mcCube_vertexRelativePosition(vertex, pos);
           /* TODO: Many of these sample values can be stored/retrieved from a
            * cache */
           sample = sf(
@@ -196,16 +93,14 @@ void mcSurfaceNet_isosurfaceFromField(
           /* Create a node for this surface cube */
           node = mcSurfaceNet_getNextNode(&surfaceNet);
           /* Set the node position to the center of the voxel cube */
-          node->pos.x = min->x + x * delta_x + delta_x / 2;
-          node->pos.y = min->y + y * delta_y + delta_y / 2;
-          node->pos.z = min->z + z * delta_z + delta_z / 2;
-          /* There is no old position yet, so we set it just the same */
-          node->oldPos = node->pos;
+          node->pos.x = min->x + x * delta_x + delta_x / 2.0f;
+          node->pos.y = min->y + y * delta_y + delta_y / 2.0f;
+          node->pos.z = min->z + z * delta_z + delta_z / 2.0f;
           /* Store the lattice position of the node */
           node->latticePos[0] = x;
           node->latticePos[1] = y;
           node->latticePos[2] = z;
-          /* Attach surface node to neighboring surface nodes */
+          /* Connect surface node to neighboring surface nodes */
           frontNeighbor = prevSlice[y * (res_x - 1) + x];
           if (frontNeighbor != NULL) {
             mcSurfaceNode_addNeighbor(
@@ -237,12 +132,19 @@ void mcSurfaceNet_isosurfaceFromField(
   }
   /* TODO: Now that the surface net has been built, we iterate to improve it */
   /* TODO: Allow the number of iterations to be passed as an argument */
-  static const int MAX_ITERATIONS = 10;
+  static const int MAX_ITERATIONS = 300;
   for (int i = 0; i < MAX_ITERATIONS; ++i) {
+    fprintf(stderr, "iteration: %d\n", i);
+    /* Update the old position of all nodes */
+    for (int j = 0; j < surfaceNet.numNodes; ++j) {
+      mcSurfaceNode *node;
+      node = mcSurfaceNet_getNode(&surfaceNet, j);
+      node->oldPos = node->pos;
+    }
     /* Iterate over the surface net */
     for (int j = 0; j < surfaceNet.numNodes; ++j) {
       mcSurfaceNode *node;
-      mcVec3 midPoint;
+      mcVec3 midPoint, newPos;
       int numNeighbors;
       node = mcSurfaceNet_getNode(&surfaceNet, j);
       /* TODO: Relax the position of surface nodes to reduce energy between
@@ -261,21 +163,43 @@ void mcSurfaceNet_isosurfaceFromField(
         midPoint.x /= (float)numNeighbors;
         midPoint.y /= (float)numNeighbors;
         midPoint.z /= (float)numNeighbors;
+        /* TODO: Weight the midpoint into the new position */
+        const float WEIGHT = 1.0f;
+        newPos.x = (1.0f - WEIGHT) * node->pos.x + WEIGHT * midPoint.x;
+        newPos.y = (1.0f - WEIGHT) * node->pos.y + WEIGHT * midPoint.y;
+        newPos.z = (1.0f - WEIGHT) * node->pos.z + WEIGHT * midPoint.z;
         /* Restrict the new position to within the voxel cube */
-        midPoint.x = max(midPoint.x,
+        newPos.x = max(newPos.x,
             min->x + (float)node->latticePos[0] * delta_x);
-        midPoint.x = min(midPoint.x,
+        newPos.x = min(newPos.x,
             min->x + (float)(node->latticePos[0] + 1) * delta_x);
-        midPoint.y = max(midPoint.y,
+        newPos.y = max(newPos.y,
             min->y + (float)node->latticePos[1] * delta_y);
-        midPoint.y = min(midPoint.y,
+        newPos.y = min(newPos.y,
             min->y + (float)(node->latticePos[1] + 1) * delta_y);
-        midPoint.z = max(midPoint.z,
+        newPos.z = max(newPos.z,
             min->z + (float)node->latticePos[2] * delta_z);
-        midPoint.z = min(midPoint.z,
+        newPos.z = min(newPos.z,
             min->z + (float)(node->latticePos[2] + 1) * delta_z);
-        /* Set the new surface node position */
-        mcSurfaceNode_setPosition(node, &midPoint);  /* XXX: uncomment this */
+        /* Compute old and new energy as sum of squared distance to neighbors */
+        float oldEnergy, newEnergy;
+        oldEnergy = newEnergy = 0.0f;
+        for (int k = 0; k < 6; ++k) {
+          if (node->neighbors[k] == NULL)
+            continue;
+          oldEnergy += squared(node->neighbors[k]->oldPos.x - node->oldPos.x)
+            + squared(node->neighbors[k]->oldPos.y - node->oldPos.y)
+            + squared(node->neighbors[k]->oldPos.z - node->oldPos.z);
+          newEnergy += squared(node->neighbors[k]->oldPos.x - newPos.x)
+            + squared(node->neighbors[k]->oldPos.y - newPos.y)
+            + squared(node->neighbors[k]->oldPos.z - newPos.z);
+        }
+        fprintf(stderr, "oldEnergy: %g, newEnergy: %g\n",
+            oldEnergy, newEnergy);
+        if (newEnergy < oldEnergy) {
+          /* Set the new surface node position */
+          node->pos = newPos;
+        }
       }
     }
   }
@@ -324,6 +248,7 @@ void mcSurfaceNet_isosurfaceFromField(
       triangle.indices[2] = rightNeighbor->vertexIndex;
       mcMesh_addFace(mesh, &triangle);
     }
+    /*
     if (leftNeighbor && backNeighbor) {
       triangle.indices[0] = node->vertexIndex;
       triangle.indices[1] = leftNeighbor->vertexIndex;
@@ -336,6 +261,7 @@ void mcSurfaceNet_isosurfaceFromField(
       triangle.indices[2] = rightNeighbor->vertexIndex;
       mcMesh_addFace(mesh, &triangle);
     }
+    */
     /* FRONT+TOP and BOTTOM+BACK or FRONT+BOTTOM and TOP+BACK */
     if (frontNeighbor && topNeighbor) {
       triangle.indices[0] = node->vertexIndex;
@@ -349,6 +275,7 @@ void mcSurfaceNet_isosurfaceFromField(
       triangle.indices[2] = backNeighbor->vertexIndex;
       mcMesh_addFace(mesh, &triangle);
     }
+    /*
     if (frontNeighbor && bottomNeighbor) {
       triangle.indices[0] = node->vertexIndex;
       triangle.indices[1] = frontNeighbor->vertexIndex;
@@ -361,6 +288,7 @@ void mcSurfaceNet_isosurfaceFromField(
       triangle.indices[2] = backNeighbor->vertexIndex;
       mcMesh_addFace(mesh, &triangle);
     }
+    */
     /* LEFT+TOP and BOTTOM+RIGHT or LEFT+BOTTOM and TOP+RIGHT */
     if (leftNeighbor && topNeighbor) {
       triangle.indices[0] = node->vertexIndex;
@@ -374,6 +302,7 @@ void mcSurfaceNet_isosurfaceFromField(
       triangle.indices[2] = rightNeighbor->vertexIndex;
       mcMesh_addFace(mesh, &triangle);
     }
+    /*
     if (leftNeighbor && bottomNeighbor) {
       triangle.indices[0] = node->vertexIndex;
       triangle.indices[1] = leftNeighbor->vertexIndex;
@@ -386,6 +315,7 @@ void mcSurfaceNet_isosurfaceFromField(
       triangle.indices[2] = rightNeighbor->vertexIndex;
       mcMesh_addFace(mesh, &triangle);
     }
+    */
   }
   /* Free node buffers */
   free(prevLine);

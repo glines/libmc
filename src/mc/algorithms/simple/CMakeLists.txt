@@ -1,7 +1,9 @@
 # Generate the simple marching cubes table header file
 add_executable(generate_simple_table
-    common.c
     generate_table.c
+    )
+target_link_libraries(generate_simple_table
+    mc_algorithms_common
     )
 target_include_directories(generate_simple_table SYSTEM
     PRIVATE "${CMAKE_SOURCE_DIR}/include"
@@ -19,7 +21,6 @@ add_dependencies(simple_table.h generate_simple_table)
 
 # Build the algorithm in a static library, including the table header
 add_library(mc_algorithms_simple STATIC
-    common.c
     simple.c
     )
 target_link_libraries(mc_algorithms_simple

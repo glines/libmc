@@ -23,11 +23,12 @@
 
 #include <assert.h>
 
-#include <mc/algorithms/simple/common.h>
+#include <mc/algorithms/common/cube.h>
+#include <mc/isosurfaceBuilder.h>
 
-const unsigned int MC_SIMPLE_MAX_EDGES = 12;
+const unsigned int MC_CUBE_NUM_EDGES = 12;
 
-void mcSimpleEdgeVertices(unsigned int edge, unsigned int *vertices) {
+void mcCube_edgeVertices(unsigned int edge, unsigned int *vertices) {
   typedef struct VertexPair {
     int vertices[2];
   } VertexPair;
@@ -50,7 +51,7 @@ void mcSimpleEdgeVertices(unsigned int edge, unsigned int *vertices) {
   vertices[1] = table[edge].vertices[1];
 }
 
-void mcSimpleEdgeFaces(unsigned int edge, unsigned int *faces) {
+void mcCube_edgeFaces(unsigned int edge, unsigned int *faces) {
   typedef struct FacePair {
     int faces[2];
   } FacePair;
@@ -73,7 +74,7 @@ void mcSimpleEdgeFaces(unsigned int edge, unsigned int *faces) {
   faces[1] = table[edge].faces[1];
 }
 
-int mcSimpleVerticesToEdge(unsigned int a, unsigned int b) {
+int mcCube_verticesToEdge(unsigned int a, unsigned int b) {
   assert(a >= 0);
   assert(a < 8);
   assert(b >= 0);
@@ -163,7 +164,7 @@ int mcSimpleVerticesToEdge(unsigned int a, unsigned int b) {
   return -1;
 }
 
-void mcSimpleVertexEdges(unsigned int vertex, int *edges) {
+void mcCube_vertexEdges(unsigned int vertex, int *edges) {
   typedef struct EdgeTriple {
     int edges[3];
   } EdgeTriple;
@@ -183,7 +184,7 @@ void mcSimpleVertexEdges(unsigned int vertex, int *edges) {
   edges[2] = table[vertex].edges[2];
 }
 
-void mcSimpleAdjacentVertices(unsigned int vertex, unsigned int *adjacent) {
+void mcCube_adjacentVertices(unsigned int vertex, unsigned int *adjacent) {
   typedef struct VertexTriple {
     int vertices[3];
   } VertexTriple;
@@ -203,11 +204,11 @@ void mcSimpleAdjacentVertices(unsigned int vertex, unsigned int *adjacent) {
   adjacent[2] = table[vertex].vertices[2];
 }
 
-int mcSimpleVertexValue(unsigned int vertex, unsigned int cube) {
+int mcCube_vertexValue(unsigned int vertex, unsigned int cube) {
   return (cube & (1 << vertex)) >> vertex;
 }
 
-unsigned int mcSimpleVertexIndex(unsigned int x, unsigned int y, unsigned int z) {
+unsigned int mcCube_vertexIndex(unsigned int x, unsigned int y, unsigned int z) {
   assert((x & ~1) == 0);
   assert((y & ~1) == 0);
   assert((z & ~1) == 0);
@@ -225,7 +226,7 @@ unsigned int mcSimpleVertexIndex(unsigned int x, unsigned int y, unsigned int z)
   return table[i];
 }
 
-void mcSimpleVertexClosure(unsigned int vertex, unsigned int cube,
+void mcCube_vertexClosure(unsigned int vertex, unsigned int cube,
     unsigned int *closure, unsigned int *closureSize)
 {
   unsigned int notVisited[8];
@@ -235,7 +236,7 @@ void mcSimpleVertexClosure(unsigned int vertex, unsigned int cube,
   unsigned int adjacent[3];
   int skip;
   int i, j;
-  int vertexValue = mcSimpleVertexValue(vertex, cube);
+  int vertexValue = mcCube_vertexValue(vertex, cube);
 
   notVisited[0] = vertex;
   numNotVisited = 1;
@@ -253,7 +254,7 @@ void mcSimpleVertexClosure(unsigned int vertex, unsigned int cube,
     /* Add this vertex to the closure */
     closure[(*closureSize)++] = notVisited[numNotVisited];
     /* Iterate over all adjacent vertices */
-    mcSimpleAdjacentVertices(notVisited[numNotVisited], adjacent);
+    mcCube_adjacentVertices(notVisited[numNotVisited], adjacent);
     for (i = 0; i < 3; ++i) {
       /* Check if this vertex has already been visited */
       skip = 0;
@@ -266,13 +267,13 @@ void mcSimpleVertexClosure(unsigned int vertex, unsigned int cube,
       if (skip)
         continue;
       /* Add alike vertices to the list of not yet visited vertices */
-      if (mcSimpleVertexValue(adjacent[i], cube) == vertexValue)
+      if (mcCube_vertexValue(adjacent[i], cube) == vertexValue)
         notVisited[numNotVisited++] = adjacent[i];
     }
   }
 }
 
-void mcSimpleBoundryEdges(unsigned int vertex, unsigned int cube,
+void mcCube_boundryEdges(unsigned int vertex, unsigned int cube,
     unsigned int *edges, unsigned int *numEdges)
 {
   unsigned int notVisited[8];
@@ -283,7 +284,7 @@ void mcSimpleBoundryEdges(unsigned int vertex, unsigned int cube,
   unsigned int adjacent[3];
   int skip;
   int i, j;
-  int vertexValue = mcSimpleVertexValue(vertex, cube);
+  int vertexValue = mcCube_vertexValue(vertex, cube);
 
   notVisited[0] = vertex;
   numNotVisited = 1;
@@ -300,7 +301,7 @@ void mcSimpleBoundryEdges(unsigned int vertex, unsigned int cube,
     /* Add this vertex to the list of visited vertices */
     visited[numVisited++] = current;
     /* Iterate over all adjacent vertices */
-    mcSimpleAdjacentVertices(current, adjacent);
+    mcCube_adjacentVertices(current, adjacent);
     for (i = 0; i < 3; ++i) {
       /* Check if this vertex has already been visited */
       skip = 0;
@@ -312,18 +313,18 @@ void mcSimpleBoundryEdges(unsigned int vertex, unsigned int cube,
       }
       if (skip)
         continue;
-      if (mcSimpleVertexValue(adjacent[i], cube) == vertexValue) {
+      if (mcCube_vertexValue(adjacent[i], cube) == vertexValue) {
         /* Add alike vertices to the list of not yet visited vertices */
         notVisited[numNotVisited++] = adjacent[i];
       } else {
         /* Add boundry edges to the list of edges */
-        edges[(*numEdges)++] = mcSimpleVerticesToEdge(current, adjacent[i]);
+        edges[(*numEdges)++] = mcCube_verticesToEdge(current, adjacent[i]);
       }
     }
   }
 }
 
-void mcSimpleVertexRelativePosition(unsigned int vertex, unsigned int *pos) {
+void mcCube_vertexRelativePosition(unsigned int vertex, unsigned int *pos) {
   typedef struct Position {
     unsigned int pos[3];
   } Position;
@@ -341,4 +342,17 @@ void mcSimpleVertexRelativePosition(unsigned int vertex, unsigned int *pos) {
   pos[0] = table[vertex].pos[0];
   pos[1] = table[vertex].pos[1];
   pos[2] = table[vertex].pos[2];
+}
+
+void mcCube_gatherCubeSamples(
+    mcScalarFieldWithArgs sf, const void *args,
+    const mcVec3 *min,
+    float delta_x, float delta_y, float delta_z,
+    float *samples)
+{
+  /* TODO */
+}
+
+unsigned int mcCube_cubeConfigurationFromSamples(float *samples) {
+  /* TODO */
 }

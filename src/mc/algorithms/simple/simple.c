@@ -26,6 +26,7 @@
 #include <stdio.h>  /* XXX */
 #include <stdlib.h>
 
+#include <mc/algorithms/common/cube.h>
 #include <mc/isosurfaceBuilder.h>
 #include <mc/mesh.h>
 
@@ -108,7 +109,7 @@ void mcSimple_isosurfaceFromField(
           /* Determine this vertex's relative position in the cube */
           unsigned int pos[3];
           float sample;
-          mcSimpleVertexRelativePosition(vertex, pos);
+          mcCube_vertexRelativePosition(vertex, pos);
           /* TODO: Many of these sample values can be stored/retrieved from a cache */
           sample = sf(
               min->x + (x + pos[0]) * delta_x,
@@ -123,20 +124,20 @@ void mcSimple_isosurfaceFromField(
         /* Look in the edge table for the edges that intersect the
          * isosurface */
         fprintf(stderr, "edges: (%d, %d, %d, ...)\n",
-            mcSimpleEdgeTable[cube].edges[0],
-            mcSimpleEdgeTable[cube].edges[1],
-            mcSimpleEdgeTable[cube].edges[2]);  /* XXX */
-        unsigned int vertexIndices[MC_SIMPLE_MAX_EDGES];
+            mcSimple_edgeTable[cube].edges[0],
+            mcSimple_edgeTable[cube].edges[1],
+            mcSimple_edgeTable[cube].edges[2]);  /* XXX */
+        unsigned int vertexIndices[MC_CUBE_NUM_EDGES];
         int numEdgeIntersections = 0;
         for (unsigned int j = 0;
-            j < MC_SIMPLE_MAX_EDGES && mcSimpleEdgeTable[cube].edges[j] != -1;
+            j < MC_CUBE_NUM_EDGES && mcSimple_edgeTable[cube].edges[j] != -1;
             ++j)
         {
           unsigned int vertices[2];
           float values[2];
           int edge;
           mcVec3 latticePos[2];
-          edge = mcSimpleEdgeTable[cube].edges[j];
+          edge = mcSimple_edgeTable[cube].edges[j];
           numEdgeIntersections += 1;
           /* Screen out edges that already have vertices and get their vertex
            * index from one of the prev voxel buffers */
@@ -213,7 +214,7 @@ void mcSimple_isosurfaceFromField(
           if (skip)
             continue; */ /* FIXME: Re-enable this skip once we have more triangles */
           /* Determine the value of each edge vertex */
-          mcSimpleEdgeVertices(edge, vertices);
+          mcCube_edgeVertices(edge, vertices);
           fprintf(stderr, "edge: %d, vertices: %d, %d\n",
               edge,
               vertices[0], 
@@ -221,7 +222,7 @@ void mcSimple_isosurfaceFromField(
               );
           for (unsigned int k = 0; k < 2; ++k) {
             unsigned int pos[3];
-            mcSimpleVertexRelativePosition(vertices[k], pos);
+            mcCube_vertexRelativePosition(vertices[k], pos);
             /* TODO: Many of these sample values can be stored/retrieved from a cache */
             latticePos[k].x = min->x + (float)(x + pos[0]) * delta_x;
             latticePos[k].y = min->y + (float)(y + pos[1]) * delta_y;
@@ -290,11 +291,11 @@ void mcSimple_isosurfaceFromField(
           mcFace_init(&face, 3);
           fprintf(stderr, "num edges: %d\n", numEdgeIntersections);
           /* FIXME: Re-enable this assertion */
-          /* assert(mcSimpleTriangulationTable[cube].triangles[j].edges[0] != -1); */
-          if (mcSimpleTriangulationTable[cube].triangles[j].edges[0] == -1)  /* XXX */
+          /* assert(mcCube_triangulationTable[cube].triangles[j].edges[0] != -1); */
+          if (mcSimple_triangulationTable[cube].triangles[j].edges[0] == -1)  /* XXX */
             break;  /* XXX */
           mcSimpleTriangle triangle =
-            mcSimpleTriangulationTable[cube].triangles[j];
+            mcSimple_triangulationTable[cube].triangles[j];
           fprintf(stderr, "triangle: %d, %d, %d\n",
               triangle.edges[0],
               triangle.edges[1],

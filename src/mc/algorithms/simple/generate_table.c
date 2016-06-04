@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <mc/algorithms/common/cube.h>
 #include <mc/algorithms/simple/common.h>
 
 /*
@@ -58,9 +59,9 @@ void computeEdgeList(
     /* Iterate through all edges */
     for (unsigned int edge = 0; edge < 12; ++edge) {
       /* Determine the two vertex values */
-      mcSimpleEdgeVertices(edge, vertices);
-      if (mcSimpleVertexValue(vertices[0], cube)
-          != mcSimpleVertexValue(vertices[1], cube))
+      mcCube_edgeVertices(edge, vertices);
+      if (mcCube_vertexValue(vertices[0], cube)
+          != mcCube_vertexValue(vertices[1], cube))
       {
         /* If the vertex values disagree, we have an edge intersection */
         /* Add this edge to the edge list */
@@ -92,7 +93,7 @@ void computeTriangleList(
   for (int vertex = 0; vertex < 8; ++vertex) {
     if (touched[vertex])
       continue;
-    if (!mcSimpleVertexValue(vertex, cube))
+    if (!mcCube_vertexValue(vertex, cube))
       continue;
     /* TODO: Our triangulation strategy will proceed as follows: 
      * We are given a list of edge intersections from our edge intersection
@@ -117,14 +118,14 @@ void computeTriangleList(
      *
      * TODO: What do do with the separate list of lines?
      */
-    for (int i = 0; i < MC_SIMPLE_MAX_EDGES && edgeList->edges[i] != -1; ++i) {
-      for (int j = i + 1; j < MC_SIMPLE_MAX_EDGES && edgeList->edges[j] != -1; ++j) {
+    for (int i = 0; i < MC_CUBE_NUM_EDGES && edgeList->edges[i] != -1; ++i) {
+      for (int j = i + 1; j < MC_CUBE_NUM_EDGES && edgeList->edges[j] != -1; ++j) {
         /* TODO: Look for a cube face common to both edges */
         /* TODO: Move this into mcSimpleEdgesSharedFace() routine */
         unsigned int faces_i[2], faces_j[2];
         int shared = -1;
-        mcSimpleEdgeFaces(edgeList->edges[i], faces_i);
-        mcSimpleEdgeFaces(edgeList->edges[j], faces_j);
+        mcCube_edgeFaces(edgeList->edges[i], faces_i);
+        mcCube_edgeFaces(edgeList->edges[j], faces_j);
         for (int k = 0; k < 2; ++k) {
           for (int l = 0; l < 2; ++l) {
             if (faces_i[k] == faces_j[l]) {
@@ -197,7 +198,7 @@ void computeTriangleList(
 
 void printEdgeTable(const mcSimpleEdgeList *edgeTable) {
   fprintf(stdout,
-      "const mcSimpleEdgeList mcSimpleEdgeTable[] = {\n");
+      "const mcSimpleEdgeList mcSimple_edgeTable[] = {\n");
   for (unsigned int cube = 0; cube <= 0xFF; ++cube) {
     fprintf(stdout,
         "  { .edges = { %2d, %2d, %2d, %2d, %2d, %2d, %2d, %2d, %2d, %2d, %2d, %2d } },  /* 0x%02x */\n",
@@ -224,7 +225,7 @@ void printTriangulationTable(
     const mcSimpleTriangleList *triangulationTable)
 {
   fprintf(stdout,
-      "const mcSimpleTriangleList mcSimpleTriangulationTable[] = {\n");
+      "const mcSimpleTriangleList mcSimple_triangulationTable[] = {\n");
   for (unsigned int cube = 0; cube <= 0xFF; ++cube) {
     fprintf(stdout,
         "  { .triangles = \n"

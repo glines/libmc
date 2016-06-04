@@ -21,7 +21,8 @@
  * IN THE SOFTWARE.
  */
 
-extern const unsigned int MC_SIMPLE_MAX_EDGES;
+#ifndef MC_ALGORITHMS_SIMPLE_COMMON_H_
+#define MC_ALGORITHMS_SIMPLE_COMMON_H_
 
 typedef struct mcSimpleEdgeList {
   int edges[12];
@@ -35,74 +36,4 @@ typedef struct mcSimpleTriangleList {
   mcSimpleTriangle triangles[4];
 } mcSimpleTriangleList;
 
-/**
- * This routine takes the index of an edge and returns the two vertex indices
- * on that edge in vertices.
- *
- * These indices are based on the numbering scheme described by the original
- * marching cubes paper by Lorensen.
- */
-void mcSimpleEdgeVertices(unsigned int edge, unsigned int *vertices);
-
-/**
- * This routine determines the two cube faces that the given edge lies on and
- * returns the indices of those faces in faces.
- */
-void mcSimpleEdgeFaces(unsigned int edge, unsigned int *faces);
-
-/**
- * This routine determines the edge that lies between the two given vertices
- * and returns that edge number. If the line between a and b is not incident to
- * the cube, or if a and b are the same vertex, then -1 is returned instead.
- */
-int mcSimpleVerticesToEdge(unsigned int a, unsigned int b);
-
-/**
- * This routine determines the edges connected to a given vertex.
- */
-void mcSimpleVertexEdges(unsigned int vertex, int *edges);
-
-/**
- * This routine determines the vertices adjacent to the given vertex and
- * returns the adjacent vertex indices in adjacent.
- */
-void mcSimpleAdjacentVertices(unsigned int vertex, unsigned int *adjacent);
-
-/**
- * This routine determines the value of a vertex (either above or below the
- * isosurface) for the given numbered cube configuration.
- *
- * The returned value is 0 for less than the isosurface value, and 1 for
- * greater than or equal to the isosurface value.
- */
-int mcSimpleVertexValue(unsigned int vertex, unsigned int cube);
-
-/**
- * This routine takes a vertex position on the unit cube with vertex 0
- * positioned at the origin and returns the vertex index.
- */
-unsigned int mcSimpleVertexIndex(
-    unsigned int x, unsigned int y, unsigned int z);
-
-/**
- * This routine traverses the edges of alike vertices to compute the closure of
- * a given vertex.
- */
-void mcSimpleVertexClosure(unsigned int vertex, unsigned int cube,
-    unsigned int *closure, unsigned int *closureSize);
-
-/**
- * This starts at a vertex and traverses adjacent edges of alike vertices to
- * find the boundry edges on the cube.
- *
- * This is similar to mcSimpleVertexClosure() except instead of returning the
- * vertices we return the outermost edges.
- */
-void mcSimpleBoundryEdges(unsigned int vertex, unsigned int cube,
-    unsigned int *edges, unsigned int *numEdges);
-
-/**
- * This routine determines the XYZ-position of the given vertex relative to the
- * origin of the cube.
- */
-void mcSimpleVertexRelativePosition(unsigned int vertex, unsigned int *pos);
+#endif

@@ -1,3 +1,5 @@
+add_subdirectory("./common")
+
 add_subdirectory("./cubes33")
 add_subdirectory("./delaunay")
 add_subdirectory("./simple")

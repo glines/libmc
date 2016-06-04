@@ -31,6 +31,7 @@
 typedef enum mcAlgorithmFlag {
   MC_SIMPLE_MARCHING_CUBES = 1,
   MC_ELASTIC_SURFACE_NETS,
+  MC_CUBERILLE,
   MC_SNAP_MARCHING_CUBES,
 } mcAlgorithmFlag;
 

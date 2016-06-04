@@ -21,7 +21,9 @@
  * IN THE SOFTWARE.
  */
 
+extern const unsigned int MC_CUBE_NUM_VERTICES;
 extern const unsigned int MC_CUBE_NUM_EDGES;
+extern const unsigned int MC_CUBE_NUM_FACES;
 
 typedef struct mcCubeEdgeList {
   int edges[12];
@@ -98,3 +100,13 @@ void mcCube_boundryEdges(unsigned int vertex, unsigned int cube,
  * origin of the cube.
  */
 void mcCube_vertexRelativePosition(unsigned int vertex, unsigned int *pos);
+
+/**
+ * This routine determines the bitwise cube configuration from the given array
+ * of eight vertex samples.
+ *
+ * The routine assumes that samples with value 0.0f lie on the positive side of
+ * the isosurface, which is the assumption made by the classic marching cubes
+ * algorithm.
+ */
+unsigned int mcCube_cubeConfigurationFromSamples(float *samples);

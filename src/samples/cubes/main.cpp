@@ -135,6 +135,9 @@ void main_loop() {
           case SDLK_n:
             demo.cubeObject->setAlgorithm(MC_ELASTIC_SURFACE_NETS);
             break;
+          case SDLK_c:
+            demo.cubeObject->setAlgorithm(MC_CUBERILLE);
+            break;
         }
         switch (event.key.keysym.scancode) {
           case SDL_SCANCODE_UP:

@@ -24,9 +24,10 @@
 #include <assert.h>
 
 #include <mc/algorithms/common/cube.h>
-#include <mc/isosurfaceBuilder.h>
 
+const unsigned int MC_CUBE_NUM_VERTICES = 8;
 const unsigned int MC_CUBE_NUM_EDGES = 12;
+const unsigned int MC_CUBE_NUM_FACES = 6;
 
 void mcCube_edgeVertices(unsigned int edge, unsigned int *vertices) {
   typedef struct VertexPair {
@@ -344,15 +345,12 @@ void mcCube_vertexRelativePosition(unsigned int vertex, unsigned int *pos) {
   pos[2] = table[vertex].pos[2];
 }
 
-void mcCube_gatherCubeSamples(
-    mcScalarFieldWithArgs sf, const void *args,
-    const mcVec3 *min,
-    float delta_x, float delta_y, float delta_z,
-    float *samples)
-{
-  /* TODO */
-}
-
 unsigned int mcCube_cubeConfigurationFromSamples(float *samples) {
-  /* TODO */
+  unsigned int cube = 0;
+  for (unsigned int vertex = 0; vertex < 8; ++vertex) {
+    /* Add the bit this vertex contributes to the cube */
+    cube |= (samples[vertex] >= 0.0f ? 1 : 0) << vertex;
+  }
+  assert(cube <= 0xff);
+  return cube;
 }

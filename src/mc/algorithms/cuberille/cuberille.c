@@ -89,7 +89,7 @@ void mcCuberille_isosurfaceFromField(
         fprintf(stderr, "cube: 0x%02x\n", cube);  /* XXX */
         /* TODO: Add cubes that intersect the surface to the surface net */
         if (cube != 0x00 && cube != 0xff) {
-          mcSurfaceNode *node, *frontNeighbor, *bottomNeighbor, *leftNeighbor;
+          mcSurfaceNode *node, *bottomNeighbor, *frontNeighbor, *leftNeighbor;
           /* Create a surface node for this surface cube */
           node = mcSurfaceNet_getNextNode(&surfaceNet);
           /* Set the node position to the center of the voxel cube */
@@ -97,15 +97,15 @@ void mcCuberille_isosurfaceFromField(
           node->pos.y = min->y + y * delta_y + delta_y / 2.0f;
           node->pos.z = min->z + z * delta_z + delta_z / 2.0f;
           /* Connect surface node to neighboring surface nodes */
-          frontNeighbor = prevSlice[y * (res_x - 1) + x];
-          if (frontNeighbor != NULL) {
-            mcSurfaceNode_addNeighbor(
-                node, frontNeighbor, MC_SURFACE_NODE_FRONT);
-          }
-          bottomNeighbor = prevLine[x];
+          bottomNeighbor = prevSlice[y * (res_x - 1) + x];
           if (bottomNeighbor != NULL) {
             mcSurfaceNode_addNeighbor(
                 node, bottomNeighbor, MC_SURFACE_NODE_BOTTOM);
+          }
+          frontNeighbor = prevLine[x];
+          if (frontNeighbor != NULL) {
+            mcSurfaceNode_addNeighbor(
+                node, frontNeighbor, MC_SURFACE_NODE_FRONT);
           }
           leftNeighbor = prevVoxel;
           if (leftNeighbor != NULL) {

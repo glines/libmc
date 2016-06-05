@@ -141,11 +141,11 @@ void main_loop() {
         }
         switch (event.key.keysym.scancode) {
           case SDL_SCANCODE_UP:
-            demo.res = min(max(demo.res * 2, 1), 64);
+            demo.res = min(max(demo.res * 2, 2), 64);
             demo.cubeObject->setResolution(demo.res, demo.res, demo.res);
             break;
           case SDL_SCANCODE_DOWN:
-            demo.res = min(max(demo.res / 2, 1), 64);
+            demo.res = min(max(demo.res / 2, 2), 64);
             demo.cubeObject->setResolution(demo.res, demo.res, demo.res);
             break;
           case SDL_SCANCODE_RIGHT:

@@ -51,9 +51,9 @@ void mcSimple_isosurfaceFromField(
   /* TODO: Pass the grid resolution as a parameter */
   /* TODO: Support lattice structures that are not perfectly cube */
   /* TODO: Support sub-lattice structures (for divide-and-conquer) */
-  float delta_x = fabs(max->x - min->x) / (float)x_res;
-  float delta_y = fabs(max->y - min->y) / (float)y_res;
-  float delta_z = fabs(max->z - min->z) / (float)z_res;
+  float delta_x = fabs(max->x - min->x) / (float)(x_res - 1);
+  float delta_y = fabs(max->y - min->y) / (float)(y_res - 1);
+  float delta_z = fabs(max->z - min->z) / (float)(z_res - 1);
   /* As the algorithm iterates along the z-axis, a 2-dimesnsional buffer
    * (called prevSlice) of the edge interpolation results from the previous
    * slice is kept. This allows the algorithm to take advantage of
@@ -110,7 +110,8 @@ void mcSimple_isosurfaceFromField(
           unsigned int pos[3];
           float sample;
           mcCube_vertexRelativePosition(vertex, pos);
-          /* TODO: Many of these sample values can be stored/retrieved from a cache */
+          /* TODO: Many of these sample values can be stored/retrieved from a
+           * cache */
           sample = sf(
               min->x + (x + pos[0]) * delta_x,
               min->y + (y + pos[1]) * delta_y,

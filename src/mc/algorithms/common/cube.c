@@ -28,6 +28,28 @@
 
 #include "cube_tables.h"
 
+const int MC_CUBE_NUM_CANONICAL_ORIENTATIONS = 15;
+
+/* FIXME: This is a little bit awkward, but it is difficult to export the
+ * generated list of orientations as an enum type. */
+const unsigned int mcCubeCanonicalOrientations[] = {
+  MC_CUBE_CANONICAL_ORIENTATION_0,
+  MC_CUBE_CANONICAL_ORIENTATION_1,
+  MC_CUBE_CANONICAL_ORIENTATION_2,
+  MC_CUBE_CANONICAL_ORIENTATION_3,
+  MC_CUBE_CANONICAL_ORIENTATION_4,
+  MC_CUBE_CANONICAL_ORIENTATION_5,
+  MC_CUBE_CANONICAL_ORIENTATION_6,
+  MC_CUBE_CANONICAL_ORIENTATION_7,
+  MC_CUBE_CANONICAL_ORIENTATION_8,
+  MC_CUBE_CANONICAL_ORIENTATION_9,
+  MC_CUBE_CANONICAL_ORIENTATION_10,
+  MC_CUBE_CANONICAL_ORIENTATION_11,
+  MC_CUBE_CANONICAL_ORIENTATION_12,
+  MC_CUBE_CANONICAL_ORIENTATION_13,
+  MC_CUBE_CANONICAL_ORIENTATION_14,
+};
+
 void mcCube_edgeVertices(unsigned int edge, unsigned int *vertices) {
   typedef struct VertexPair {
     int vertices[2];

@@ -118,6 +118,9 @@ void computeTriangleList(
       fprintf(stderr, "rotation: 0x%08x\n", rotation);
       break;
     case MC_CUBE_CANONICAL_ORIENTATION_2:
+      /* This is the case where two samples on the same edge are on the other
+       * side of the isosurface. This makes a single quad. */
+      triangle = &triangleList->triangles[numTriangles];
       break;
     case MC_CUBE_CANONICAL_ORIENTATION_3:
       break;

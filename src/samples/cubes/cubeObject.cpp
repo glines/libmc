@@ -540,7 +540,7 @@ namespace mc {namespace samples { namespace cubes {
       for (unsigned int y_index = 0; y_index <= 1; ++y_index) {
         for (unsigned int x_index = 0; x_index <= 1; ++x_index) {
           unsigned int i = mcCube_vertexIndex(x_index, y_index, z_index);
-          float value = vertexValue(i, m_cube) ? 1.0f : -1.0f;
+          float value = vertexValue(i, m_cube) ? -1.0f : 1.0f;
           result +=
             (x_index ? x : 1.0f - x) *
             (y_index ? y : 1.0f - y) *

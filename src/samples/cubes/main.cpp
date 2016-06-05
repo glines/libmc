@@ -28,6 +28,10 @@
 #include <cstdlib>
 #include <glm/gtc/quaternion.hpp>
 
+extern "C" {
+#include <mc/algorithms/common/cube.h>
+}
+
 #include "../common/arcballCamera.h"
 #include "../common/scene.h"
 #include "cubeObject.h"
@@ -153,6 +157,26 @@ void main_loop() {
             break;
           case SDL_SCANCODE_LEFT:
             demo.cubeObject->setCube((demo.cubeObject->cube() - 1) % 256);
+            break;
+          case SDL_SCANCODE_PAGEUP:
+            for (int i = MC_CUBE_NUM_CANONICAL_ORIENTATIONS - 1; i >= 0; --i) {
+              if (mcCubeCanonicalOrientations[i] < demo.cubeObject->cube()) {
+                fprintf(stdout, "mcCubeCanonicalOrientations[%d]: 0x%02x\n",
+                    i, mcCubeCanonicalOrientations[i]);
+                demo.cubeObject->setCube(mcCubeCanonicalOrientations[i]);
+                break;
+              }
+            }
+            break;
+          case SDL_SCANCODE_PAGEDOWN:
+            for (int i = 0; i < MC_CUBE_NUM_CANONICAL_ORIENTATIONS; ++i) {
+              if (mcCubeCanonicalOrientations[i] > demo.cubeObject->cube()) {
+                fprintf(stdout, "mcCubeCanonicalOrientations[%d]: 0x%02x\n",
+                    i, mcCubeCanonicalOrientations[i]);
+                demo.cubeObject->setCube(mcCubeCanonicalOrientations[i]);
+                break;
+              }
+            }
             break;
           case SDL_SCANCODE_SPACE:
             demo.cubeObject->setDrawScalarField(

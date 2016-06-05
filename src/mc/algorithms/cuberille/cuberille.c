@@ -58,12 +58,15 @@ void mcCuberille_isosurfaceFromField(
   memset(prevSlice, 0, sizeof(mcSurfaceNode*) * (res_x - 1) * (res_y - 1));
   mcSurfaceNode **prevLine = 
     (mcSurfaceNode**)malloc(sizeof(mcSurfaceNode*) * (res_x - 1));
-  memset(prevLine, 0, sizeof(mcSurfaceNode*) * (res_x - 1));
-  mcSurfaceNode *prevVoxel = 0;
+  mcSurfaceNode *prevVoxel;
   /* TODO: We start by generating the surface net */
   /* Iterate over the sample lattice */
   for (unsigned int z = 0; z < res_z - 1; ++z) {
+    /* The start of a new slice has no previous line */
+    memset(prevLine, 0, sizeof(mcSurfaceNode*) * (res_x - 1));
     for (unsigned int y = 0; y < res_y - 1; ++y) {
+      /* The start of a new line has no previous voxel */
+      prevVoxel = NULL;
       for (unsigned int x = 0; x < res_x - 1; ++x) {
         unsigned int cube;
         float samples[8];

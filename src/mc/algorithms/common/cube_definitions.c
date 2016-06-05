@@ -21,21 +21,8 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef MC_ALGORITHMS_SIMPLE_COMMON_H_
-#define MC_ALGORITHMS_SIMPLE_COMMON_H_
+#include <mc/algorithms/common/cube_definitions.h>
 
-#define MC_SIMPLE_MAX_TRIANGLES 4
-
-typedef struct mcSimpleEdgeList {
-  int edges[12];
-} mcSimpleEdgeList;
-
-typedef struct mcSimpleTriangle {
-  int edges[3];
-} mcSimpleTriangle;
-
-typedef struct mcSimpleTriangleList {
-  mcSimpleTriangle triangles[MC_SIMPLE_MAX_TRIANGLES];
-} mcSimpleTriangleList;
-
-#endif
+const unsigned int MC_CUBE_NUM_VERTICES = 8;
+const unsigned int MC_CUBE_NUM_EDGES = 12;
+const unsigned int MC_CUBE_NUM_FACES = 6;

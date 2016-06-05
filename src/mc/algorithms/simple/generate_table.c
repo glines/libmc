@@ -29,6 +29,10 @@
 #include <mc/algorithms/common/cube.h>
 #include <mc/algorithms/simple/common.h>
 
+#include "../common/cube_tables.h"
+
+#define get_byte(num, byte) (((num) & (0xff << (8 * byte))) >> (8 * byte))
+
 /*
  * This program generates the edge and triangularization tables needed for
  * implementing a performant marching cubes algorithm. While these tables are
@@ -83,116 +87,95 @@ void computeTriangleList(
   int touched[8];
   unsigned int numIncidentLines;
   IncidentLine incidentLines[MAX_NUM_INCIDENT_LINES];
+
   unsigned int numTriangles;
+  unsigned int canonical, rotation;
+  mcSimpleTriangle *triangle;
 
   numIncidentLines = 0;
-  numTriangles = 0;
   memset(touched, 0, sizeof(int) * 8);
+  memset(triangleList, -1, sizeof(mcSimpleTriangleList));
 
-  /* TODO: Iterate through untouched vertices of interest */
-  for (int vertex = 0; vertex < 8; ++vertex) {
-    if (touched[vertex])
-      continue;
-    if (!mcCube_vertexValue(vertex, cube))
-      continue;
-    /* TODO: Our triangulation strategy will proceed as follows: 
-     * We are given a list of edge intersections from our edge intersection
-     * table.
-     *
-     * From these intersections, we build a list of lines from edge to
-     * edge that are incident with the surface of the cube.
-     *
-     * From this list of lines, we find and remove two incident lines that
-     * share an edge intersection. We make a triangle with these two lines. If
-     * the third line in the triangle is incident with the surface of the cube,
-     * we must remove the third line from our list of incident lines. If it is
-     * not incident with the surface of the cube, we add it to a separate list
-     * of unused lines.
-     *
-     * We iterate the previous step until we can find no two incident lines
-     * that share an edge intersection.
-     *
-     * Now we just need to fill the gaps caused by the unused lines. At this
-     * point, the unused lines might be coincident (i.e. we have no gap to
-     * fill), or they might form a triangle or a quad.
-     *
-     * TODO: What do do with the separate list of lines?
-     */
-    for (int i = 0; i < MC_CUBE_NUM_EDGES && edgeList->edges[i] != -1; ++i) {
-      for (int j = i + 1; j < MC_CUBE_NUM_EDGES && edgeList->edges[j] != -1; ++j) {
-        /* TODO: Look for a cube face common to both edges */
-        /* TODO: Move this into mcSimpleEdgesSharedFace() routine */
-        unsigned int faces_i[2], faces_j[2];
-        int shared = -1;
-        mcCube_edgeFaces(edgeList->edges[i], faces_i);
-        mcCube_edgeFaces(edgeList->edges[j], faces_j);
-        for (int k = 0; k < 2; ++k) {
-          for (int l = 0; l < 2; ++l) {
-            if (faces_i[k] == faces_j[l]) {
-              shared = faces_i[k];
-              break;
-            }
-          }
-          if (shared != -1)
-            break;
-        }
-        if (shared != -1) {
-          /* Add this edge pair to the list of incident lines */
-          assert(numIncidentLines < MAX_NUM_INCIDENT_LINES);
-          incidentLines[numIncidentLines].edges[0] = edgeList->edges[i];
-          incidentLines[numIncidentLines].edges[1] = edgeList->edges[j];
-          incidentLines[numIncidentLines].face = shared;
-          numIncidentLines += 1;
-        }
+  numTriangles = 0;
+
+  /* TODO: Determine this cube's canonical orientation and the corresponding
+   * rotation sequences that brings it to that orientation */
+  canonical = mcCube_canonicalOrientation(cube);
+  rotation = mcCube_canonicalRotation(cube);
+  /* TODO: Generate triangles for the canonical orientation */
+  switch (canonical) {
+    case MC_CUBE_CANONICAL_ORIENTATION_0:
+      /* This is a cube entirely inside or outside the isosurface, with no need
+       * to generate triangles */
+      break;
+    case MC_CUBE_CANONICAL_ORIENTATION_1:
+      /* This corresponds to a single triangle in one corner */
+      triangle = &triangleList->triangles[numTriangles];
+      triangle->edges[0] = MC_CUBE_EDGE_BOTTOM_FRONT;
+      triangle->edges[1] = MC_CUBE_EDGE_FRONT_RIGHT;
+      triangle->edges[2] = MC_CUBE_EDGE_BOTTOM_RIGHT;
+      numTriangles += 1;
+      fprintf(stderr, "rotation: 0x%08x\n", rotation);
+      break;
+    case MC_CUBE_CANONICAL_ORIENTATION_2:
+      break;
+    case MC_CUBE_CANONICAL_ORIENTATION_3:
+      break;
+    case MC_CUBE_CANONICAL_ORIENTATION_4:
+      break;
+    case MC_CUBE_CANONICAL_ORIENTATION_5:
+      break;
+    case MC_CUBE_CANONICAL_ORIENTATION_6:
+      break;
+    case MC_CUBE_CANONICAL_ORIENTATION_7:
+      break;
+    case MC_CUBE_CANONICAL_ORIENTATION_8:
+      break;
+    case MC_CUBE_CANONICAL_ORIENTATION_9:
+      break;
+    case MC_CUBE_CANONICAL_ORIENTATION_10:
+      break;
+    case MC_CUBE_CANONICAL_ORIENTATION_11:
+      break;
+    case MC_CUBE_CANONICAL_ORIENTATION_12:
+      break;
+    case MC_CUBE_CANONICAL_ORIENTATION_13:
+      break;
+    case MC_CUBE_CANONICAL_ORIENTATION_14:
+      break;
+  }
+  fprintf(stderr, "triangleList before: {\n");
+  for (int i = 0; i < MC_SIMPLE_MAX_TRIANGLES; ++i) {
+    fprintf(stderr, "  { ");
+    for (int j = 0; j < 3; ++j) {
+      fprintf(stderr, "%2d, ",
+          triangleList->triangles[i].edges[j]);
+    }
+    fprintf(stderr, "}, \n");
+  }
+  fprintf(stderr, "}\n");
+
+  /* Rotate the canonical triangles back into our cube's orientation */
+  for (int i = 0; i < MC_SIMPLE_MAX_TRIANGLES; ++i) {
+    triangle = &triangleList->triangles[i];
+    if (triangle->edges[0] == -1)
+      break;  /* No more triangles to consider */
+    /* Iterate over each triangle edge intersection */
+    for (int j = 0; j < 3; ++j) {
+      /* Rotate the triangle edge intersection about the y-axis */
+      for (int k = 0; k < get_byte(rotation, 2); ++k) {
+        triangle->edges[j] = mcCube_rotateEdgeReverseY(triangle->edges[j]);
+      }
+      /* Rotate the triangle edge intersection about the x-axis */
+      for (int k = 0; k < get_byte(rotation, 1); ++k) {
+        triangle->edges[j] = mcCube_rotateEdgeReverseX(triangle->edges[j]);
+      }
+      /* Rotate the triangle edge intersection about the z-axis */
+      for (int k = 0; k < get_byte(rotation, 0); ++k) {
+        triangle->edges[j] = mcCube_rotateEdgeReverseZ(triangle->edges[j]);
       }
     }
-    /* Iterate until we can find no longer find two incident lines that share
-     * an edge intersection */
-    int done = 0;
-    do {
-      /* Look for two incident lines that share an edge intersection */
-      int found = 0;
-      for (int i = 0; i < numIncidentLines; ++i) {
-        for (int j = i + 1; j < numIncidentLines; ++j) {
-          for (int k = 0; k < 2; ++k) {
-            for (int l = 0; l < 2; ++l) {
-              if (incidentLines[i].edges[k] == incidentLines[j].edges[l]) {
-                /* Make a triangle from the lines we found */
-                triangleList->triangles[numTriangles].edges[0] = incidentLines[i].edges[(k + 1) % 2];
-                triangleList->triangles[numTriangles].edges[1] = incidentLines[j].edges[(l + 1) % 2];
-                triangleList->triangles[numTriangles].edges[2] = incidentLines[i].edges[k];
-                /* Remove the lines */
-                for (int m = i; m < j - 1; ++m) {
-                  incidentLines[m] = incidentLines[m + 1];
-                }
-                for (int m = j - 1; m < numIncidentLines - 2; ++m) {
-                  incidentLines[m] = incidentLines[m + 2];
-                }
-                numIncidentLines -= 2;
-                /* TODO: Check if the third line created by this triangle is
-                 * incident with the cube. If it is, remove it from the list of
-                 * incident lines. */
-                /* TODO: If the third line created by this triangle is not
-                 * incident with the cube, then we add that line to a list of
-                 * unused lines. */
-                found = 1;
-                break;
-              }
-            }
-            if (found)
-              break;
-          }
-          if (found)
-            break;
-        }
-        if (found)
-          break;
-      }
-      if (!found)
-        done = 1;
-    } while (!done);
-    fprintf(stderr, "cube: 0x%02x, numIncidentLines: %d\n", cube, numIncidentLines);
-    numIncidentLines = 0;
+    /* TODO: Consider that cube inversion affects triangle winding order */
   }
 }
 
@@ -274,6 +257,47 @@ int main(int argc, char **argv) {
 
     /* Compute the triangulation list for this configuration */
     computeTriangleList(cube, &edgeTable[cube], &triangulationTable[cube]);
+
+    fprintf(stderr, "cube: 0x%02x\n", cube);
+    fprintf(stderr, "edgeList: { ");
+    for (int i = 0; i < MC_CUBE_NUM_EDGES; ++i) {
+      fprintf(stderr, "%2d", edgeTable[cube].edges[i]);
+      if (i != MC_CUBE_NUM_EDGES - 1)
+        fprintf(stderr, ", ");
+    }
+    fprintf(stderr, " } \n");
+    fprintf(stderr, "triangleList: {\n");
+    for (int i = 0; i < MC_SIMPLE_MAX_TRIANGLES; ++i) {
+      fprintf(stderr, "  { ");
+      for (int j = 0; j < 3; ++j) {
+        fprintf(stderr, "%2d, ",
+            triangulationTable[cube].triangles[i].edges[j]);
+      }
+      fprintf(stderr, "}, \n");
+    }
+    fprintf(stderr, "}\n");
+
+#ifndef NDEBUG
+    /* Ensure that the edge and triangulation tables agree */
+    for (int i = 0; i < MC_SIMPLE_MAX_TRIANGLES; ++i) {
+      mcSimpleTriangle *triangle = &triangulationTable[cube].triangles[i];
+      if (triangle->edges[0] == -1)
+        break;  /* No more triangles to consider */
+      for (int j = 0; j < 3; ++j) {
+        int found;
+        unsigned int edge = triangle->edges[j];
+        /* Look for this edge in the edge list */
+        found = 0;
+        for (int k = 0; k < MC_CUBE_NUM_EDGES; ++k) {
+          if (edgeTable[cube].edges[k] == edge) {
+            found = 1;
+            break;
+          }
+        }
+        assert(found);
+      }
+    }
+#endif
   }
 
   /* Print the necessary headers */

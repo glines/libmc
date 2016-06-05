@@ -21,8 +21,16 @@
  * IN THE SOFTWARE.
  */
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
+#include <mc/algorithms/common/cube_definitions.h>
+
+#define get_byte(num, byte) (((num) & (0xff << (8 * byte))) >> (8 * byte))
+#define set_byte(num, byte, val) (((num) & ~(0xff << (8 * byte))) | ((val & 0xff) << (8 * byte)))
+#define incr_byte(num, byte) (set_byte(num, byte, get_byte(num, byte) + 1))
 
 enum Axis {
   X_AXIS, Y_AXIS, Z_AXIS
@@ -70,6 +78,205 @@ void computeRotationTable(int axis, unsigned int *table) {
   }
 }
 
+void computeCanonicalOrientations(
+    const unsigned int *x_table,
+    const unsigned int *y_table,
+    const unsigned int *z_table,
+    unsigned int *list,
+    unsigned int *table,
+    unsigned int *rotation_table)
+{
+  unsigned int listIndex;
+
+  memset(table, -1, sizeof(unsigned int) * 256);
+  memset(rotation_table, 0, sizeof(unsigned int) * 256);
+  listIndex = 0;
+
+  /* Rotations in the rotation table are encoded as follows. Starting from the
+   * low-order byte, the first byte represents the number of rotations about
+   * the z-axis, the second byte represents the number of rotations about the
+   * x-axis, and the third byte represents the number of rotations about the
+   * y-axis. Thus, the first three bytes represent 90-degree Euler angles in
+   * zxy order.  The fourth byte is 0x01 if the cube was inverted, and 0x00
+   * otherwis.
+   *
+   * If the inverse rotation is desired, simply apply the corresponding number
+   * of reverse rotations in the yxz order.
+   */
+
+  /* Iterate over all possible cube configurations */
+  for (unsigned int cube = 0; cube <= 0xff; ++cube) {
+    int canonical = -1;
+    /* Invert the cube */
+    unsigned int inverted = cube;
+    for (int i = 0; i < 2; ++i) {
+      /* Iterate through all six possible directions the front face of the cube
+       * can point */
+      for (mcCubeFace face = 0; face < MC_CUBE_NUM_FACES; ++face) {
+        unsigned int rotated, rotation;
+        rotated = inverted;
+        /* Set the inversion byte */
+        rotation = set_byte(0, 3, i);
+        /* Determine the face direction and rotate accordingly */
+        switch (face) {
+          case MC_CUBE_FACE_LEFT:
+            rotated = z_table[rotated];
+            rotation = incr_byte(rotation, 0);
+          case MC_CUBE_FACE_BACK:
+            rotated = z_table[rotated];
+            rotation = incr_byte(rotation, 0);
+          case MC_CUBE_FACE_RIGHT:
+            rotated = z_table[rotated];
+            rotation = incr_byte(rotation, 0);
+          case MC_CUBE_FACE_FRONT:
+            break;
+          case MC_CUBE_FACE_BOTTOM:
+            rotated = x_table[rotated];
+            rotated = x_table[rotated];
+            rotation = incr_byte(rotation, 1);
+            rotation = incr_byte(rotation, 1);
+          case MC_CUBE_FACE_TOP:
+            rotated = x_table[rotated];
+            rotation = incr_byte(rotation, 1);
+            break;
+        }
+        /* Rotate about the Y axis four times */
+        for (int j = 0; j < 4; ++j) {
+          if (table[rotated] != -1) {
+            if (canonical == -1) {
+              /* We found the canonical orientation for this cube */
+              canonical = table[rotated];
+              table[cube] = canonical;
+            } else {
+              assert(table[rotated] == canonical);
+            }
+          }
+          if (rotated == canonical) {
+            /* We found the rotation sequence that brings us into the canonical
+             * orientation for this cube */
+            /* Store the rotation sequence and inversion flag */
+            rotation_table[cube] = rotation;
+          }
+          rotated = y_table[rotated];
+          rotation = incr_byte(rotation, 2);
+        }
+      }
+      inverted = ~inverted & 0xff;
+    }
+    if (canonical == -1) {
+      /* We could not find the current cube configuration in the table, so this
+       * cube configuration defines a canonical cube orientation */
+      canonical = cube;
+      list[listIndex++] = canonical;
+      table[cube] = canonical;
+    }
+  }
+  assert(listIndex == 15);
+}
+
+void computeEdgeRotationTable(int axis, unsigned int *table) {
+  /* This routine does not actually "compute" a table, since there are only 12
+   * edges to consider. It is included for completeness, as we do actually
+   * compute the reverse table.
+   */
+  static const unsigned int rotationTableX[] = {
+     4, /* Edge 0 */
+     9, /* Edge 1 */
+     0, /* Edge 2 */
+     8, /* Edge 3 */
+     6, /* Edge 4 */
+    11, /* Edge 5 */
+     2, /* Edge 6 */
+    10, /* Edge 7 */
+     7, /* Edge 8 */
+     5, /* Edge 9 */
+     3, /* Edge 10 */
+     1, /* Edge 11 */
+  };
+  static const unsigned int rotationTableY[] = {
+     3, /* Edge 0 */
+     0, /* Edge 1 */
+     1, /* Edge 2 */
+     2, /* Edge 3 */
+     7, /* Edge 4 */
+     4, /* Edge 5 */
+     5, /* Edge 6 */
+     6, /* Edge 7 */
+    10, /* Edge 8 */
+     8, /* Edge 9 */
+    11, /* Edge 10 */
+     9, /* Edge 11 */
+  };
+  static const unsigned int rotationTableZ[] = {
+     9, /* Edge 0 */
+     5, /* Edge 1 */
+    11, /* Edge 2 */
+     1, /* Edge 3 */
+     8, /* Edge 4 */
+     7, /* Edge 5 */
+    10, /* Edge 6 */
+     3, /* Edge 7 */
+     0, /* Edge 8 */
+     4, /* Edge 9 */
+     2, /* Edge 10 */
+     6, /* Edge 11 */
+  };
+  switch (axis) {
+    case X_AXIS:
+      memcpy(table, rotationTableX, sizeof(rotationTableX));
+    break;
+    case Y_AXIS:
+      memcpy(table, rotationTableY, sizeof(rotationTableY));
+    break;
+    case Z_AXIS:
+      memcpy(table, rotationTableZ, sizeof(rotationTableZ));
+    break;
+  }
+}
+
+void computeReverseEdgeRotationTable(
+    const unsigned int *table,
+    unsigned int *reverseTable)
+{
+  /* Iterate over all cube edges */
+  for (int i = 0; i < MC_CUBE_NUM_EDGES; ++i) {
+    /* Rotate the edge by 90-degrees three times, which is equivalent to
+     * rotating the edge in the opposite direction by 90-degrees. */
+    reverseTable[i] = table[i];
+    reverseTable[i] = table[reverseTable[i]];
+    reverseTable[i] = table[reverseTable[i]];
+  }
+}
+
+void printCubeCharTable(const unsigned int *table) {
+  /* Iterate over all possible cube configurations and print the table */
+  for (unsigned int cube = 0; cube <= 0xff; cube += 8) {
+    fprintf(stdout, "  ");
+    for (unsigned int i = 0; i < 8; ++i) {
+      fprintf(stdout, "0x%02x,", table[cube + i]);
+      if (i == 7)
+        fprintf(stdout, "\n");
+      else
+        fprintf(stdout, " ");
+    }
+  }
+}
+
+void printCubeIntTable(const unsigned int *table) {
+  /* Same routine as printCubeCharTable(), except for printing integers */
+  /* Iterate over all possible cube configurations and print the table */
+  for (unsigned int cube = 0; cube <= 0xff; cube += 4) {
+    fprintf(stdout, "  ");
+    for (unsigned int i = 0; i < 4; ++i) {
+      fprintf(stdout, "0x%08x,", table[cube + i]);
+      if (i == 3)
+        fprintf(stdout, "\n");
+      else
+        fprintf(stdout, " ");
+    }
+  }
+}
+
 void printRotationTable(int axis, const unsigned int *table) {
   const char *axisStr;
   switch (axis) {
@@ -85,27 +292,59 @@ void printRotationTable(int axis, const unsigned int *table) {
   }
   fprintf(stdout, "static const unsigned int mcCubeRotationTable%s[] = {\n",
       axisStr);
-  /* Iterate over all possible cube configurations and print the table */
-  for (unsigned int cube = 0; cube <= 0xff; cube += 8) {
-    fprintf(stdout, "  ");
-    for (unsigned int i = 0; i < 8; ++i) {
-      fprintf(stdout, "0x%02x,", table[cube + i]);
-      if (i == 7)
-        fprintf(stdout, "\n");
-      else
-        fprintf(stdout, " ");
-    }
-  }
+  printCubeCharTable(table);
   fprintf(stdout, "};\n");
 }
 
-void computeCanonicalOrientationTable(
-    const unsigned int *x_table,
-    const unsigned int *y_table,
-    const unsigned int *z_table,
-    unsigned int *table);
+void printCanonicalOrientationList(const unsigned int *list) {
+  fprintf(stdout, "typedef enum mcCubeCanonicalOrientation {\n");
+  for (int i = 0; i < 15; ++i) {
+    fprintf(stdout, "  MC_CUBE_CANONICAL_ORIENTATION_%d = 0x%02x,\n", i, list[i]);
+  }
+  fprintf(stdout, "} mcCubeCanonicalOrientation;\n");
+}
 
-void printCanonicalOrientationTable(const unsigned int *table);
+void printCanonicalOrientationTable(const unsigned int *table) {
+  fprintf(stdout,
+      "static const unsigned int mcCubeCanonicalOrientationTable[] = {\n");
+  printCubeCharTable(table);
+  fprintf(stdout, "};\n");
+}
+
+void printCanonicalRotationTable(const unsigned int *table) {
+  fprintf(stdout,
+      "static const unsigned int mcCubeCanonicalRotationTable[] = {\n");
+  printCubeIntTable(table);
+  fprintf(stdout, "};\n");
+}
+
+void printEdgeRotationTable(
+    int axis, int reverse, const unsigned int *table)
+{
+  const char *axisStr, *reverseStr;
+  switch (axis) {
+    case X_AXIS:
+      axisStr = "X";
+      break;
+    case Y_AXIS:
+      axisStr = "Y";
+      break;
+    case Z_AXIS:
+      axisStr = "Z";
+      break;
+  }
+  if (reverse)
+    reverseStr = "Reverse";
+  else 
+    reverseStr = "";
+  fprintf(stdout,
+      "static const unsigned int mcCubeEdge%sRotationTable%s[] = {\n",
+      reverseStr, axisStr);
+  for (int i = 0; i < MC_CUBE_NUM_EDGES; ++i) {
+    fprintf(stdout, "  %2d, /* Edge %d */\n", table[i], i);
+  }
+  fprintf(stdout, "};\n");
+}
 
 /**
  * This program generates the tables needed to quickly rotate a cube
@@ -114,41 +353,62 @@ void printCanonicalOrientationTable(const unsigned int *table);
  * table, which can orient any cube in a canonical manner.
  */
 int main(int argc, char **argv) {
-  unsigned int *x_table, *y_table, *z_table, *canonical_table;
-  /* Allocate memory for each table */
-  x_table = malloc(sizeof(unsigned int) * 256);
-  y_table = malloc(sizeof(unsigned int) * 256);
-  z_table = malloc(sizeof(unsigned int) * 256);
-  canonical_table = malloc(sizeof(unsigned int) * 256);
+  /* Allocate stack memory for each table */
+  unsigned int x_table[256], y_table[256], z_table[256],
+               canonical_list[15], canonical_table[256],
+               canonical_rotation_table[256],
+               x_edge_table[MC_CUBE_NUM_EDGES],
+               y_edge_table[MC_CUBE_NUM_EDGES],
+               z_edge_table[MC_CUBE_NUM_EDGES],
+               x_reverse_edge_table[MC_CUBE_NUM_EDGES],
+               y_reverse_edge_table[MC_CUBE_NUM_EDGES],
+               z_reverse_edge_table[MC_CUBE_NUM_EDGES];
 
   /* Compute the X, Y, and Z rotation tables */
   computeRotationTable(X_AXIS, x_table);
   computeRotationTable(Y_AXIS, y_table);
   computeRotationTable(Z_AXIS, z_table);
 
-  /* TODO: Compute the cannonical orientation table */
-  /*
-  computeCanonicalOrientationTable(
+  /* Compute the cannonical orientation table */
+  computeCanonicalOrientations(
       x_table, y_table, z_table,
-      canonical_table);
-      */
+      canonical_list, canonical_table,
+      canonical_rotation_table);
 
-  /* TODO: Print the tables */
+  /* Compute the X, Y, and Z edge rotation tables */
+  computeEdgeRotationTable(X_AXIS, x_edge_table);
+  computeEdgeRotationTable(Y_AXIS, y_edge_table);
+  computeEdgeRotationTable(Z_AXIS, z_edge_table);
+
+  /* Compute the reverse X, Y, and Z edge rotation tables */
+  computeReverseEdgeRotationTable(x_edge_table, x_reverse_edge_table);
+  computeReverseEdgeRotationTable(y_edge_table, y_reverse_edge_table);
+  computeReverseEdgeRotationTable(z_edge_table, z_reverse_edge_table);
+
+  /* Print the tables */
   printRotationTable(X_AXIS, x_table);
   fprintf(stdout, "\n");
   printRotationTable(Y_AXIS, y_table);
   fprintf(stdout, "\n");
   printRotationTable(Z_AXIS, z_table);
   fprintf(stdout, "\n");
-  /*
+  printCanonicalOrientationList(canonical_list);
+  fprintf(stdout, "\n");
   printCanonicalOrientationTable(canonical_table);
-  */
-
-  /* Free table memory */
-  free(canonical_table);
-  free(z_table);
-  free(y_table);
-  free(x_table);
+  fprintf(stdout, "\n");
+  printCanonicalRotationTable(canonical_rotation_table);
+  fprintf(stdout, "\n");
+  printEdgeRotationTable(X_AXIS, 0, x_edge_table);
+  fprintf(stdout, "\n");
+  printEdgeRotationTable(Y_AXIS, 0, y_edge_table);
+  fprintf(stdout, "\n");
+  printEdgeRotationTable(Z_AXIS, 0, z_edge_table);
+  fprintf(stdout, "\n");
+  printEdgeRotationTable(X_AXIS, 1, x_reverse_edge_table);
+  fprintf(stdout, "\n");
+  printEdgeRotationTable(Y_AXIS, 1, y_reverse_edge_table);
+  fprintf(stdout, "\n");
+  printEdgeRotationTable(Z_AXIS, 1, z_reverse_edge_table);
 
   return EXIT_SUCCESS;
 }

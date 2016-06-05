@@ -21,9 +21,10 @@
  * IN THE SOFTWARE.
  */
 
-extern const unsigned int MC_CUBE_NUM_VERTICES;
-extern const unsigned int MC_CUBE_NUM_EDGES;
-extern const unsigned int MC_CUBE_NUM_FACES;
+#ifndef MC_ALGORITHMS_COMMON_CUBE_H_
+#define MC_ALGORITHMS_COMMON_CUBE_H_
+
+#include <mc/algorithms/common/cube_definitions.h>
 
 typedef struct mcCubeEdgeList {
   int edges[12];
@@ -110,3 +111,67 @@ void mcCube_vertexRelativePosition(unsigned int vertex, unsigned int *pos);
  * algorithm.
  */
 unsigned int mcCube_cubeConfigurationFromSamples(float *samples);
+
+/**
+ * This routine returns the canonical orientation of the given cube. This
+ * canonical orientation is retrieved from a table generated at compile time.
+ */
+unsigned int mcCube_canonicalOrientation(unsigned int cube);
+
+/**
+ * This routine returns the encoded rotation sequence and inversion needed to
+ * bring the given cube to its canonical orientation. This rotation sequence is
+ * retrieved from a table generated at compile time.
+ * 
+ * Rotation sequences are encoded as follows. Starting from the low-order byte,
+ * the first byte represents the number of rotations about the z-axis, the
+ * second byte represents the number of rotations about the x-axis, and the
+ * third byte represents the number of rotations about the y-axis.  Thus, the
+ * first three bytes represent 90-degree Euler angles in zxy order.  The fourth
+ * byte is 0x01 if the cube was inverted, and 0x00 otherwis.
+ *
+ * If the inverse rotation is desired, simply apply the corresponding number
+ * of reverse rotations in the yxz order.
+ */
+unsigned int mcCube_canonicalRotation(unsigned int cube);
+
+/**
+ * Rotates the given cube about the x-axis by 90-degrees and returns the
+ * resulting edge. This function uses a pre-computed lookup table.
+ */
+unsigned int mcCube_rotateEdgeX(unsigned int edge);
+
+/**
+ * Rotates the given cube about the y-axis by 90-degrees and returns the
+ * resulting edge. This function uses a pre-computed lookup table.
+ */
+unsigned int mcCube_rotateEdgeY(unsigned int edge);
+
+/**
+ * Rotates the given cube about the z-axis by 90-degrees and returns the
+ * resulting edge. This function uses a pre-computed lookup table.
+ */
+unsigned int mcCube_rotateEdgeZ(unsigned int edge);
+
+/**
+ * Rotates the given cube about the x-axis in the reverse direction by
+ * 90-degrees and returns the resulting edge. This function uses a pre-computed
+ * lookup table.
+ */
+unsigned int mcCube_rotateEdgeReverseX(unsigned int edge);
+
+/**
+ * Rotates the given cube about the y-axis in the reverse direction by
+ * 90-degrees and returns the resulting edge. This function uses a pre-computed
+ * lookup table.
+ */
+unsigned int mcCube_rotateEdgeReverseY(unsigned int edge);
+
+/**
+ * Rotates the given cube about the z-axis in the reverse direction by
+ * 90-degrees and returns the resulting edge. This function uses a pre-computed
+ * lookup table.
+ */
+unsigned int mcCube_rotateEdgeReverseZ(unsigned int edge);
+
+#endif

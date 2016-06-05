@@ -2,6 +2,9 @@
 add_executable(generate_simple_table
     generate_table.c
     )
+target_include_directories(generate_simple_table
+    PRIVATE "${CMAKE_CURRENT_BINARY_DIR}"
+    )
 target_link_libraries(generate_simple_table
     mc_algorithms_common
     )

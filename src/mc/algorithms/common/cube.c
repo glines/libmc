@@ -23,11 +23,10 @@
 
 #include <assert.h>
 
+#define MC_CUBE_HAVE_TABLES
 #include <mc/algorithms/common/cube.h>
 
-const unsigned int MC_CUBE_NUM_VERTICES = 8;
-const unsigned int MC_CUBE_NUM_EDGES = 12;
-const unsigned int MC_CUBE_NUM_FACES = 6;
+#include "cube_tables.h"
 
 void mcCube_edgeVertices(unsigned int edge, unsigned int *vertices) {
   typedef struct VertexPair {
@@ -353,4 +352,44 @@ unsigned int mcCube_cubeConfigurationFromSamples(float *samples) {
   }
   assert(cube <= 0xff);
   return cube;
+}
+
+unsigned int mcCube_canonicalOrientation(unsigned int cube) {
+  assert(cube <= 0xff);
+  return mcCubeCanonicalOrientationTable[cube];
+}
+
+unsigned int mcCube_canonicalRotation(unsigned int cube) {
+  assert(cube <= 0xff);
+  return mcCubeCanonicalRotationTable[cube];
+}
+
+unsigned int mcCube_rotateEdgeX(unsigned int edge) {
+  assert(edge < MC_CUBE_NUM_EDGES);
+  return mcCubeEdgeRotationTableX[edge];
+}
+
+unsigned int mcCube_rotateEdgeY(unsigned int edge) {
+  assert(edge < MC_CUBE_NUM_EDGES);
+  return mcCubeEdgeRotationTableY[edge];
+}
+
+unsigned int mcCube_rotateEdgeZ(unsigned int edge) {
+  assert(edge < MC_CUBE_NUM_EDGES);
+  return mcCubeEdgeRotationTableZ[edge];
+}
+
+unsigned int mcCube_rotateEdgeReverseX(unsigned int edge) {
+  assert(edge < MC_CUBE_NUM_EDGES);
+  return mcCubeEdgeReverseRotationTableX[edge];
+}
+
+unsigned int mcCube_rotateEdgeReverseY(unsigned int edge) {
+  assert(edge < MC_CUBE_NUM_EDGES);
+  return mcCubeEdgeReverseRotationTableY[edge];
+}
+
+unsigned int mcCube_rotateEdgeReverseZ(unsigned int edge) {
+  assert(edge < MC_CUBE_NUM_EDGES);
+  return mcCubeEdgeReverseRotationTableZ[edge];
 }

@@ -47,6 +47,7 @@ namespace mc { namespace samples {
         unsigned int m_resX, m_resY, m_resZ;
         mcAlgorithmFlag m_algorithm;
         bool m_isDrawScalarField;
+        float m_intensity;
 
         void m_generateCubeWireframe();
         void m_generateTriangleWireframe(const Mesh *mesh);
@@ -75,8 +76,11 @@ namespace mc { namespace samples {
         class CubeScalarField : public ScalarField {
           private:
             unsigned int m_cube;
+            float m_intensity;
           public:
-            CubeScalarField(unsigned int cube);
+            CubeScalarField(
+                unsigned int cube,
+                float intensity = 1.0f);
 
             float operator()(float x, float y, float z) const;
         };
@@ -141,6 +145,19 @@ namespace mc { namespace samples {
          * method will cause the isosurface mesh to be re-evaluated.
          */
         void setAlgorithm(mcAlgorithmFlag algorithm);
+
+        /**
+         * Returns the intensity value for the isosurface generated, which
+         * affects how the edge values are interpolated.
+         */
+        float intensity() const { return m_intensity; }
+
+        /**
+         * Sets the intensity value for the isosurface generated, which
+         * affects how the edge values are interpolated. The isosurface is
+         * re-evaluated with each call to this method.
+         */
+        void setIntensity(float intensity);
     };
   }
 } }

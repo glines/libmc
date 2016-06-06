@@ -42,7 +42,8 @@ namespace mc {namespace samples { namespace cubes {
       const glm::vec3 &position,
       const glm::quat &orientation)
     : SceneObject(position, orientation), m_isDrawScalarField(false),
-      m_resX(res_x), m_resY(res_y), m_resZ(res_z), m_algorithm(algorithm)
+      m_resX(res_x), m_resY(res_y), m_resZ(res_z), m_algorithm(algorithm),
+      m_intensity(1.0f)
   {
     // Generate a simple cube wireframe and send it to the GL
     glGenBuffers(1, &m_cubeWireframeVertices);
@@ -209,7 +210,7 @@ namespace mc {namespace samples { namespace cubes {
   }
 
   void CubeObject::m_update() {
-    CubeScalarField sf(m_cube);
+    CubeScalarField sf(m_cube, m_intensity);
     const Mesh *mesh = m_builder.buildIsosurface(
         sf,  // scalarField
         m_algorithm,  // algorithm
@@ -499,8 +500,15 @@ namespace mc {namespace samples { namespace cubes {
     m_update();
   }
 
-  CubeObject::CubeScalarField::CubeScalarField(unsigned int cube)
-    : m_cube(cube)
+  void CubeObject::setIntensity(float intensity) {
+    m_intensity = intensity;
+
+    m_update();
+  }
+
+  CubeObject::CubeScalarField::CubeScalarField(
+      unsigned int cube, float intensity)
+    : m_cube(cube), m_intensity(intensity)
   {
   }
 
@@ -516,7 +524,7 @@ namespace mc {namespace samples { namespace cubes {
       for (unsigned int y_index = 0; y_index <= 1; ++y_index) {
         for (unsigned int x_index = 0; x_index <= 1; ++x_index) {
           unsigned int i = mcCube_vertexIndex(x_index, y_index, z_index);
-          float value = mcCube_vertexValue(i, m_cube) ? -1.0f : 1.0f;
+          float value = mcCube_vertexValue(i, m_cube) ? -m_intensity : 1.0f;
           result +=
             (x_index ? x : 1.0f - x) *
             (y_index ? y : 1.0f - y) *

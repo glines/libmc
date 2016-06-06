@@ -142,6 +142,17 @@ void main_loop() {
           case SDLK_c:
             demo.cubeObject->setAlgorithm(MC_CUBERILLE);
             break;
+#define INTENSITY_DELTA 0.1f
+          case SDLK_COMMA:
+            demo.cubeObject->setIntensity(
+                demo.cubeObject->intensity() - INTENSITY_DELTA);
+            fprintf(stderr, "intensity: %g\n", demo.cubeObject->intensity());
+            break;
+          case SDLK_PERIOD:
+            demo.cubeObject->setIntensity(
+                demo.cubeObject->intensity() + INTENSITY_DELTA);
+            fprintf(stderr, "intensity: %g\n", demo.cubeObject->intensity());
+            break;
         }
         switch (event.key.keysym.scancode) {
           case SDL_SCANCODE_UP:

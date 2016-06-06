@@ -224,7 +224,7 @@ void mcSimple_isosurfaceFromField(
                 args);
           }
           /* Interpolate between vertex values */
-          float weight = fabs(values[1] / (values[0] - values[1]));
+          float weight = fabs(values[0] / (values[0] - values[1]));
           /* The corresponding edge vertex must lie on the edge between the
            * lattice points, so we interpolate between these points. */
           mcVertex vertex;

@@ -202,7 +202,6 @@ void computeTriangleList(
       make_triangle(4, 7, 8);
       make_triangle(0, 3, 10);
       make_triangle(0, 10, 9);
-      /* FIXME: Adding this fourth triangle breaks something */
       make_triangle(9, 10, 11);
       break;
     case MC_CUBE_CANONICAL_ORIENTATION_13:
@@ -211,7 +210,6 @@ void computeTriangleList(
       make_triangle(3, 10, 11);
       make_triangle(1, 3, 11);
       make_triangle(5, 7, 8);
-      /* FIXME: Adding this fourth triangle breaks something */
       make_triangle(5, 8, 9);
       break;
     case MC_CUBE_CANONICAL_ORIENTATION_14:
@@ -220,7 +218,6 @@ void computeTriangleList(
       make_triangle(0, 1, 9);
       make_triangle(2, 3, 10);
       make_triangle(4, 7, 8);
-      /* FIXME: Adding this fourth triangle breaks something */
       make_triangle(5, 11, 6);
       break;
   }

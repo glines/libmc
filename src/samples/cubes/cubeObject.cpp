@@ -174,9 +174,9 @@ namespace mc {namespace samples { namespace cubes {
       for (int y = 0; y < m_resY; ++y) {
         for (int x = 0; x < m_resZ; ++x) {
           int i = x + y * m_resX + z * m_resX * m_resY;
-          points[i].pos[0] = 2.0f * (float)x / (float)m_resX - 1.0f;
-          points[i].pos[1] = 2.0f * (float)y / (float)m_resY - 1.0f;
-          points[i].pos[2] = 2.0f * (float)z / (float)m_resZ - 1.0f;
+          points[i].pos[0] = 2.0f * (float)x / (float)(m_resX - 1) - 1.0f;
+          points[i].pos[1] = 2.0f * (float)y / (float)(m_resY - 1) - 1.0f;
+          points[i].pos[2] = 2.0f * (float)z / (float)(m_resZ - 1) - 1.0f;
           float value = sf(
               points[i].pos[0],
               points[i].pos[1],

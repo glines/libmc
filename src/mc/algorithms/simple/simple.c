@@ -152,12 +152,10 @@ void mcSimple_isosurfaceFromField(
           i = x + pos[0]
               + (y + pos[1]) * x_res
               + ((sampleSliceIndex + pos[2]) % 3) * x_res * y_res;
-          assert(
-              samples[i] == sf(
-                min->x + (x + pos[0]) * delta_x,
-                min->y + (y + pos[1]) * delta_y,
-                min->z + (z + pos[2]) * delta_z,
-                args));
+          assert(samples[i] == sf(min->x + (x + pos[0]) * delta_x,
+                                  min->y + (y + pos[1]) * delta_y,
+                                  min->z + (z + pos[2]) * delta_z,
+                                  args));
           /* Add the bit this vertex contributes to the cube */
           cube |= (samples[i] >= 0.0f ? 1 : 0) << vertex;
         }
@@ -169,13 +167,13 @@ void mcSimple_isosurfaceFromField(
          * configuration. This is easy since the edge table is already sorted.
          * We iterate over all possible edges, and for any edges we do not find
          * in the table we leave their vertex index value at -1. */
-        int j = 0;
+        int i = 0;
         /* TODO: Most of this loop can be avoided in a release build by simply
          * moving from one edge in mcSimple_edgeTable[cube] to the next rather
          * than iterating over all possible edges. */
         for (int edge = 0; edge < MC_CUBE_NUM_EDGES; ++edge) {
           vertexIndices[edge] = -1;
-          if (mcSimple_edgeTable[cube].edges[j] == edge) {
+          if (mcSimple_edgeTable[cube].edges[i] == edge) {
             /* This edge intersection must exist. We will either find it in one
              * of our buffers or compute it ourselves. */
             unsigned int vertices[2];
@@ -258,16 +256,20 @@ void mcSimple_isosurfaceFromField(
               mcCube_edgeVertices(edge, vertices);
               for (unsigned int k = 0; k < 2; ++k) {
                 unsigned int pos[3];
+                unsigned int i;
                 mcCube_vertexRelativePosition(vertices[k], pos);
                 latticePos[k].x = min->x + (float)(x + pos[0]) * delta_x;
                 latticePos[k].y = min->y + (float)(y + pos[1]) * delta_y;
                 latticePos[k].z = min->z + (float)(z + pos[2]) * delta_z;
-                /* TODO: Get these samples from our cache */
-                values[k] = sf(
-                    latticePos[k].x,
-                    latticePos[k].y,
-                    latticePos[k].z,
-                    args);
+                /* Find the sample in our samples buffer */
+                i = x + pos[0]
+                    + (y + pos[1]) * x_res
+                    + ((sampleSliceIndex + pos[2]) % 3) * x_res * y_res;
+                assert(samples[i] == sf(latticePos[k].x,
+                                        latticePos[k].y,
+                                        latticePos[k].z,
+                                        args));
+                values[k] = samples[i];
               }
               /* Interpolate between the sample values at each vertex */
               float weight = fabs(values[0] / (values[0] - values[1]));
@@ -275,20 +277,14 @@ void mcSimple_isosurfaceFromField(
                * lattice points, so we interpolate between these points. */
               mcVertex vertex;
               vertex.pos = mcVec3_lerp(&latticePos[0], &latticePos[1], weight);
+              /* TODO: Calculate the surface normal */
               /* Add this vertex to the mesh */
               vertexIndices[edge] = mcMesh_addVertex(mesh, &vertex);
             }
-            j += 1;
+            i += 1;
           }
           /* Add the index for this vertex to the appropriate prev voxel
-           * buffers so we can connect the mesh properly. Note that if the
-           * vertex index is still -1, this is an indication to future
-           * iterations that this edge intersection does not exist.
-           *
-           * FIXME: This argument is flawed. The algorithm has perfect
-           * knowledge of where the edges should be in cache. If the algorithm
-           * finds a -1 in cache, that should cause an assertion error.
-           */
+           * buffers so we can connect the mesh properly. */
           switch (edge) {
             case 1:
               currentVoxel->e1 = vertexIndices[edge];

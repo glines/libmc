@@ -97,28 +97,66 @@ void mcSimple_isosurfaceFromField(
     unsigned int e3, e7, e8, e10;
   } PrevVoxel;
   PrevVoxel prevVoxel;
-  /* Iterate over the sample lattice */
+  /* A sample buffer of three slices is needed in order to calculate the vertex
+   * normals. The buffer must contain samples from the previous slice, samples
+   * for the current slice, and samples for the next slice. We store these
+   * slices in a circular buffer. */
+  /* FIXME: This buffer might need to be four slices large for computing
+   * normals. See Lorensen. */
+  float *samples = (float*)malloc(sizeof(float) * x_res * y_res * 3);
+  int currentSlice = 2;
+  /* Initialize the sample buffer */
+  for (int z = 0; z < 2; ++z) {
+    for (int y = 0; y < y_res; ++y) {
+      for (int x = 0; x < x_res; ++x) {
+        int i = x + y * x_res + z * x_res * y_res;
+        samples[i] = sf(
+            min->x + (float)x * delta_x,
+            min->y + (float)y * delta_y,
+            min->z + (float)z * delta_z,
+            args);
+      }
+    }
+  }
+  /* Iterate over the cube lattice */
   for (int z = 0; z < z_res - 1; ++z) {
+    /* Rotate the sample buffer and get samples for next slice */
+    currentSlice = (currentSlice + 1) % 3;
+    for (int y = 0; y < y_res; ++y) {
+      for (int x = 0; x < x_res; ++x) {
+        int i = x + y * x_res + ((currentSlice + 2) % 3) * x_res * y_res;
+        if (z + 2 == z_res) {
+          /* FIXME: Don't sample past min->z + (z_res - 1) * delta_z */
+        }
+        samples[i] = sf(
+            min->x + (float)x * delta_x,
+            min->y + (float)y * delta_y,
+            min->z + (float)(z + 2) * delta_z,
+            args);
+      }
+    }
     for (int y = 0; y < y_res - 1; ++y) {
       for (int x = 0; x < x_res - 1; ++x) {
-        int i = x + y * x_res + z * x_res * y_res;
         /* Determine the cube configuration index by iterating over the eight
          * cube vertices */
         unsigned int cube = 0;
         for (unsigned int vertex = 0; vertex < 8; ++vertex) {
-          /* Determine this vertex's relative position in the cube */
           unsigned int pos[3];
-          float sample;
+          unsigned int i;
+          /* Determine this vertex's relative position in the cube and sample
+           * buffer */
           mcCube_vertexRelativePosition(vertex, pos);
-          /* TODO: Many of these sample values can be stored/retrieved from a
-           * cache */
-          sample = sf(
-              min->x + (x + pos[0]) * delta_x,
-              min->y + (y + pos[1]) * delta_y,
-              min->z + (z + pos[2]) * delta_z,
-              args);
+          i = x + pos[0]
+              + (y + pos[1]) * x_res
+              + ((currentSlice + pos[2]) % 3) * x_res * y_res;
+          assert(
+              samples[i] == sf(
+                min->x + (x + pos[0]) * delta_x,
+                min->y + (y + pos[1]) * delta_y,
+                min->z + (z + pos[2]) * delta_z,
+                args));
           /* Add the bit this vertex contributes to the cube */
-          cube |= (sample >= 0.0f ? 1 : 0) << vertex;
+          cube |= (samples[i] >= 0.0f ? 1 : 0) << vertex;
         }
         /* Look in the edge table for the edges that intersect the
          * isosurface */
@@ -269,8 +307,7 @@ void mcSimple_isosurfaceFromField(
           }
         }
         /* Look in the triangulation table for the triangles corresponding to
-         * this cube configuration. The number of edge intersections determines
-         * the number of resulting triangles. */
+         * this cube configuration. */
         for (int j = 0; j < MC_SIMPLE_MAX_TRIANGLES; ++j) {
           mcFace face;
           if (mcSimple_triangulationTable[cube].triangles[j].edges[0] == -1)
@@ -287,6 +324,7 @@ void mcSimple_isosurfaceFromField(
       }
     }
   }
+  free(samples);
   free(prevLine);
   free(prevSlice);
 }

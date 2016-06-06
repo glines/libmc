@@ -24,6 +24,7 @@
 #include <assert.h>
 #include <math.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <mc/algorithms/common/cube.h>
 #include <mc/isosurfaceBuilder.h>
@@ -48,8 +49,6 @@ void mcSimple_isosurfaceFromField(
     const mcVec3 *min, const mcVec3 *max,
     mcMesh *mesh)
 {
-  /* TODO: Pass the grid resolution as a parameter */
-  /* TODO: Support lattice structures that are not perfectly cube */
   /* TODO: Support sub-lattice structures (for divide-and-conquer) */
   float delta_x = fabs(max->x - min->x) / (float)(x_res - 1);
   float delta_y = fabs(max->y - min->y) / (float)(y_res - 1);
@@ -74,29 +73,33 @@ void mcSimple_isosurfaceFromField(
    * cubes algorithm is applied. This divide and conquer approach lends
    * itself to parallelism as well.
    */
-  typedef struct PrevSliceVoxel {
-    /* FIXME: These edges should be numbered relative to the prev slice */
-    unsigned int e0, e1, e2, e3;
-  } PrevSliceVoxel;
-  PrevSliceVoxel *prevSlice =
-    (PrevSliceVoxel*)malloc(sizeof(PrevSliceVoxel) * x_res * y_res);
+  typedef struct SliceVoxel {
+    int e2, e6, e10, e11;
+  } SliceVoxel;
+  SliceVoxel *previousSlice =
+    (SliceVoxel*)malloc(sizeof(SliceVoxel) * (x_res - 1) * (y_res - 1));
+  SliceVoxel *currentSlice =
+    (SliceVoxel*)malloc(sizeof(SliceVoxel) * (x_res - 1) * (y_res - 1));
   /* As in the z-axis loop, the algorithm keeps a 1-dimensional buffer (called
    * prevLine) of the edge interpolation results from the previous line. This
    * eliminates on average three redundant interpolations per voxel cube.
    */
-  typedef struct PrevLineVoxel {
-    unsigned int e0, e4, e8, e9;
-  } PrevLineVoxel;
-  PrevLineVoxel *prevLine =
-    (PrevLineVoxel*)malloc(sizeof(PrevLineVoxel) * x_res);
+  typedef struct LineVoxel {
+    int e4, e5, e6, e7;
+  } LineVoxel;
+  LineVoxel *previousLine =
+    (LineVoxel*)malloc(sizeof(LineVoxel) * (x_res - 1));
+  LineVoxel *currentLine =
+    (LineVoxel*)malloc(sizeof(LineVoxel) * (x_res - 1));
   /* As in the z-axis and y-axis loops, the algorithm keeps a 0-dimensional
    * buffer of the edge interpolation results from the previous voxel. This
    * eliminates on average two redundant interpolations per voxel cube.
    */
-  typedef struct PrevVoxel {
-    unsigned int e3, e7, e8, e10;
-  } PrevVoxel;
-  PrevVoxel prevVoxel;
+  typedef struct Voxel {
+    int e1, e5, e9, e11;
+  } Voxel;
+  Voxel *previousVoxel = (Voxel*)malloc(sizeof(Voxel));
+  Voxel *currentVoxel = (Voxel*)malloc(sizeof(Voxel));
   /* A sample buffer of three slices is needed in order to calculate the vertex
    * normals. The buffer must contain samples from the previous slice, samples
    * for the current slice, and samples for the next slice. We store these
@@ -104,7 +107,7 @@ void mcSimple_isosurfaceFromField(
   /* FIXME: This buffer might need to be four slices large for computing
    * normals. See Lorensen. */
   float *samples = (float*)malloc(sizeof(float) * x_res * y_res * 3);
-  int currentSlice = 2;
+  int sampleSliceIndex = 2;
   /* Initialize the sample buffer */
   for (int z = 0; z < 2; ++z) {
     for (int y = 0; y < y_res; ++y) {
@@ -121,10 +124,10 @@ void mcSimple_isosurfaceFromField(
   /* Iterate over the cube lattice */
   for (int z = 0; z < z_res - 1; ++z) {
     /* Rotate the sample buffer and get samples for next slice */
-    currentSlice = (currentSlice + 1) % 3;
+    sampleSliceIndex = (sampleSliceIndex + 1) % 3;
     for (int y = 0; y < y_res; ++y) {
       for (int x = 0; x < x_res; ++x) {
-        int i = x + y * x_res + ((currentSlice + 2) % 3) * x_res * y_res;
+        int i = x + y * x_res + ((sampleSliceIndex + 2) % 3) * x_res * y_res;
         if (z + 2 == z_res) {
           /* FIXME: Don't sample past min->z + (z_res - 1) * delta_z */
         }
@@ -148,7 +151,7 @@ void mcSimple_isosurfaceFromField(
           mcCube_vertexRelativePosition(vertex, pos);
           i = x + pos[0]
               + (y + pos[1]) * x_res
-              + ((currentSlice + pos[2]) % 3) * x_res * y_res;
+              + ((sampleSliceIndex + pos[2]) % 3) * x_res * y_res;
           assert(
               samples[i] == sf(
                 min->x + (x + pos[0]) * delta_x,
@@ -160,149 +163,162 @@ void mcSimple_isosurfaceFromField(
         }
         /* Look in the edge table for the edges that intersect the
          * isosurface */
-        unsigned int vertexIndices[MC_CUBE_NUM_EDGES];
-        int numEdgeIntersections = 0;
-        for (unsigned int j = 0;
-            j < MC_CUBE_NUM_EDGES && mcSimple_edgeTable[cube].edges[j] != -1;
-            ++j)
-        {
-          unsigned int vertices[2];
-          float values[2];
-          int edge;
-          mcVec3 latticePos[2];
-          edge = mcSimple_edgeTable[cube].edges[j];
-          numEdgeIntersections += 1;
-          /* Screen out edges that already have vertices and get their vertex
-           * index from one of the prev voxel buffers */
-          int skip = 0;
-          switch (edge) {
-            case 0:
-              if (y > 0) {
-                vertexIndices[edge] = prevLine[x].e0;
-                skip = 1;
+        int vertexIndices[MC_CUBE_NUM_EDGES];
+        /* The edges in the previous voxel buffers need to be reset to -1 if
+         * the given edge is not in the edge table for the given cube
+         * configuration. This is easy since the edge table is already sorted.
+         * We iterate over all possible edges, and for any edges we do not find
+         * in the table we leave their vertex index value at -1. */
+        int j = 0;
+        /* TODO: Most of this loop can be avoided in a release build by simply
+         * moving from one edge in mcSimple_edgeTable[cube] to the next rather
+         * than iterating over all possible edges. */
+        for (int edge = 0; edge < MC_CUBE_NUM_EDGES; ++edge) {
+          vertexIndices[edge] = -1;
+          if (mcSimple_edgeTable[cube].edges[j] == edge) {
+            /* This edge intersection must exist. We will either find it in one
+             * of our buffers or compute it ourselves. */
+            unsigned int vertices[2];
+            float values[2];
+            mcVec3 latticePos[2];
+            /* Look for edge intersections that already have vertices and get
+             * their vertex index from one of the previous voxel buffers */
+            switch (edge) {
+              case 0:
+                if (y > 0) {
+                  vertexIndices[edge] = previousLine[x].e4;
+                  assert(vertexIndices[edge] != -1);
+                }
+                else if (z > 0) {
+                  vertexIndices[edge] = previousSlice[x + y * (x_res - 1)].e2;
+                  assert(vertexIndices[edge] != -1);
+                }
+                break;
+              case 1:
+                if (y > 0) {
+                  vertexIndices[edge] = previousLine[x].e5;
+                  assert(vertexIndices[edge] != -1);
+                }
+                break;
+              case 2:
+                if (y > 0) {
+                  vertexIndices[edge] = previousLine[x].e6;
+                  assert(vertexIndices[edge] != -1);
+                }
+                break;
+              case 3:
+                if (x > 0) {
+                  vertexIndices[edge] = previousVoxel->e1;
+                  assert(vertexIndices[edge] != -1);
+                }
+                else if (y > 0) {
+                  vertexIndices[edge] = previousLine[x].e7;
+                  assert(vertexIndices[edge] != -1);
+                }
+                break;
+              case 4:
+                if (z > 0) {
+                  vertexIndices[edge] = previousSlice[x + y * (x_res - 1)].e6;
+                  assert(vertexIndices[edge] != -1);
+                }
+                break;
+              case 7:
+                if (x > 0) {
+                  vertexIndices[edge] = previousVoxel->e5;
+                  assert(vertexIndices[edge] != -1);
+                }
+                break;
+              case 8:
+                if (x > 0) {
+                  vertexIndices[edge] = previousVoxel->e9;
+                  assert(vertexIndices[edge] != -1);
+                }
+                else if (z > 0) {
+                  vertexIndices[edge] = previousSlice[x + y * (x_res - 1)].e10;
+                  assert(vertexIndices[edge] != -1);
+                }
+                break;
+              case 9:
+                if (z > 0) {
+                  vertexIndices[edge] = previousSlice[x + y * (x_res - 1)].e11;
+                  assert(vertexIndices[edge] != -1);
+                }
+                break;
+              case 10:
+                if (x > 0) {
+                  vertexIndices[edge] = previousVoxel->e11;
+                  assert(vertexIndices[edge] != -1);
+                }
+                break;
+            }
+            /* vertexIndices[edge] = -1; */
+            if (vertexIndices[edge] == -1) {
+              /* The mesh vertex for this edge intersection has not been generated yet */
+              /* Find the cube vertices on this edge */
+              mcCube_edgeVertices(edge, vertices);
+              for (unsigned int k = 0; k < 2; ++k) {
+                unsigned int pos[3];
+                mcCube_vertexRelativePosition(vertices[k], pos);
+                latticePos[k].x = min->x + (float)(x + pos[0]) * delta_x;
+                latticePos[k].y = min->y + (float)(y + pos[1]) * delta_y;
+                latticePos[k].z = min->z + (float)(z + pos[2]) * delta_z;
+                /* TODO: Get these samples from our cache */
+                values[k] = sf(
+                    latticePos[k].x,
+                    latticePos[k].y,
+                    latticePos[k].z,
+                    args);
               }
-              else if (z > 0) {
-                vertexIndices[edge] = prevSlice[x + y * x_res].e0;
-                skip = 1;
-              }
-              break;
-            case 1:
-              if (z > 0) {
-                vertexIndices[edge] = prevSlice[x + y * x_res].e1;
-                skip = 1;
-              }
-              break;
-            case 2:
-              if (z > 0) {
-                vertexIndices[edge] = prevSlice[x + y * x_res].e2;
-                skip = 1;
-              }
-              break;
-            case 3:
-              if (x > 0) {
-                vertexIndices[edge] = prevVoxel.e3;
-                skip = 1;
-              }
-              else if (z > 0) {
-                vertexIndices[edge] = prevSlice[x + y * x_res].e3;
-                skip = 1;
-              }
-              break;
-            case 4:
-              if (y > 0) {
-                vertexIndices[edge] = prevLine[x].e4;
-                skip = 1;
-              }
-              break;
-            case 7:
-              if (x > 0) {
-                vertexIndices[edge] = prevVoxel.e7;
-                skip = 1;
-              }
-              break;
-            case 8:
-              if (x > 0) {
-                vertexIndices[edge] = prevVoxel.e8;
-                skip = 1;
-              }
-              else if (y > 0) {
-                vertexIndices[edge] = prevLine[x].e8;
-                skip = 1;
-              }
-              break;
-            case 9:
-              if (y > 0) {
-                vertexIndices[edge] = prevLine[x].e9;
-                skip = 1;
-              }
-              break;
-            case 10:
-              if (x > 0) {
-                vertexIndices[edge] = prevVoxel.e10;
-                skip = 1;
-              }
-              break;
+              /* Interpolate between the sample values at each vertex */
+              float weight = fabs(values[0] / (values[0] - values[1]));
+              /* The corresponding edge vertex must lie on the edge between the
+               * lattice points, so we interpolate between these points. */
+              mcVertex vertex;
+              vertex.pos = mcVec3_lerp(&latticePos[0], &latticePos[1], weight);
+              /* Add this vertex to the mesh */
+              vertexIndices[edge] = mcMesh_addVertex(mesh, &vertex);
+            }
+            j += 1;
           }
-          /*
-          if (skip)
-            continue; */ /* FIXME: Re-enable this skip once we have more triangles */
-          /* Determine the value of each edge vertex */
-          mcCube_edgeVertices(edge, vertices);
-          for (unsigned int k = 0; k < 2; ++k) {
-            unsigned int pos[3];
-            mcCube_vertexRelativePosition(vertices[k], pos);
-            /* TODO: Many of these sample values can be stored/retrieved from a cache */
-            latticePos[k].x = min->x + (float)(x + pos[0]) * delta_x;
-            latticePos[k].y = min->y + (float)(y + pos[1]) * delta_y;
-            latticePos[k].z = min->z + (float)(z + pos[2]) * delta_z;
-            values[k] = sf(
-                latticePos[k].x,
-                latticePos[k].y,
-                latticePos[k].z,
-                args);
-          }
-          /* Interpolate between vertex values */
-          float weight = fabs(values[0] / (values[0] - values[1]));
-          /* The corresponding edge vertex must lie on the edge between the
-           * lattice points, so we interpolate between these points. */
-          mcVertex vertex;
-          vertex.pos = mcVec3_lerp(&latticePos[0], &latticePos[1], weight);
-          /* Add this vertex to the mesh */
-          vertexIndices[edge] = mcMesh_addVertex(mesh, &vertex);
           /* Add the index for this vertex to the appropriate prev voxel
-           * buffers */
-          /* TODO: Facilitate debugging here by setting all unused edge indices to -1.
+           * buffers so we can connect the mesh properly. Note that if the
+           * vertex index is still -1, this is an indication to future
+           * iterations that this edge intersection does not exist.
+           *
+           * FIXME: This argument is flawed. The algorithm has perfect
+           * knowledge of where the edges should be in cache. If the algorithm
+           * finds a -1 in cache, that should cause an assertion error.
            */
           switch (edge) {
             case 1:
-              prevVoxel.e3 = vertexIndices[edge];
+              currentVoxel->e1 = vertexIndices[edge];
               break;
             case 2:
-              prevLine[x].e0 = vertexIndices[edge];
+              currentSlice[x + y * (x_res - 1)].e2 = vertexIndices[edge];
               break;
             case 4:
-              prevSlice[x + y * x_res].e0 = vertexIndices[edge];
+              currentLine[x].e4 = vertexIndices[edge];
               break;
             case 5:
-              prevVoxel.e7 = vertexIndices[edge];
-              prevSlice[x + y * x_res].e1 = vertexIndices[edge];
+              currentVoxel->e5 = vertexIndices[edge];
+              currentLine[x].e5 = vertexIndices[edge];
               break;
             case 6:
-              prevLine[x].e4 = vertexIndices[edge];
-              prevSlice[x + y * x_res].e2 = vertexIndices[edge];
+              currentLine[x].e6 = vertexIndices[edge];
+              currentSlice[x + y * (x_res - 1)].e6 = vertexIndices[edge];
               break;
             case 7:
-              prevSlice[x + y * x_res].e3 = vertexIndices[edge];
+              currentLine[x].e7 = vertexIndices[edge];
               break;
             case 9:
-              prevVoxel.e8 = vertexIndices[edge];
+              currentVoxel->e9 = vertexIndices[edge];
               break;
             case 10:
-              prevLine[x].e8 = vertexIndices[edge];
+              currentSlice[x + y * (x_res - 1)].e10 = vertexIndices[edge];
               break;
             case 11:
-              prevVoxel.e10 = vertexIndices[edge];
-              prevLine[x].e9 = vertexIndices[edge];
+              currentVoxel->e11 = vertexIndices[edge];
+              currentSlice[x + y * (x_res - 1)].e11 = vertexIndices[edge];
               break;
           }
         }
@@ -321,10 +337,26 @@ void mcSimple_isosurfaceFromField(
           mcMesh_addFace(mesh, &face);
           mcFace_destroy(&face);
         }
+        /* Make the current voxel the previous one */
+        Voxel *temp = previousVoxel;
+        previousVoxel = currentVoxel;
+        currentVoxel = temp;
       }
+      /* Make the current line the previous one */
+      LineVoxel *temp = previousLine;
+      previousLine = currentLine;
+      currentLine = temp;
     }
+    /* Make the current slice the previous one */
+    SliceVoxel *temp = previousSlice;
+    previousSlice = currentSlice;
+    currentSlice = temp;
   }
   free(samples);
-  free(prevLine);
-  free(prevSlice);
+  free(previousVoxel);
+  free(currentVoxel);
+  free(previousLine);
+  free(currentLine);
+  free(previousSlice);
+  free(currentSlice);
 }

@@ -351,14 +351,14 @@ void mcCube_vertexRelativePosition(unsigned int vertex, unsigned int *pos) {
     unsigned int pos[3];
   } Position;
   Position table[8] = {
-    { .pos = { 0, 0, 0 } },  /* vertex 0 */
-    { .pos = { 1, 0, 0 } },  /* vertex 1 */
-    { .pos = { 1, 1, 0 } },  /* vertex 2 */
-    { .pos = { 0, 1, 0 } },  /* vertex 3 */
-    { .pos = { 0, 0, 1 } },  /* vertex 4 */
-    { .pos = { 1, 0, 1 } },  /* vertex 5 */
-    { .pos = { 1, 1, 1 } },  /* vertex 6 */
-    { .pos = { 0, 1, 1 } },  /* vertex 7 */
+    { .pos = { 0, 0, 0 } },  /* Vertex 0 */
+    { .pos = { 1, 0, 0 } },  /* Vertex 1 */
+    { .pos = { 1, 0, 1 } },  /* Vertex 2 */
+    { .pos = { 0, 0, 1 } },  /* Vertex 3 */
+    { .pos = { 0, 1, 0 } },  /* Vertex 4 */
+    { .pos = { 1, 1, 0 } },  /* Vertex 5 */
+    { .pos = { 1, 1, 1 } },  /* Vertex 6 */
+    { .pos = { 0, 1, 1 } },  /* Vertex 7 */
   };
   assert(vertex < 8);
   pos[0] = table[vertex].pos[0];

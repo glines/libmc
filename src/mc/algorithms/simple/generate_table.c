@@ -58,20 +58,23 @@ void computeEdgeList(
     unsigned int cube,
     mcSimpleEdgeList *edgeList)
 {
-    unsigned int vertices[2];
-    unsigned int listIndex = 0;
-    /* Iterate through all edges */
-    for (unsigned int edge = 0; edge < 12; ++edge) {
-      /* Determine the two vertex values */
-      mcCube_edgeVertices(edge, vertices);
-      if (mcCube_vertexValue(vertices[0], cube)
-          != mcCube_vertexValue(vertices[1], cube))
-      {
-        /* If the vertex values disagree, we have an edge intersection */
-        /* Add this edge to the edge list */
-        edgeList->edges[listIndex++] = edge;
-      }
+  unsigned int vertices[2];
+  unsigned int listIndex = 0;
+  /* Iterate through all edges */
+  /* NOTE: The edges MUST be in sorted order. This makes it much easier for the
+   * marching cubes algorithm to determine which edges are not in the edge
+   * list. */
+  for (unsigned int edge = 0; edge < MC_CUBE_NUM_EDGES; ++edge) {
+    /* Determine the two vertex values */
+    mcCube_edgeVertices(edge, vertices);
+    if (mcCube_vertexValue(vertices[0], cube)
+        != mcCube_vertexValue(vertices[1], cube))
+    {
+      /* If the vertex values disagree, we have an edge intersection */
+      /* Add this edge to the edge list */
+      edgeList->edges[listIndex++] = edge;
     }
+  }
 }
 
 void computeTriangleList(

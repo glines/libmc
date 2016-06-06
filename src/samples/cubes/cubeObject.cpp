@@ -504,30 +504,6 @@ namespace mc {namespace samples { namespace cubes {
   {
   }
 
-  // FIXME: This code was copied from src/mc/tables/common.c
-  int vertexValue(unsigned int vertex, unsigned int cube) {
-    return (cube & (1 << vertex)) >> vertex;
-  }
-
-  // FIXME: This code was copied from src/mc/tables/common.c
-  unsigned int vertexIndex(unsigned int x, unsigned int y, unsigned int z) {
-    assert((x & ~1) == 0);
-    assert((y & ~1) == 0);
-    assert((z & ~1) == 0);
-    int i = x | y << 1 | z << 2;
-    static const unsigned int table[] = {
-      0,  // x = 0, y = 0, z = 0
-      1,  // x = 1, y = 0, z = 0
-      3,  // x = 0, y = 1, z = 0
-      2,  // x = 1, y = 1, z = 0
-      4,  // x = 0, y = 0, z = 1
-      5,  // x = 1, y = 0, z = 1
-      7,  // x = 0, y = 1, z = 1
-      6   // x = 1, y = 1, z = 1
-    };
-    return table[i];
-  }
-
   float CubeObject::CubeScalarField::operator()(
       float x, float y, float z) const
   {
@@ -540,7 +516,7 @@ namespace mc {namespace samples { namespace cubes {
       for (unsigned int y_index = 0; y_index <= 1; ++y_index) {
         for (unsigned int x_index = 0; x_index <= 1; ++x_index) {
           unsigned int i = mcCube_vertexIndex(x_index, y_index, z_index);
-          float value = vertexValue(i, m_cube) ? -1.0f : 1.0f;
+          float value = mcCube_vertexValue(i, m_cube) ? -1.0f : 1.0f;
           result +=
             (x_index ? x : 1.0f - x) *
             (y_index ? y : 1.0f - y) *

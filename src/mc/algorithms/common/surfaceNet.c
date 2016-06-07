@@ -33,10 +33,10 @@ mcSurfaceNodePos mcSurfaceNodePos_opposite(mcSurfaceNodePos pos) {
   } PosPair;
   mcSurfaceNodePos table[] = {
     MC_SURFACE_NODE_BACK,  // FRONT
-    MC_SURFACE_NODE_LEFT,  // RIGHT
-    MC_SURFACE_NODE_BOTTOM,  // TOP
     MC_SURFACE_NODE_RIGHT,  // LEFT
+    MC_SURFACE_NODE_BOTTOM,  // TOP
     MC_SURFACE_NODE_TOP,  // BOTTOM
+    MC_SURFACE_NODE_LEFT,  // RIGHT
     MC_SURFACE_NODE_FRONT,  // BACK
   };
   assert(pos < 6);

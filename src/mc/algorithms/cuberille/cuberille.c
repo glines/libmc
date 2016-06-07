@@ -21,6 +21,7 @@
  * IN THE SOFTWARE.
  */
 
+#include <assert.h>
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
@@ -59,7 +60,7 @@ void mcCuberille_isosurfaceFromField(
   mcSurfaceNode **prevLine = 
     (mcSurfaceNode**)malloc(sizeof(mcSurfaceNode*) * (res_x - 1));
   mcSurfaceNode *prevVoxel;
-  /* TODO: We start by generating the surface net */
+  /* We start by generating the surface net */
   /* Iterate over the sample lattice */
   for (unsigned int z = 0; z < res_z - 1; ++z) {
     /* The start of a new slice has no previous line */
@@ -70,7 +71,7 @@ void mcCuberille_isosurfaceFromField(
       for (unsigned int x = 0; x < res_x - 1; ++x) {
         unsigned int cube;
         float samples[8];
-        /* TODO: Gather a sample from each of the cube's eight vertices */
+        /* Gather a sample from each of the cube's eight vertices */
         /* TODO: Many of these samples can be stored/retrieved from a cache */
         for (unsigned int vertex = 0; vertex < 8; ++vertex) {
           /* Determine this vertex's relative position in the cube */
@@ -89,7 +90,7 @@ void mcCuberille_isosurfaceFromField(
         fprintf(stderr, "cube: 0x%02x\n", cube);  /* XXX */
         /* TODO: Add cubes that intersect the surface to the surface net */
         if (cube != 0x00 && cube != 0xff) {
-          mcSurfaceNode *node, *bottomNeighbor, *frontNeighbor, *leftNeighbor;
+          mcSurfaceNode *node, *bottomNeighbor, *frontNeighbor, *rightNeighbor;
           /* Create a surface node for this surface cube */
           node = mcSurfaceNet_getNextNode(&surfaceNet);
           /* Set the node position to the center of the voxel cube */
@@ -107,10 +108,10 @@ void mcCuberille_isosurfaceFromField(
             mcSurfaceNode_addNeighbor(
                 node, frontNeighbor, MC_SURFACE_NODE_FRONT);
           }
-          leftNeighbor = prevVoxel;
-          if (leftNeighbor != NULL) {
+          rightNeighbor = prevVoxel;
+          if (rightNeighbor != NULL) {
             mcSurfaceNode_addNeighbor(
-                node, leftNeighbor, MC_SURFACE_NODE_LEFT);
+                node, rightNeighbor, MC_SURFACE_NODE_RIGHT);
           }
           /* Record this surface node in the prev node buffers */
           prevSlice[y * (res_x - 1) + x] = node;
@@ -151,8 +152,64 @@ void mcCuberille_isosurfaceFromField(
   }
   /* With the vertex indices generated, we can now generate triangles */
   for (int i = 0; i < surfaceNet.numNodes; ++i) {
-    mcSurfaceNode *node;
+    mcSurfaceNode *node, *frontNeighbor, *leftNeighbor, *topNeighbor,
+                  *bottomNeighbor, *rightNeighbor, *backNeighbor;
     node = mcSurfaceNet_getNode(&surfaceNet, i);
+    /* We look for pairs of neighboring nodes in order to generate triangles.
+     * See Gibson, "Constrained Elastic Surface Nets: Generating Smooth Models
+     * from Binary Segmented Data."
+     * Note that we must avoid generating redundant triangles, since each quad
+     * has two possible triangulations. We make the decision arbitrarily. */
+    frontNeighbor = node->neighbors[MC_SURFACE_NODE_FRONT];
+    leftNeighbor = node->neighbors[MC_SURFACE_NODE_LEFT];
+    topNeighbor = node->neighbors[MC_SURFACE_NODE_TOP];
+    bottomNeighbor = node->neighbors[MC_SURFACE_NODE_BOTTOM];
+    rightNeighbor = node->neighbors[MC_SURFACE_NODE_RIGHT];
+    backNeighbor = node->neighbors[MC_SURFACE_NODE_BACK];
+    /* TODO: Maybe add an option for changing the triangulation and/or chosing
+     * an optimal triangulation. */
+    /* TODO: Make sure the winding order of these triangles is correct */
+    /* FIXME: Many of the triangles generated make the cubes appear "webbed"
+     * like a frog's foot at the corners. */
+    /* LEFT+FRONT and BACK+RIGHT or LEFT+BACK and FRONT+RIGHT */
+    if (leftNeighbor && frontNeighbor) {
+      triangle.indices[0] = node->vertexIndex;
+      triangle.indices[1] = leftNeighbor->vertexIndex;
+      triangle.indices[2] = frontNeighbor->vertexIndex;
+      mcMesh_addFace(mesh, &triangle);
+    }
+    if (backNeighbor && rightNeighbor) {
+      triangle.indices[0] = node->vertexIndex;
+      triangle.indices[1] = backNeighbor->vertexIndex;
+      triangle.indices[2] = rightNeighbor->vertexIndex;
+      mcMesh_addFace(mesh, &triangle);
+    }
+    /* FRONT+TOP and BOTTOM+BACK or FRONT+BOTTOM and TOP+BACK */
+    if (frontNeighbor && topNeighbor) {
+      triangle.indices[0] = node->vertexIndex;
+      triangle.indices[1] = frontNeighbor->vertexIndex;
+      triangle.indices[2] = topNeighbor->vertexIndex;
+      mcMesh_addFace(mesh, &triangle);
+    }
+    if (bottomNeighbor && backNeighbor) {
+      triangle.indices[0] = node->vertexIndex;
+      triangle.indices[1] = bottomNeighbor->vertexIndex;
+      triangle.indices[2] = backNeighbor->vertexIndex;
+      mcMesh_addFace(mesh, &triangle);
+    }
+    /* LEFT+TOP and BOTTOM+RIGHT or LEFT+BOTTOM and TOP+RIGHT */
+    if (leftNeighbor && topNeighbor) {
+      triangle.indices[0] = node->vertexIndex;
+      triangle.indices[1] = leftNeighbor->vertexIndex;
+      triangle.indices[2] = topNeighbor->vertexIndex;
+      mcMesh_addFace(mesh, &triangle);
+    }
+    if (bottomNeighbor && rightNeighbor) {
+      triangle.indices[0] = node->vertexIndex;
+      triangle.indices[1] = bottomNeighbor->vertexIndex;
+      triangle.indices[2] = rightNeighbor->vertexIndex;
+      mcMesh_addFace(mesh, &triangle);
+    }
     /* XXX: Draw a thin triangle to each of our neighbor nodes (poor man's
      *      line) */
     for (int j = 0; j < MC_CUBE_NUM_FACES; ++j) {
@@ -160,6 +217,7 @@ void mcCuberille_isosurfaceFromField(
       unsigned int vertexIndex;
       if (node->neighbors[j] == NULL)
         continue;
+      assert(node->neighbors[j]->neighbors[mcSurfaceNodePos_opposite(j)] == node);
       vertex.pos = node->neighbors[j]->pos;
       vertex.pos.x += delta_x / 64.0f;
       vertex.pos.y += delta_y / 64.0f;

@@ -44,7 +44,7 @@ namespace mc {namespace samples { namespace cubes {
       const glm::quat &orientation)
     : SceneObject(position, orientation),
       m_isDrawScalarField(false), m_isDrawWireframe(false),
-      m_isDrawOpaque(true),
+      m_isDrawNormals(false), m_isDrawOpaque(true),
       m_resX(res_x), m_resY(res_y), m_resZ(res_z), m_algorithm(algorithm),
       m_intensity(1.0f)
   {
@@ -721,7 +721,9 @@ namespace mc {namespace samples { namespace cubes {
 
       // Draw the isosurface triangles
       m_drawTriangleWireframe(modelView, projection);
+    }
 
+    if (m_isDrawNormals) {
       // Draw the isosurface normals
       m_drawSurfaceNormals(modelView, projection);
     }

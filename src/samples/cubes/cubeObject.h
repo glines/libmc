@@ -47,7 +47,8 @@ namespace mc { namespace samples {
         unsigned int m_numTriangles, m_numVertices, m_numPoints;
         unsigned int m_resX, m_resY, m_resZ;
         mcAlgorithmFlag m_algorithm;
-        bool m_isDrawScalarField, m_isDrawWireframe, m_isDrawOpaque;
+        bool m_isDrawScalarField, m_isDrawWireframe, m_isDrawNormals,
+             m_isDrawOpaque;
         float m_intensity;
 
         void m_generateCubeWireframe();
@@ -139,7 +140,7 @@ namespace mc { namespace samples {
 
         /**
          * Returns true if the scalar field is being drawn as a lattice of
-         * points.
+         * points. Returns false otherwise.
          */
         bool isDrawScalarField() const {
           return m_isDrawScalarField;
@@ -151,6 +152,51 @@ namespace mc { namespace samples {
          */
         void setDrawScalarField(bool flag) {
           m_isDrawScalarField = flag;
+        }
+
+        /**
+         * Returns true if the the wireframe of the triangle mesh is being
+         * drawn. Returns false otherwise.
+         */
+        bool isDrawWireframe() const {
+          return m_isDrawWireframe;
+        }
+
+        /**
+         * Returns true if the the surface normals are being drawn (as lines).
+         * Returns false otherwise.
+         */
+        bool isDrawNormals() const {
+          return m_isDrawNormals;
+        }
+
+        /**
+         * Sets whether or not surface normal lines are to be drawn.
+         */
+        void setDrawNormals(bool flag) {
+          m_isDrawNormals = flag;
+        }
+
+        /**
+         * Sets whether or not a wireframe of the triangle mesh is to be drawn.
+         */
+        void setDrawWireframe(bool flag) {
+          m_isDrawWireframe = flag;
+        }
+
+        /**
+         * Returns true if the opaque surface (with lighting) is being drawn.
+         * Returns false otherwise.
+         */
+        bool isDrawOpaque() {
+          return m_isDrawOpaque;
+        }
+
+        /**
+         * Sets whether or not the opaque surface is to be drawn.
+         */
+        void setDrawOpaque(bool flag) {
+          m_isDrawOpaque = flag;
         }
 
         /**

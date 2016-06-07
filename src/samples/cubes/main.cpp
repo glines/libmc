@@ -102,6 +102,7 @@ void init_gl() {
   glEnable(GL_DEPTH_TEST);
   glDepthFunc(GL_LESS);
   glDisable(GL_CULL_FACE);
+  glFrontFace(GL_CCW);
   glViewport(0, 0, demo.window_width, demo.window_height);
 }
 
@@ -142,7 +143,7 @@ void main_loop() {
           case SDLK_m:
             demo.cubeObject->setAlgorithm(MC_SIMPLE_MARCHING_CUBES);
             break;
-          case SDLK_n:
+          case SDLK_e:
             demo.cubeObject->setAlgorithm(MC_ELASTIC_SURFACE_NETS);
             break;
           case SDLK_c:
@@ -158,6 +159,15 @@ void main_loop() {
             demo.cubeObject->setIntensity(
                 demo.cubeObject->intensity() + INTENSITY_DELTA);
             fprintf(stderr, "intensity: %g\n", demo.cubeObject->intensity());
+            break;
+          case SDLK_w:
+            demo.cubeObject->setDrawWireframe(!demo.cubeObject->isDrawWireframe());
+            break;
+          case SDLK_n:
+            demo.cubeObject->setDrawNormals(!demo.cubeObject->isDrawNormals());
+            break;
+          case SDLK_o:
+            demo.cubeObject->setDrawOpaque(!demo.cubeObject->isDrawOpaque());
             break;
         }
         switch (event.key.keysym.scancode) {

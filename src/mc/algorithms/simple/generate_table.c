@@ -255,7 +255,15 @@ void computeTriangleList(
         triangle->edges[j] = mcCube_rotateEdgeReverseZ(triangle->edges[j]);
       }
     }
-    /* TODO: Consider that cube inversion affects triangle winding order */
+    /* Cube inversion affects triangle winding order */
+    /* FIXME: I'm not sure why the inversion byte needs to be negated here.
+     * Something is off somewhere. */
+    if (!get_byte(rotation, 3)) {
+      /* Reverse triangle winding order to get correct front/back faces */
+      int temp = triangle->edges[0];
+      triangle->edges[0] = triangle->edges[2];
+      triangle->edges[2] = temp;
+    }
   }
 }
 

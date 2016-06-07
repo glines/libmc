@@ -30,4 +30,8 @@ typedef struct mcVec3 {
 
 mcVec3 mcVec3_lerp(const mcVec3 *u, const mcVec3 *v, float a);
 
+float mcVec3_length(const mcVec3 *u);
+
+void mcVec3_normalize(mcVec3 *u);
+
 #endif

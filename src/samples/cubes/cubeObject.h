@@ -42,8 +42,8 @@ namespace mc { namespace samples {
         unsigned int m_cube;
         GLuint m_cubeWireframeVertices, m_cubeWireframeIndices,
                m_triangleWireframeVertices, m_triangleWireframeIndices,
-               m_pointBuffer;
-        unsigned int m_numTriangles, m_numPoints;
+               m_surfaceNormalVertices, m_pointBuffer;
+        unsigned int m_numTriangles, m_numVertices, m_numPoints;
         unsigned int m_resX, m_resY, m_resZ;
         mcAlgorithmFlag m_algorithm;
         bool m_isDrawScalarField;
@@ -51,6 +51,7 @@ namespace mc { namespace samples {
 
         void m_generateCubeWireframe();
         void m_generateTriangleWireframe(const Mesh *mesh);
+        void m_generateSurfaceNormals(const Mesh *mesh);
         void m_generateDebugPoints(const Mesh *mesh);
 
         void m_update();
@@ -62,6 +63,9 @@ namespace mc { namespace samples {
             const glm::mat4 &modelView,
             const glm::mat4 &projection) const;
         void m_drawTriangleWireframe(
+            const glm::mat4 &modelView,
+            const glm::mat4 &projection) const;
+        void m_drawSurfaceNormals(
             const glm::mat4 &modelView,
             const glm::mat4 &projection) const;
         void m_drawDebugPoints(

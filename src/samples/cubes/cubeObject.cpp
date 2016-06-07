@@ -57,6 +57,8 @@ namespace mc {namespace samples { namespace cubes {
     FORCE_ASSERT_GL_ERROR();
     glGenBuffers(1, &m_triangleWireframeIndices);
     FORCE_ASSERT_GL_ERROR();
+    glGenBuffers(1, &m_surfaceNormalVertices);
+    FORCE_ASSERT_GL_ERROR();
     glGenBuffers(1, &m_pointBuffer);
     FORCE_ASSERT_GL_ERROR();
     this->setCube(cube);
@@ -162,6 +164,38 @@ namespace mc {namespace samples { namespace cubes {
     m_numTriangles = mesh->numFaces();
   }
 
+  void CubeObject::m_generateSurfaceNormals(const Mesh *mesh) {
+    // Allocate memory for the surface normal lines
+    Vertex *lines = new Vertex[mesh->numVertices() * 2];
+    // Iterate through the mesh vertices
+    for (unsigned int i = 0; i < mesh->numVertices(); ++i) {
+      // Make a line to represent the surface normal
+      auto v = mesh->vertex(i);
+      lines[i * 2].pos[0] = v.pos.x;
+      lines[i * 2].pos[1] = v.pos.y;
+      lines[i * 2].pos[2] = v.pos.z;
+      lines[i * 2 + 1].pos[0] = v.pos.x + v.norm.x;
+      lines[i * 2 + 1].pos[1] = v.pos.y + v.norm.y;
+      lines[i * 2 + 1].pos[2] = v.pos.z + v.norm.z;
+      lines[i * 2].color[0] = 0.0f;
+      lines[i * 2].color[1] = 0.0f;
+      lines[i * 2].color[2] = 1.0f;
+      lines[i * 2 + 1].color[0] = 0.0f;
+      lines[i * 2 + 1].color[1] = 0.0f;
+      lines[i * 2 + 1].color[2] = 1.0f;
+    }
+    // Copy the surface normal lines to the GL
+    glBindBuffer(GL_ARRAY_BUFFER, m_surfaceNormalVertices);
+    glBufferData(
+        GL_ARRAY_BUFFER,  // target
+        sizeof(Vertex) * mesh->numVertices() * 2,  // size
+        lines,  // data
+        GL_STATIC_DRAW  // usage
+        );
+
+    delete[] lines;
+  }
+
   void CubeObject::m_generateDebugPoints(const Mesh *mesh) {
     CubeScalarField sf(m_cube);
 
@@ -218,12 +252,16 @@ namespace mc {namespace samples { namespace cubes {
         Vec3(-1.0f, -1.0f, -1.0f),  // min
         Vec3(1.0f, 1.0f, 1.0f)  // max
         );
+    m_numVertices = mesh->numVertices();
 
     // Generate point data to send to the GL for visual debugging
     m_generateDebugPoints(mesh);
 
     // Generate triangle wireframe data and send it to the GL
     m_generateTriangleWireframe(mesh);
+
+    // Generate surface normal lines and send them to the GL
+    m_generateSurfaceNormals(mesh);
   }
 
   std::shared_ptr<ShaderProgram> CubeObject::m_pointShader() {
@@ -392,6 +430,71 @@ namespace mc {namespace samples { namespace cubes {
     ASSERT_GL_ERROR();
   }
 
+  void CubeObject::m_drawSurfaceNormals(
+      const glm::mat4 &modelView,
+      const glm::mat4 &projection) const
+  {
+    // Use our shader for drawing wireframes
+    std::shared_ptr<ShaderProgram> shader = m_wireframeShader();
+    shader->use();
+
+    // Prepare the uniform values
+    assert(shader->modelViewLocation() != -1);
+    glUniformMatrix4fv(
+        shader->modelViewLocation(),  // location
+        1,  // count
+        0,  // transpose
+        glm::value_ptr(modelView)  // value
+        );
+    ASSERT_GL_ERROR();
+    assert(shader->projectionLocation() != -1);
+    glUniformMatrix4fv(
+        shader->projectionLocation(),  // location
+        1,  // count
+        0,  // transpose
+        glm::value_ptr(projection)  // value
+        );
+    ASSERT_GL_ERROR();
+
+    // Prepare the vertex attributes
+    glBindBuffer(GL_ARRAY_BUFFER, m_surfaceNormalVertices);
+    ASSERT_GL_ERROR();
+    assert(shader->vertPositionLocation() != -1);
+    glEnableVertexAttribArray(shader->vertPositionLocation());
+    ASSERT_GL_ERROR();
+    glVertexAttribPointer(
+        shader->vertPositionLocation(),  // index
+        3,  // size
+        GL_FLOAT,  // type
+        0,  // normalized
+        sizeof(Vertex),  // stride
+        &(((Vertex *)0)->pos[0])  // pointer
+        );
+    ASSERT_GL_ERROR();
+    assert(shader->vertColorLocation() != -1);
+    glEnableVertexAttribArray(shader->vertColorLocation());
+    ASSERT_GL_ERROR();
+    glVertexAttribPointer(
+        shader->vertColorLocation(),  // index
+        3,  // size
+        GL_FLOAT,  // type
+        0,  // normalized
+        sizeof(Vertex),  // stride
+        &(((Vertex *)0)->color[0])  // pointer
+        );
+    ASSERT_GL_ERROR();
+
+    // Draw the surface normals
+    glLineWidth(1.0f);
+    ASSERT_GL_ERROR();
+    glDrawArrays(
+        GL_LINES,  // mode
+        0,  // first
+        m_numVertices * 2  // count
+        );
+    ASSERT_GL_ERROR();
+  }
+
   void CubeObject::m_drawDebugPoints(
       const glm::mat4 &modelView,
       const glm::mat4 &projection) const
@@ -468,6 +571,9 @@ namespace mc {namespace samples { namespace cubes {
 
     // Draw the isosurface triangles
     m_drawTriangleWireframe(modelView, projection);
+
+    // Draw the isosurface normals
+    m_drawSurfaceNormals(modelView, projection);
 
     if (m_isDrawScalarField) {
       // Draw the lattice points and edge intersection points

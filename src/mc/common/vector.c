@@ -21,6 +21,8 @@
  * IN THE SOFTWARE.
  */
 
+#include <math.h>
+
 #include <mc/vector.h>
 
 mcVec3 mcVec3_lerp(const mcVec3 *u, const mcVec3 *v, float a) {
@@ -29,4 +31,15 @@ mcVec3 mcVec3_lerp(const mcVec3 *u, const mcVec3 *v, float a) {
   result.y = (1.0f - a) * u->y + a * v->y;
   result.z = (1.0f - a) * u->z + a * v->z;
   return result;
+}
+
+float mcVec3_length(const mcVec3 *u) {
+  return sqrt(u->x * u->x + u->y * u->y + u->z * u->z);
+}
+
+void mcVec3_normalize(mcVec3 *u) {
+  float length = mcVec3_length(u);
+  u->x /= length;
+  u->y /= length;
+  u->z /= length;
 }

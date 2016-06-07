@@ -102,14 +102,15 @@ void mcSimple_isosurfaceFromField(
   } Voxel;
   Voxel *previousVoxel = (Voxel*)malloc(sizeof(Voxel));
   Voxel *currentVoxel = (Voxel*)malloc(sizeof(Voxel));
-  /* A sample buffer of three slices is needed in order to calculate the vertex
-   * normals. The buffer must contain samples from the previous slice, samples
-   * for the current slice, and samples for the next slice. We store these
-   * slices in a circular buffer. */
-  /* FIXME: This buffer might need to be four slices large for computing
-   * normals. See Lorensen. */
-  float *samples = (float*)malloc(sizeof(float) * x_res * y_res * 3);
-  int sampleSliceIndex = 2;
+  /* A sample buffer of four slices is needed in order to calculate the vertex
+   * normals. The buffer must contain samples from the current cube as well as
+   * samples from slices before and after the current cube's samples. We store
+   * these slices in a circular buffer. The current sample slice index always
+   * points to the slice containing the sample for the zero vertex on the
+   * current cube.
+   */
+  float *samples = (float*)malloc(sizeof(float) * x_res * y_res * 4);
+  int sampleSliceIndex = 3;
   /* Initialize the sample buffer */
   for (int z = 0; z < 2; ++z) {
     for (int y = 0; y < y_res; ++y) {
@@ -126,18 +127,17 @@ void mcSimple_isosurfaceFromField(
   /* Iterate over the cube lattice */
   for (int z = 0; z < z_res - 1; ++z) {
     /* Rotate the sample buffer and get samples for next slice */
-    sampleSliceIndex = (sampleSliceIndex + 1) % 3;
-    for (int y = 0; y < y_res; ++y) {
-      for (int x = 0; x < x_res; ++x) {
-        int i = x + y * x_res + ((sampleSliceIndex + 2) % 3) * x_res * y_res;
-        if (z + 2 == z_res) {
-          /* FIXME: Don't sample past min->z + (z_res - 1) * delta_z */
+    sampleSliceIndex = (sampleSliceIndex + 1) % 4;
+    if (z + 2 < z_res) {  /* Don't sample past the maximum resolution */
+      for (int y = 0; y < y_res; ++y) {
+        for (int x = 0; x < x_res; ++x) {
+          int i = x + y * x_res + ((sampleSliceIndex + 2) % 4) * x_res * y_res;
+          samples[i] = sf(
+              min->x + (float)x * delta_x,
+              min->y + (float)y * delta_y,
+              min->z + (float)(z + 2) * delta_z,
+              args);
         }
-        samples[i] = sf(
-            min->x + (float)x * delta_x,
-            min->y + (float)y * delta_y,
-            min->z + (float)(z + 2) * delta_z,
-            args);
       }
     }
     for (int y = 0; y < y_res - 1; ++y) {
@@ -153,7 +153,7 @@ void mcSimple_isosurfaceFromField(
           mcCube_vertexRelativePosition(vertex, pos);
           i = x + pos[0]
               + (y + pos[1]) * x_res
-              + ((sampleSliceIndex + pos[2]) % 3) * x_res * y_res;
+              + ((sampleSliceIndex + pos[2]) % 4) * x_res * y_res;
           assert(samples[i] == sf(min->x + (x + pos[0]) * delta_x,
                                   min->y + (y + pos[1]) * delta_y,
                                   min->z + (z + pos[2]) * delta_z,
@@ -178,9 +178,6 @@ void mcSimple_isosurfaceFromField(
           if (mcSimple_edgeTable[cube].edges[edgeTableIndex] == edge) {
             /* This edge intersection must exist. We will either find it in one
              * of our buffers or compute it ourselves. */
-            unsigned int vertices[2];
-            float values[2];
-            mcVec3 latticePos[2];
             /* Look for edge intersections that already have vertices and get
              * their vertex index from one of the previous voxel buffers */
             switch (edge) {
@@ -253,24 +250,65 @@ void mcSimple_isosurfaceFromField(
             }
             if (vertexIndices[edge] == -1) {
               /* The mesh vertex for this edge intersection has not been generated yet */
+              unsigned int vertices[2];
+              float values[2];
+              mcVec3 latticePos[2];
+              mcVec3 gradiants[2];
               /* Find the cube vertices on this edge */
               mcCube_edgeVertices(edge, vertices);
               for (unsigned int i = 0; i < 2; ++i) {
-                unsigned int pos[3];
+                unsigned int pos[3], abs[3];
                 int j;
                 mcCube_vertexRelativePosition(vertices[i], pos);
-                latticePos[i].x = min->x + (float)(x + pos[0]) * delta_x;
-                latticePos[i].y = min->y + (float)(y + pos[1]) * delta_y;
-                latticePos[i].z = min->z + (float)(z + pos[2]) * delta_z;
+                abs[0] = x + pos[0];
+                abs[1] = y + pos[1];
+                abs[2] = z + pos[2];
+                latticePos[i].x = min->x + (float)(abs[0]) * delta_x;
+                latticePos[i].y = min->y + (float)(abs[1]) * delta_y;
+                latticePos[i].z = min->z + (float)(abs[2]) * delta_z;
                 /* Find the sample in our samples buffer */
-                j = x + pos[0]
-                    + (y + pos[1]) * x_res
-                    + ((sampleSliceIndex + pos[2]) % 3) * x_res * y_res;
+                j = abs[0]
+                    + abs[1] * x_res
+                    + ((sampleSliceIndex + pos[2]) % 4) * x_res * y_res;
                 assert(samples[j] == sf(latticePos[i].x,
                                         latticePos[i].y,
                                         latticePos[i].z,
                                         args));
                 values[i] = samples[j];
+                /* Calculate the surface normal by estimating the gradiant of
+                 * the scalar field at the cube vertices, and then
+                 * interpolating between the two gradiants. (see Lorensen,
+                 * "Marching Cubes: A High Resolution 3D Surface Construction
+                 * Algorihm") */
+                /* FIXME: I'm not so sure delta_x is the correct divisor */
+                gradiants[i].x =
+                  (samples[abs[0] + ((abs[0] < x_res - 1) ? 1 : 0)
+                           + abs[1] * x_res
+                           + ((sampleSliceIndex + pos[2]) % 4) * x_res * y_res]
+                   - samples[abs[0] - (abs[0] > 0 ? 1 : 0)
+                             + abs[1] * x_res
+                             + ((sampleSliceIndex + pos[2]) % 4) * x_res * y_res]
+                  ) / delta_x;
+                /* FIXME: I'm not so sure delta_y is the correct divisor */
+                gradiants[i].y =
+                  (samples[abs[0]
+                           + (abs[1] + ((abs[1] < y_res - 1) ? 1 : 0)) * x_res
+                           + ((sampleSliceIndex + pos[2]) % 4) * x_res * y_res]
+                   - samples[abs[0]
+                             + (abs[1] - (abs[1] > 0 ? 1 : 0)) * x_res
+                             + ((sampleSliceIndex + pos[2]) % 4) * x_res * y_res]
+                  ) / delta_y;
+                /* FIXME: I'm not so sure delta_z is the correct divisor */
+                gradiants[i].z =
+                  (samples[abs[0]
+                           + abs[1] * x_res
+                           + ((sampleSliceIndex + ((abs[2] < z_res - 1) ? 1 : 0)) % 4)
+                             * x_res * y_res]
+                   - samples[abs[0]
+                             + abs[1] * x_res
+                             + mod((sampleSliceIndex - (abs[2] > 0 ? 1 : 0)), 4)
+                               * x_res * y_res]
+                  ) / delta_z;
               }
               /* Interpolate between the sample values at each vertex */
               float weight = fabs(values[0] / (values[0] - values[1]));
@@ -278,40 +316,9 @@ void mcSimple_isosurfaceFromField(
                * lattice points, so we interpolate between these points. */
               mcVertex vertex;
               vertex.pos = mcVec3_lerp(&latticePos[0], &latticePos[1], weight);
-              /* Calculate the surface normal by estimating the gradiant of the
-               * scalar field from adjacent sample points. (see Lorensen,
-               * "Marching Cubes: A High Resolution 3D Surface Construction
-               * Algorihm") */
-              /* FIXME: I'm not so sure delta_x is the correct divisor */
-              vertex.norm.x =
-                (samples[x + ((x < x_res - 1) ? 1 : 0)
-                         + y * x_res
-                         + sampleSliceIndex * x_res * y_res]
-                 - samples[x - ((x > 0) ? 1 : 0)
-                           + y * x_res
-                           + sampleSliceIndex * x_res * y_res]
-                ) / delta_x;
-              /* FIXME: I'm not so sure delta_y is the correct divisor */
-              vertex.norm.y =
-                (samples[x
-                         + (y + ((y < y_res - 1) ? 1 : 0)) * x_res
-                         + sampleSliceIndex * x_res * y_res]
-                 - samples[x
-                           + (y - (y > 0 ? 1 : 0)) * x_res
-                           + sampleSliceIndex * x_res * y_res]
-                ) / delta_y;
-              /* FIXME: I'm not so sure delta_z is the correct divisor */
-              /* FIXME: I'm not sure why negating the z normal gives better results */
-              vertex.norm.z =
-                -(samples[x
-                         + y * x_res
-                         + ((sampleSliceIndex + ((z < z_res - 1) ? 1 : 0)) % 3)
-                           * x_res * y_res]
-                 - samples[x
-                           + y * x_res
-                           + mod((sampleSliceIndex - (z > 0 ? 1 : 0)), 3)
-                             * x_res * y_res]
-                ) / delta_z;
+              /* Interpolate between the gradiants to approximate the surface
+               * normal */
+              vertex.norm = mcVec3_lerp(&gradiants[0], &gradiants[1], weight);
               mcVec3_normalize(&vertex.norm);
               /* Add this vertex to the mesh */
               vertexIndices[edge] = mcMesh_addVertex(mesh, &vertex);

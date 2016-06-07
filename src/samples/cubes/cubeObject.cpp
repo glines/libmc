@@ -197,7 +197,7 @@ namespace mc {namespace samples { namespace cubes {
   }
 
   void CubeObject::m_generateDebugPoints(const Mesh *mesh) {
-    CubeScalarField sf(m_cube);
+    CubeScalarField sf(m_cube, m_intensity);
 
     // TODO: Generate points at cube vertices
     // TODO: Generate triangle points at edge intersections
@@ -218,10 +218,10 @@ namespace mc {namespace samples { namespace cubes {
               points[i].pos[2]);
           if (value >= 0.0f) {
             points[i].color[0] = 0.0f;
-            points[i].color[1] = value;
+            points[i].color[1] = 1.0f;
             points[i].color[2] = 0.0f;
           } else {
-            points[i].color[0] = -value;
+            points[i].color[0] = 1.0f;
             points[i].color[1] = 0.0f;
             points[i].color[2] = 0.0f;
           }

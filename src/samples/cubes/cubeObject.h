@@ -42,22 +42,29 @@ namespace mc { namespace samples {
         unsigned int m_cube;
         GLuint m_cubeWireframeVertices, m_cubeWireframeIndices,
                m_triangleWireframeVertices, m_triangleWireframeIndices,
-               m_surfaceNormalVertices, m_pointBuffer;
+               m_surfaceNormalVertices, m_pointBuffer,
+               m_vertexBuffer, m_indexBuffer;
         unsigned int m_numTriangles, m_numVertices, m_numPoints;
         unsigned int m_resX, m_resY, m_resZ;
         mcAlgorithmFlag m_algorithm;
-        bool m_isDrawScalarField;
+        bool m_isDrawScalarField, m_isDrawWireframe, m_isDrawOpaque;
         float m_intensity;
 
         void m_generateCubeWireframe();
         void m_generateTriangleWireframe(const Mesh *mesh);
         void m_generateSurfaceNormals(const Mesh *mesh);
         void m_generateDebugPoints(const Mesh *mesh);
+        void m_generateTriangles(const Mesh *mesh);
 
         void m_update();
 
-        static std::shared_ptr<ShaderProgram> m_pointShader();
-        static std::shared_ptr<ShaderProgram> m_wireframeShader();
+#define DECLARE_SHADER(shader) \
+        static std::shared_ptr<ShaderProgram> m_ ## shader ## Shader()
+
+        DECLARE_SHADER(point);
+        DECLARE_SHADER(wireframe);
+        DECLARE_SHADER(gouraud);
+        DECLARE_SHADER(phong);
 
         void m_drawCubeWireframe(
             const glm::mat4 &modelView,
@@ -71,11 +78,20 @@ namespace mc { namespace samples {
         void m_drawDebugPoints(
             const glm::mat4 &modelView,
             const glm::mat4 &projection) const;
+        void m_drawSurface(
+            const glm::mat4 &modelView,
+            const glm::mat4 &projection,
+            const glm::mat4 &modelViewProjection,
+            const glm::mat4 &normalTransform) const;
 
         typedef struct Vertex {
           float pos[3];
-          float color[3];
+          float norm[3];
         } Vertex;
+        typedef struct WireframeVertex {
+          float pos[3];
+          float color[3];
+        } WireframeVertex;
 
         class CubeScalarField : public ScalarField {
           private:

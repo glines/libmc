@@ -34,8 +34,13 @@ namespace mc { namespace samples {
    */
   class ShaderProgram {
     private:
+      // FIXME: Clean these up with a couple macros
+      // FIXME: Remove "Location" from all of these variables
       GLuint m_shaderProgram;
-      GLuint m_modelViewLocation, m_projectionLocation, m_timeLocation;
+      GLuint m_modelViewLocation, m_projectionLocation,
+             m_modelViewProjectionLocation, m_normalTransformLocation,
+             m_lightPositionLocation, m_lightIntensityLocation,
+             m_timeLocation;
       GLuint m_vertPositionLocation, m_vertNormalLocation, m_vertColorLocation,
              m_vertTexCoordLocation, m_vertVelocityLocation;
       GLuint m_vertStartTimeLocation;
@@ -60,6 +65,10 @@ namespace mc { namespace samples {
 
       GLuint modelViewLocation() const { return m_modelViewLocation; }
       GLuint projectionLocation() const { return m_projectionLocation; }
+      GLuint modelViewProjectionLocation() const { return m_modelViewProjectionLocation; }
+      GLuint normalTransformLocation() const { return m_normalTransformLocation; }
+      GLuint lightPositionLocation() const { return m_lightPositionLocation; }
+      GLuint lightIntensityLocation() const { return m_lightIntensityLocation; }
       GLuint timeLocation() const { return m_timeLocation; }
       GLuint vertPositionLocation() const { return m_vertPositionLocation; }
       GLuint vertNormalLocation() const { return m_vertNormalLocation; }

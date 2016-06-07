@@ -28,6 +28,10 @@
 #include <cstdlib>
 #include <glm/gtc/quaternion.hpp>
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
+
 extern "C" {
 #include <mc/algorithms/common/cube.h>
 }
@@ -95,7 +99,9 @@ void init_gl() {
   // Configure the GL
   glClearColor(0.0, 0.0, 0.0, 0.0);
   glClearDepth(1.0);
+  glEnable(GL_DEPTH_TEST);
   glDepthFunc(GL_LESS);
+  glDisable(GL_CULL_FACE);
   glViewport(0, 0, demo.window_width, demo.window_height);
 }
 
@@ -222,10 +228,14 @@ int main(int argc, char **argv) {
       new CubeObject(0x01, demo.res, demo.res, demo.res));
   demo.scene->addObject(demo.cubeObject);
 
+#ifdef __EMSCRIPTEN__
+  emscripten_set_main_loop(main_loop, 0, 1);
+#else
   while (1) {
     main_loop();
     // TODO: Wait for VSync? Or should we poll input faster than that?
   }
+#endif
 
   // TODO: Free SDL and GL resources
   delete demo.scene;

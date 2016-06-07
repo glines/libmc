@@ -136,6 +136,14 @@ namespace mc { namespace samples {
         m_shaderProgram, "modelView");
     m_projectionLocation = glGetUniformLocation(
         m_shaderProgram, "projection");
+    m_modelViewProjectionLocation = glGetUniformLocation(
+        m_shaderProgram, "modelViewProjection");
+    m_normalTransformLocation = glGetUniformLocation(
+        m_shaderProgram, "normalTransform");
+    m_lightPositionLocation = glGetUniformLocation(
+        m_shaderProgram, "lightPosition");
+    m_lightIntensityLocation = glGetUniformLocation(
+        m_shaderProgram, "lightIntensity");
     m_timeLocation = glGetUniformLocation(
         m_shaderProgram, "time");
 

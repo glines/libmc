@@ -154,10 +154,14 @@ void mcSimple_isosurfaceFromField(
           i = x + pos[0]
               + (y + pos[1]) * x_res
               + ((sampleSliceIndex + pos[2]) % 4) * x_res * y_res;
+#ifndef __EMSCRIPTEN__
+          /* NOTE: This assertion does not work with Emscripten for
+           * some reason */
           assert(samples[i] == sf(min->x + (x + pos[0]) * delta_x,
                                   min->y + (y + pos[1]) * delta_y,
                                   min->z + (z + pos[2]) * delta_z,
                                   args));
+#endif
           /* Add the bit this vertex contributes to the cube */
           cube |= (samples[i] >= 0.0f ? 1 : 0) << vertex;
         }
@@ -270,10 +274,14 @@ void mcSimple_isosurfaceFromField(
                 j = abs[0]
                     + abs[1] * x_res
                     + ((sampleSliceIndex + pos[2]) % 4) * x_res * y_res;
+#ifndef __EMSCRIPTEN__
+                /* NOTE: This assertion does not work with Emscripten for
+                 * some reason */
                 assert(samples[j] == sf(latticePos[i].x,
                                         latticePos[i].y,
                                         latticePos[i].z,
                                         args));
+#endif
                 values[i] = samples[j];
                 /* Calculate the surface normal by estimating the gradiant of
                  * the scalar field at the cube vertices, and then

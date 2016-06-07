@@ -112,7 +112,7 @@ void mcSimple_isosurfaceFromField(
   float *samples = (float*)malloc(sizeof(float) * x_res * y_res * 4);
   int sampleSliceIndex = 3;
   /* Initialize the sample buffer */
-  for (int z = 0; z < 4; ++z) {  /* XXX: z should only need to go to 1 */
+  for (int z = 0; z < 2; ++z) {
     for (int y = 0; y < y_res; ++y) {
       for (int x = 0; x < x_res; ++x) {
         int i = x + y * x_res + z * x_res * y_res;
@@ -121,12 +121,6 @@ void mcSimple_isosurfaceFromField(
             min->y + (float)y * delta_y,
             min->z + (float)z * delta_z,
             args);
-        if (z == 2) {  /* XXX */
-          samples[i] = 1000.0f;
-        }
-        if (z == 3) {  /* XXX */
-          samples[i] = 1000.0f;
-        }
       }
     }
   }

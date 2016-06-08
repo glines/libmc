@@ -23,22 +23,68 @@
 
 #include <assert.h>
 #include <math.h>
-#include <stdlib.h>
-#include <string.h>
+#include <stddef.h>
 
-#include <stdio.h> /* XXX */
+#include <mc/algorithms/common/cube.h>
 
 #include <mc/algorithms/common/surfaceNet.h>
-#include <mc/algorithms/cuberille/cuberille.h>
-#include <mc/mesh.h>
+
+#define max(a, b) ((a) > (b) ? (a) : (b))
+#define min(a, b) ((a) < (b) ? (a) : (b))
+#define squared(a) ((a) * (a))
+
+float mcElasticSurfaceNet_nodeEnergy(const mcSurfaceNode *node) {
+  float energy;
+  /* TODO: Sum up the square of the distance to each of our existing neighbors */
+  energy = 0.0f;
+  for (unsigned int i = 0; i < MC_CUBE_NUM_FACES; ++i) {
+    float distanceSquared;
+    mcSurfaceNode *neighbor;
+    neighbor = node->neighbors[i];
+    if (neighbor == NULL)
+      continue;
+    distanceSquared = squared(neighbor->oldPos.x - node->pos.x)
+      + squared(neighbor->oldPos.y - node->pos.y)
+      + squared(neighbor->oldPos.z - node->pos.z);
+    energy += distanceSquared;
+  }
+  return energy;
+}
+
+void mcElasticSurfaceNet_nodeNegihborsMidpoint(const mcSurfaceNode *node, mcVec3 *midpoint) {
+  int numNeighbors;
+  /* TODO: Average the position of all neighboring nodes */
+  numNeighbors = 0;
+  midpoint->x = 0.0f;
+  midpoint->y = 0.0f;
+  midpoint->z = 0.0f;
+  for (unsigned int i = 0; i < MC_CUBE_NUM_FACES; ++i) {
+    mcSurfaceNode *neighbor;
+    neighbor = node->neighbors[i];
+    if (neighbor == NULL)
+      continue;
+    numNeighbors += 1;
+    midpoint->x += neighbor->pos.x;
+    midpoint->y += neighbor->pos.y;
+    midpoint->z += neighbor->pos.z;
+  }
+  if (numNeighbors == 0) {
+    /* The midpoint is trivial for a node with no neighbors */
+    *midpoint = node->pos;
+    return;
+  }
+  midpoint->x /= (float)numNeighbors;
+  midpoint->y /= (float)numNeighbors;
+  midpoint->z /= (float)numNeighbors;
+}
 
 /**
- * Implementation of a simple "cuberille" isosurface extraction algorithm as
- * described by <https://0fps.net/2012/07/12/smooth-voxel-terrain-part-2/>.
- * This algorithm is the precursor to elastic surface nets and other "dual"
- * methods.
+ * This routine implements the Elastic Surface Net algorithm for extracting
+ * isosurfaces as described by Gibson. This method does not converge very
+ * quickly, and it does not necessarily follow the isosurface as closely as
+ * other methods, but it should produce evenly distributed vertices.
  */
-void mcCuberille_isosurfaceFromField(
+void mcElasticSurfaceNet_isosurfaceFromField(
     mcScalarFieldWithArgs sf, const void *args,
     unsigned int res_x, unsigned int res_y, unsigned int res_z,
     const mcVec3 *min, const mcVec3 *max,
@@ -56,9 +102,54 @@ void mcCuberille_isosurfaceFromField(
       sf, args,
       res_x, res_y, res_z,
       min, max);
-  fprintf(stderr, "numNodes: %d\n", surfaceNet.numNodes);
-  /* Now that we have the surface net, we generate a vertex for each surface
-   * node */
+  /* TODO: Iteratively relax the position of surface nodes to reduce the total
+   * energy between neighboring nodes */
+  /* TODO: Make the number of iterations configurable */
+  /* TODO: Automatically detect when the total energy is below a suitable threshold */
+  static const int MAX_ITERATIONS = 3000;
+  for (int i = 0; i < MAX_ITERATIONS; ++i) {
+    /* TODO: Record the current position of the surface nodes as their old
+     * positions */
+    mcSurfaceNet_updateOldPos(&surfaceNet);
+    /* TODO: We relax surface node positions by "nudging" surface nodes to
+     * reduce the measured energy between nodes. Energy is measured as the sum
+     * of the square distances between neighbors.
+     */
+    for (unsigned int j = 0; j < surfaceNet.numNodes; ++j) {
+      mcSurfaceNode *node;
+      mcVec3 initialPos, midpoint;
+      float initial, final;
+      node = mcSurfaceNet_getNode(&surfaceNet, j);
+      /* TODO: Measure the initial energy of this node */
+      initial = mcElasticSurfaceNet_nodeEnergy(node);
+      /* TODO: Nudge the node towards the centerpoint of its neighbor nodes */
+      mcElasticSurfaceNet_nodeNegihborsMidpoint(node, &midpoint);
+      const float WEIGHT = 0.001f;
+      node->pos.x = (1.0f - WEIGHT) * node->oldPos.x + WEIGHT * midpoint.x;
+      node->pos.y = (1.0f - WEIGHT) * node->oldPos.y + WEIGHT * midpoint.y;
+      node->pos.z = (1.0f - WEIGHT) * node->oldPos.z + WEIGHT * midpoint.z;
+      /* Restrict the new position to within the voxel cube */
+      node->pos.x = max(node->pos.x,
+          min->x + (float)node->latticePos[0] * delta_x);
+      node->pos.x = min(node->pos.x,
+          min->x + (float)(node->latticePos[0] + 1) * delta_x);
+      node->pos.y = max(node->pos.y,
+          min->y + (float)node->latticePos[1] * delta_y);
+      node->pos.y = min(node->pos.y,
+          min->y + (float)(node->latticePos[1] + 1) * delta_y);
+      node->pos.z = max(node->pos.z,
+          min->z + (float)node->latticePos[2] * delta_z);
+      node->pos.z = min(node->pos.z,
+          min->z + (float)(node->latticePos[2] + 1) * delta_z);
+      /* Measure the final energy of this node and compare */
+      final = mcElasticSurfaceNet_nodeEnergy(node);
+      if (final > initial) {
+        node->pos = initialPos;
+      }
+    }
+  }
+  /* Now that the vertices are in their final positions, we can add them to the
+   * mesh and generate vertex indices */
   mcFace_init(&triangle, 3);
   for (int i = 0; i < surfaceNet.numNodes; ++i) {
     mcSurfaceNode *node;
@@ -66,23 +157,14 @@ void mcCuberille_isosurfaceFromField(
     node = mcSurfaceNet_getNode(&surfaceNet, i);
     vertex.pos = node->pos;
     /* TODO: Calculate the surface normal */
-    /* NOTE: Since cubes have sharp corners, we need multiple vertices in
-     * strategic places in order to accurately represent the sharp angles.
-     * Corners require three vertices, edges require two vertices, and flat
-     * surfaces require only one vertex.
-     *
-     * TODO: In order to classify vertices, we can use a lookup table. For
-     * instance, given the two neighbors nodes that make a triangle, we can
-     * determine the direction the normal points. Given the neighbor
-     * connectivity in all 6 directions, we can determine the type of node
-     * (corner, edge, or flat) and also all of the normal directions we need to
-     * compute.
-     *
-     * TODO: There are many reasonable strategies for generating a cuberille
-     * mesh. We can generate triangles or quads.
-     */
-    /* Add the vertex for this node to the mesh */
     node->vertexIndex = mcMesh_addVertex(mesh, &vertex);
+    /* XXX: Draw a triangle here so we can tell where the vertices are going */
+    triangle.indices[0] = node->vertexIndex;
+    vertex.pos.x += delta_x * 0.1;
+    triangle.indices[1] = mcMesh_addVertex(mesh, &vertex);
+    vertex.pos.y += delta_y * 0.1;
+    triangle.indices[2] = mcMesh_addVertex(mesh, &vertex);
+    mcMesh_addFace(mesh, &triangle);
   }
   /* With the vertex indices generated, we can now generate triangles */
   for (int i = 0; i < surfaceNet.numNodes; ++i) {
@@ -167,7 +249,5 @@ void mcCuberille_isosurfaceFromField(
       mcMesh_addFace(mesh, &triangle);
     }
   }
-  /* Free our resources */
   mcFace_destroy(&triangle);
-  mcSurfaceNet_destroy(&surfaceNet);
 }

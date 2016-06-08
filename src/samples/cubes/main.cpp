@@ -229,8 +229,10 @@ int main(int argc, char **argv) {
         90.0f,  // fovy
         0.1f,  // near
         1000.0f,  // far
-        glm::vec3(0.0f, 0.0f, 2.0f),  // position
-        glm::quat(),  // orientation
+        glm::vec3(0.0f, -2.0f, 0.0f),  // position
+        glm::angleAxis(
+          (float)M_PI / 2.0f,
+          glm::vec3(1.0f, 0.0f, 0.0f)),  // orientation
         glm::vec3(0.0f, 0.0f, 0.0f)  // followPoint
         ));
   demo.res = 8;

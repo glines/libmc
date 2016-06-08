@@ -25,6 +25,7 @@
 #define MC_ALGORITHMS_COMMON_SURFACE_NET_H_
 
 #include <mc/vector.h>
+#include <mc/isosurfaceBuilder.h>  /* FIXME: This should be mc/scalarField.h */
 
 typedef enum mcSurfaceNodePos {
   MC_SURFACE_NODE_FRONT = 0,
@@ -76,6 +77,13 @@ typedef struct mcSurfaceNet {
 void mcSurfaceNet_init(mcSurfaceNet *self);
 
 void mcSurfaceNet_destroy(mcSurfaceNet *self);
+
+void mcSurfaceNet_build(mcSurfaceNet *self,
+    mcScalarFieldWithArgs sf, const void *args,
+    unsigned int res_x, unsigned int res_y, unsigned int res_z,
+    const mcVec3 *min, const mcVec3 *max);
+
+void mcSurfaceNet_updateOldPos(mcSurfaceNet *self);
 
 void mcSurfaceNet_growBlockPool(mcSurfaceNet *self);
 

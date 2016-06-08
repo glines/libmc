@@ -27,7 +27,7 @@
 
 #include <mc/algorithms/cuberille.h>
 #include <mc/algorithms/simple.h>
-#include <mc/algorithms/surfaceNet.h>
+#include <mc/algorithms/elasticSurfaceNet.h>
 #include <mc/isosurfaceBuilder.h>
 #include <mc/mesh.h>
 
@@ -131,7 +131,7 @@ const mcMesh *mcIsosurfaceBuilder_isosurfaceFromFieldWithArgs(
           mesh);
       break;
     case MC_ELASTIC_SURFACE_NETS:
-      mcSurfaceNet_isosurfaceFromField(
+      mcElasticSurfaceNet_isosurfaceFromField(
           sf, args,
           x_res, y_res, z_res,
           min, max,

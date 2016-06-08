@@ -715,11 +715,11 @@ namespace mc {namespace samples { namespace cubes {
     glm::mat4 modelViewProjection = projection * modelView;
     glm::mat4 normalTransform = glm::inverseTranspose(modelView);
 
-    if (m_isDrawWireframe) {
-      // Draw the cube wireframe
-      m_drawCubeWireframe(modelView, projection);
+    // Draw the cube wireframe
+    m_drawCubeWireframe(modelView, projection);
 
-      // Draw the isosurface triangles
+    if (m_isDrawWireframe) {
+      // Draw the isosurface triangles as a wireframe
       m_drawTriangleWireframe(modelView, projection);
     }
 

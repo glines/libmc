@@ -9,6 +9,7 @@ target_link_libraries(mc
     mc_algorithms_cuberille
     mc_algorithms_cubes33
     mc_algorithms_delaunay
+    mc_algorithms_elasticSurfaceNet
     mc_algorithms_simple
     mc_algorithms_snapmc
     mc_algorithms_surfaceNet

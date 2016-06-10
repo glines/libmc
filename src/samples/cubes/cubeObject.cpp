@@ -726,12 +726,18 @@ namespace mc {namespace samples { namespace cubes {
     // Draw the isosurface
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indexBuffer);
     ASSERT_GL_ERROR();
+    glEnable(GL_POLYGON_OFFSET_FILL);
+    ASSERT_GL_ERROR();
+    glPolygonOffset(1.0f, 1.0f);
+    ASSERT_GL_ERROR();
     glDrawElements(
         GL_TRIANGLES,  // mode
         m_numTriangles * 3,  // count
         GL_UNSIGNED_INT,  // type
         0  // indices
         );
+    ASSERT_GL_ERROR();
+    glDisable(GL_POLYGON_OFFSET_FILL);
     ASSERT_GL_ERROR();
   }
 

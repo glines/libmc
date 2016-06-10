@@ -248,36 +248,36 @@ void computeReverseEdgeRotationTable(
   }
 }
 
-void printCubeCharTable(const unsigned int *table) {
+void printCubeCharTable(const unsigned int *table, FILE *fp) {
   /* Iterate over all possible cube configurations and print the table */
   for (unsigned int cube = 0; cube <= 0xff; cube += 8) {
-    fprintf(stdout, "  ");
+    fprintf(fp, "  ");
     for (unsigned int i = 0; i < 8; ++i) {
-      fprintf(stdout, "0x%02x,", table[cube + i]);
+      fprintf(fp, "0x%02x,", table[cube + i]);
       if (i == 7)
-        fprintf(stdout, "\n");
+        fprintf(fp, "\n");
       else
-        fprintf(stdout, " ");
+        fprintf(fp, " ");
     }
   }
 }
 
-void printCubeIntTable(const unsigned int *table) {
+void printCubeIntTable(const unsigned int *table, FILE *fp) {
   /* Same routine as printCubeCharTable(), except for printing integers */
   /* Iterate over all possible cube configurations and print the table */
   for (unsigned int cube = 0; cube <= 0xff; cube += 4) {
-    fprintf(stdout, "  ");
+    fprintf(fp, "  ");
     for (unsigned int i = 0; i < 4; ++i) {
-      fprintf(stdout, "0x%08x,", table[cube + i]);
+      fprintf(fp, "0x%08x,", table[cube + i]);
       if (i == 3)
-        fprintf(stdout, "\n");
+        fprintf(fp, "\n");
       else
-        fprintf(stdout, " ");
+        fprintf(fp, " ");
     }
   }
 }
 
-void printRotationTable(int axis, const unsigned int *table) {
+void printRotationTable(int axis, const unsigned int *table, FILE *fp) {
   const char *axisStr;
   switch (axis) {
     case X_AXIS:
@@ -290,36 +290,36 @@ void printRotationTable(int axis, const unsigned int *table) {
       axisStr = "Z";
       break;
   }
-  fprintf(stdout, "static const unsigned int mcCubeRotationTable%s[] = {\n",
+  fprintf(fp, "const unsigned int mcCubeRotationTable%s[] = {\n",
       axisStr);
-  printCubeCharTable(table);
-  fprintf(stdout, "};\n");
+  printCubeCharTable(table, fp);
+  fprintf(fp, "};\n");
 }
 
-void printCanonicalOrientationList(const unsigned int *list) {
-  fprintf(stdout, "typedef enum mcCubeCanonicalOrientation {\n");
+void printCanonicalOrientationList(const unsigned int *list, FILE *fp) {
+  fprintf(fp, "typedef enum mcCubeCanonicalOrientation {\n");
   for (int i = 0; i < 15; ++i) {
-    fprintf(stdout, "  MC_CUBE_CANONICAL_ORIENTATION_%d = 0x%02x,\n", i, list[i]);
+    fprintf(fp, "  MC_CUBE_CANONICAL_ORIENTATION_%d = 0x%02x,\n", i, list[i]);
   }
-  fprintf(stdout, "} mcCubeCanonicalOrientation;\n");
+  fprintf(fp, "} mcCubeCanonicalOrientation;\n");
 }
 
-void printCanonicalOrientationTable(const unsigned int *table) {
-  fprintf(stdout,
-      "static const unsigned int mcCubeCanonicalOrientationTable[] = {\n");
-  printCubeCharTable(table);
-  fprintf(stdout, "};\n");
+void printCanonicalOrientationTable(const unsigned int *table, FILE *fp) {
+  fprintf(fp,
+      "const unsigned int mcCubeCanonicalOrientationTable[] = {\n");
+  printCubeCharTable(table, fp);
+  fprintf(fp, "};\n");
 }
 
-void printCanonicalRotationTable(const unsigned int *table) {
-  fprintf(stdout,
-      "static const unsigned int mcCubeCanonicalRotationTable[] = {\n");
-  printCubeIntTable(table);
-  fprintf(stdout, "};\n");
+void printCanonicalRotationTable(const unsigned int *table, FILE *fp) {
+  fprintf(fp,
+      "const unsigned int mcCubeCanonicalRotationTable[] = {\n");
+  printCubeIntTable(table, fp);
+  fprintf(fp, "};\n");
 }
 
 void printEdgeRotationTable(
-    int axis, int reverse, const unsigned int *table)
+    int axis, int reverse, const unsigned int *table, FILE *fp)
 {
   const char *axisStr, *reverseStr;
   switch (axis) {
@@ -337,14 +337,25 @@ void printEdgeRotationTable(
     reverseStr = "Reverse";
   else 
     reverseStr = "";
-  fprintf(stdout,
-      "static const unsigned int mcCubeEdge%sRotationTable%s[] = {\n",
+  fprintf(fp,
+      "const unsigned int mcCubeEdge%sRotationTable%s[] = {\n",
       reverseStr, axisStr);
   for (int i = 0; i < MC_CUBE_NUM_EDGES; ++i) {
-    fprintf(stdout, "  %2d, /* Edge %d */\n", table[i], i);
+    fprintf(fp, "  %2d, /* Edge %d */\n", table[i], i);
   }
-  fprintf(stdout, "};\n");
+  fprintf(fp, "};\n");
 }
+
+void print_usage() {
+  fprintf(stderr,
+      "Usage:\n"
+      "generate_cube_tables [cube_tables.c|canonical_cube_orientations.h]\n");
+}
+
+typedef enum TableFile {
+  CUBE_TABLES_C,
+  CANONICAL_CUBE_ORIENTATIONS_H,
+} TableFile;
 
 /**
  * This program generates the tables needed to quickly rotate a cube
@@ -353,6 +364,7 @@ void printEdgeRotationTable(
  * table, which can orient any cube in a canonical manner.
  */
 int main(int argc, char **argv) {
+  TableFile tableFile;
   /* Allocate stack memory for each table */
   unsigned int x_table[256], y_table[256], z_table[256],
                canonical_list[15], canonical_table[256],
@@ -363,6 +375,20 @@ int main(int argc, char **argv) {
                x_reverse_edge_table[MC_CUBE_NUM_EDGES],
                y_reverse_edge_table[MC_CUBE_NUM_EDGES],
                z_reverse_edge_table[MC_CUBE_NUM_EDGES];
+
+  /* Parse command line arguments to determine which table we are generating */
+  if (argc != 2) {
+    print_usage();
+    return EXIT_FAILURE;
+  }
+  if (strcmp(argv[1], "cube_tables.c") == 0) {
+    tableFile = CUBE_TABLES_C;
+  } else if (strcmp(argv[1], "canonical_cube_orientations.h") == 0) {
+    tableFile = CANONICAL_CUBE_ORIENTATIONS_H;
+  } else {
+    print_usage();
+    return EXIT_FAILURE;
+  }
 
   /* Compute the X, Y, and Z rotation tables */
   computeRotationTable(X_AXIS, x_table);
@@ -386,29 +412,50 @@ int main(int argc, char **argv) {
   computeReverseEdgeRotationTable(z_edge_table, z_reverse_edge_table);
 
   /* Print the tables */
-  printRotationTable(X_AXIS, x_table);
-  fprintf(stdout, "\n");
-  printRotationTable(Y_AXIS, y_table);
-  fprintf(stdout, "\n");
-  printRotationTable(Z_AXIS, z_table);
-  fprintf(stdout, "\n");
-  printCanonicalOrientationList(canonical_list);
-  fprintf(stdout, "\n");
-  printCanonicalOrientationTable(canonical_table);
-  fprintf(stdout, "\n");
-  printCanonicalRotationTable(canonical_rotation_table);
-  fprintf(stdout, "\n");
-  printEdgeRotationTable(X_AXIS, 0, x_edge_table);
-  fprintf(stdout, "\n");
-  printEdgeRotationTable(Y_AXIS, 0, y_edge_table);
-  fprintf(stdout, "\n");
-  printEdgeRotationTable(Z_AXIS, 0, z_edge_table);
-  fprintf(stdout, "\n");
-  printEdgeRotationTable(X_AXIS, 1, x_reverse_edge_table);
-  fprintf(stdout, "\n");
-  printEdgeRotationTable(Y_AXIS, 1, y_reverse_edge_table);
-  fprintf(stdout, "\n");
-  printEdgeRotationTable(Z_AXIS, 1, z_reverse_edge_table);
+  /* NOTE: stdout is used because Emscripten's filesystem model makes using
+   * fopen() difficult */
+  switch (tableFile) {
+    case CUBE_TABLES_C:
+      {
+        /* Print the tables */
+        printRotationTable(X_AXIS, x_table, stdout);
+        fprintf(stdout, "\n");
+        printRotationTable(Y_AXIS, y_table, stdout);
+        fprintf(stdout, "\n");
+        printRotationTable(Z_AXIS, z_table, stdout);
+        fprintf(stdout, "\n");
+        printCanonicalOrientationTable(canonical_table, stdout);
+        fprintf(stdout, "\n");
+        printCanonicalRotationTable(canonical_rotation_table, stdout);
+        fprintf(stdout, "\n");
+        printEdgeRotationTable(X_AXIS, 0, x_edge_table, stdout);
+        fprintf(stdout, "\n");
+        printEdgeRotationTable(Y_AXIS, 0, y_edge_table, stdout);
+        fprintf(stdout, "\n");
+        printEdgeRotationTable(Z_AXIS, 0, z_edge_table, stdout);
+        fprintf(stdout, "\n");
+        printEdgeRotationTable(X_AXIS, 1, x_reverse_edge_table, stdout);
+        fprintf(stdout, "\n");
+        printEdgeRotationTable(Y_AXIS, 1, y_reverse_edge_table, stdout);
+        fprintf(stdout, "\n");
+        printEdgeRotationTable(Z_AXIS, 1, z_reverse_edge_table, stdout);
+      }
+      break;
+    case CANONICAL_CUBE_ORIENTATIONS_H:
+      {
+        /* We need to put the enumeration of canonical cube orientations in a
+         * separate file because it is not possible to link enum types into object
+         * files. */
+        /* Print the include guard */
+        fprintf(stdout,
+            "#ifndef MC_ALGORITHMS_COMMON_CANONICAL_CUBE_ORIENTATIONS_H_\n"
+            "#define MC_ALGORITHMS_COMMON_CANONICAL_CUBE_ORIENTATIONS_H_\n\n");
+        printCanonicalOrientationList(canonical_list, stdout);
+        /* Print the include guard */
+        fprintf(stdout, "\n#endif\n");
+      }
+      break;
+  }
 
   return EXIT_SUCCESS;
 }

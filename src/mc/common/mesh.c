@@ -72,6 +72,9 @@ void mcMesh_init(
   self->faces = malloc(sizeof(mcFace) * INIT_SIZE_FACES);
   self->sizeFaces = INIT_SIZE_FACES;
   self->numFaces = 0;
+  self->numIndices = 0;
+  /* A mesh with no faces is a trivial triangle mesh */
+  self->isTriangleMesh = 1;
 }
 
 void mcMesh_destroy(
@@ -137,4 +140,10 @@ void mcMesh_addFace(
   /* TODO: This mcFace_copy can be replaced with mcFace_move? No... that's a
    * bad idea. surfaceNet.c relies on this being copied. */
   mcFace_copy(&self->faces[self->numFaces++], face);
+  /* Increment the total number of face indices in the mesh */
+  self->numIndices += face->numIndices;
+  /* Check if we are still a triangle mesh */
+  if (face->numIndices != 3) {
+    self->isTriangleMesh = 0;
+  }
 }

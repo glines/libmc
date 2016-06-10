@@ -2,24 +2,28 @@ add_executable(generate_cube_tables
     cube_definitions.c
     generate_cube_tables.c
     )
-if(DEFINED ENV{EMSCRIPTEN})
-  add_custom_target(cube_tables.h
-      COMMAND node generate_cube_tables.js > cube_tables.h
-      )
-else()
-  add_custom_target(cube_tables.h
-      COMMAND generate_cube_tables > cube_tables.h
-      )
-endif()
-add_dependencies(cube_tables.h generate_cube_tables)
+foreach(table_file cube_tables.c canonical_cube_orientations.h)
+  if(DEFINED ENV{EMSCRIPTEN})
+    add_custom_target(${table_file}
+        COMMAND node generate_cube_tables.js ${table_file} > ${table_file}
+        )
+  else()
+    add_custom_target(${table_file}
+        COMMAND generate_cube_tables ${table_file} > ${table_file}
+        )
+  endif()
+  add_dependencies(${table_file} generate_cube_tables)
+endforeach(table_file)
 
-# TODO: Move the routines from mc_algorithms_simple to this library
 add_library(mc_algorithms_common STATIC
     cube.c
     cube_definitions.c
     surfaceNet.c
     )
-add_dependencies(mc_algorithms_common cube_tables.h)
+add_dependencies(mc_algorithms_common
+    canonical_cube_orientations.h
+    cube_tables.c
+    )
 target_include_directories(mc_algorithms_common SYSTEM
     PRIVATE "${CMAKE_SOURCE_DIR}/include"
     )

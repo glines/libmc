@@ -43,7 +43,7 @@ namespace mc {namespace samples { namespace cubes {
       const glm::vec3 &position,
       const glm::quat &orientation)
     : SceneObject(position, orientation),
-      m_isDrawScalarField(false), m_isDrawWireframe(false),
+      m_isDrawScalarField(false), m_isDrawWireframe(true),
       m_isDrawNormals(false), m_isDrawOpaque(true),
       m_resX(res_x), m_resY(res_y), m_resZ(res_z), m_algorithm(algorithm),
       m_intensity(1.0f)
@@ -56,9 +56,9 @@ namespace mc {namespace samples { namespace cubes {
     m_generateCubeWireframe();
 
     // Initialize the cube and send isosurface triangles, etc. to the GL
-    glGenBuffers(1, &m_triangleWireframeVertices);
+    glGenBuffers(1, &m_wireframeVertices);
     FORCE_ASSERT_GL_ERROR();
-    glGenBuffers(1, &m_triangleWireframeIndices);
+    glGenBuffers(1, &m_wireframeIndices);
     FORCE_ASSERT_GL_ERROR();
     glGenBuffers(1, &m_surfaceNormalVertices);
     FORCE_ASSERT_GL_ERROR();
@@ -114,7 +114,7 @@ namespace mc {namespace samples { namespace cubes {
     FORCE_ASSERT_GL_ERROR();
   }
 
-  void CubeObject::m_generateTriangleWireframe(const Mesh *mesh) {
+  void CubeObject::m_generateWireframe(const Mesh *mesh) {
     // Copy the vertices from the mesh
     WireframeVertex *vertices = new WireframeVertex[mesh->numVertices()];
     /* TODO: Get this loop working
@@ -136,7 +136,7 @@ namespace mc {namespace samples { namespace cubes {
       vertices[i].color[2] = 1.0f;
     }
     // Send the vertices to the GL
-    glBindBuffer(GL_ARRAY_BUFFER, m_triangleWireframeVertices);
+    glBindBuffer(GL_ARRAY_BUFFER, m_wireframeVertices);
     FORCE_ASSERT_GL_ERROR();
     glBufferData(
         GL_ARRAY_BUFFER,  // target
@@ -146,28 +146,29 @@ namespace mc {namespace samples { namespace cubes {
         );
     FORCE_ASSERT_GL_ERROR();
     delete[] vertices;
-    // Copy the triangle indices from the mesh
-    unsigned int *indices = new unsigned int[mesh->numFaces() * 3 * 2];
+    unsigned int *indices = new unsigned int[mesh->numIndices() * 2];
+    unsigned int currentIndex = 0;
+    // Copy the face indices from the mesh
     for (unsigned int i = 0; i < mesh->numFaces(); ++i) {
       auto face = mesh->face(i);
-      assert(face.numIndices == 3);
-      for (unsigned int j = 0; j < 3; ++j) {
-        indices[i * 3 * 2 + j * 2] = face.indices[j];
-        indices[i * 3 * 2 + j * 2 + 1] = face.indices[(j + 1) % 3];
+      for (unsigned int j = 0; j < face.numIndices; ++j) {
+        indices[currentIndex++] = face.indices[j];
+        indices[currentIndex++] = face.indices[(j + 1) % face.numIndices];
       }
     }
     fprintf(stderr, "mesh->numFaces(): %d\n", mesh->numFaces());
     // Send the triangle indices to the GL
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_triangleWireframeIndices);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_wireframeIndices);
     FORCE_ASSERT_GL_ERROR();
     glBufferData(
         GL_ELEMENT_ARRAY_BUFFER,  // target
-        sizeof(unsigned int) * mesh->numFaces() * 3 * 2,  // size
+        sizeof(unsigned int) * mesh->numIndices() * 2,  // size
         indices,  // data
         GL_STATIC_DRAW  // usage
         );
     FORCE_ASSERT_GL_ERROR();
     delete[] indices;
+    m_numWireframeLines = mesh->numIndices();
   }
 
   void CubeObject::m_generateSurfaceNormals(const Mesh *mesh) {
@@ -273,12 +274,41 @@ namespace mc {namespace samples { namespace cubes {
     FORCE_ASSERT_GL_ERROR();
     delete[] vertices;
     // Copy the triangle indices from the mesh to a buffer
-    unsigned int *indices = new unsigned int [mesh->numFaces() * 3];
+    unsigned int numIndices;
+    if (mesh->isTriangleMesh()) {
+      numIndices = mesh->numFaces() * 3;
+    } else {
+      // Determine how many indices are needed in order to triangulate this
+      // mesh
+      numIndices = 0;
+      for (int i = 0; i < mesh->numFaces(); ++i) {
+        auto face = mesh->face(i);
+        assert(face.numIndices >= 3);
+        numIndices += 3 + (face.numIndices - 3) * 3;
+      }
+    }
+    unsigned int *indices = new unsigned int [numIndices];
+    unsigned int currentIndex = 0;
+    m_numTriangles = 0;
     for (int i = 0; i < mesh->numFaces(); ++i) {
-      auto triangle = mesh->face(i);
-      assert(triangle.numIndices == 3);
-      for (int j = 0; j < triangle.numIndices; ++j) {
-        indices[i * 3 + j] = triangle.indices[j];
+      auto face = mesh->face(i);
+      assert(face.numIndices >= 3);
+      for (int j = 0; j < 3; ++j) {
+        assert(currentIndex < numIndices);
+        indices[currentIndex++] = face.indices[j];
+      }
+      m_numTriangles += 1;
+      for (int j = 3; j < face.numIndices; ++j) {
+        /* Draw the remaining parts of the face with a triangle fan. This might
+         * not make optimal geometry, but this is acceptable for a debugging
+         * program. */
+        assert(currentIndex < numIndices);
+        indices[currentIndex++] = face.indices[0];
+        assert(currentIndex < numIndices);
+        indices[currentIndex++] = face.indices[j - 1];
+        assert(currentIndex < numIndices);
+        indices[currentIndex++] = face.indices[j];
+        m_numTriangles += 1;
       }
     }
     // Send the indices to the GL
@@ -286,7 +316,7 @@ namespace mc {namespace samples { namespace cubes {
     FORCE_ASSERT_GL_ERROR();
     glBufferData(
         GL_ELEMENT_ARRAY_BUFFER,  // target
-        sizeof(unsigned int) * mesh->numFaces() * 3,  // size
+        sizeof(unsigned int) * numIndices,  // size
         indices,  // data
         GL_STATIC_DRAW  // usage
         );
@@ -304,13 +334,12 @@ namespace mc {namespace samples { namespace cubes {
         Vec3(1.0f, 1.0f, 1.0f)  // max
         );
     m_numVertices = mesh->numVertices();
-    m_numTriangles = mesh->numFaces();
 
     // Generate point data to send to the GL for visual debugging
     m_generateDebugPoints(mesh);
 
     // Generate triangle wireframe data and send it to the GL
-    m_generateTriangleWireframe(mesh);
+    m_generateWireframe(mesh);
 
     // Generate surface normal lines and send them to the GL
     m_generateSurfaceNormals(mesh);
@@ -409,7 +438,7 @@ namespace mc {namespace samples { namespace cubes {
     ASSERT_GL_ERROR();
   }
 
-  void CubeObject::m_drawTriangleWireframe(
+  void CubeObject::m_drawWireframe(
       const glm::mat4 &modelView,
       const glm::mat4 &projection) const
   {
@@ -436,7 +465,7 @@ namespace mc {namespace samples { namespace cubes {
     ASSERT_GL_ERROR();
 
     // Prepare the vertex attributes
-    glBindBuffer(GL_ARRAY_BUFFER, m_triangleWireframeVertices);
+    glBindBuffer(GL_ARRAY_BUFFER, m_wireframeVertices);
     ASSERT_GL_ERROR();
     assert(shader->vertPositionLocation() != -1);
     glEnableVertexAttribArray(shader->vertPositionLocation());
@@ -464,13 +493,13 @@ namespace mc {namespace samples { namespace cubes {
     ASSERT_GL_ERROR();
 
     // Draw the wireframe lines
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_triangleWireframeIndices);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_wireframeIndices);
     ASSERT_GL_ERROR();
     glLineWidth(1.0f);
     ASSERT_GL_ERROR();
     glDrawElements(
         GL_LINES,  // mode
-        m_numTriangles * 3 * 2,  // count
+        m_numWireframeLines * 2,  // count
         GL_UNSIGNED_INT,  // type
         0  // indices
         );
@@ -720,7 +749,7 @@ namespace mc {namespace samples { namespace cubes {
 
     if (m_isDrawWireframe) {
       // Draw the isosurface triangles as a wireframe
-      m_drawTriangleWireframe(modelView, projection);
+      m_drawWireframe(modelView, projection);
     }
 
     if (m_isDrawNormals) {

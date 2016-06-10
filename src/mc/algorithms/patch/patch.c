@@ -23,38 +23,28 @@
 
 #include <assert.h>
 #include <math.h>
+#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include <mc/algorithms/common/cube.h>
-#include <mc/isosurfaceBuilder.h>
-#include <mc/mesh.h>
+#include <mc/algorithms/patch/common.h>
+#include <mc/algorithms/simple/simple_tables.h>
 
-#include "simple_tables.c"
+#include <mc/algorithms/patch/patch.h>
 
-#define max(a, b) ((a) > (b) ? (a) : (b))
+#include "patch_tables.c"
 
 #define mod(a, b) ((a) % (b) < 0 ? (a) % (b) + (b) : (a) % (b))
 
-/**
- * This file implements the simple marching cubes algorithm as described by
- * Lorensen in "Marching Cubes: A high Resolution 3D Surface Construction
- * Algorithm"
- */
-
-void mcSimple_isosurfaceFromLattice(mcScalarLattice sl) {
-}
-
 /* NOTE: This algorithm is nearly identical to the algorithm in
- * src/mc/algorithms/patch/patch.c. Any changes to this algorithm should be
+ * src/mc/algorithms/simple/simple.c. Any changes to this algorithm should be
  * reflected in the other one. */
-void mcSimple_isosurfaceFromField(
+void mcPatch_isosurfaceFromField(
     mcScalarFieldWithArgs sf, const void *args,
     unsigned int x_res, unsigned int y_res, unsigned int z_res,
     const mcVec3 *min, const mcVec3 *max,
     mcMesh *mesh)
 {
-  /* TODO: Support sub-lattice structures (for divide-and-conquer) */
   float delta_x = fabs(max->x - min->x) / (float)(x_res - 1);
   float delta_y = fabs(max->y - min->y) / (float)(y_res - 1);
   float delta_z = fabs(max->z - min->z) / (float)(z_res - 1);
@@ -182,6 +172,8 @@ void mcSimple_isosurfaceFromField(
          * than iterating over all possible edges. */
         for (int edge = 0; edge < MC_CUBE_NUM_EDGES; ++edge) {
           vertexIndices[edge] = -1;
+          /* FIXME: It might be better to access mcsimple_edgeTable through a
+           * function call */
           if (mcSimple_edgeTable[cube].edges[edgeTableIndex] == edge) {
             /* This edge intersection must exist. We will either find it in one
              * of our buffers or compute it ourselves. */
@@ -371,18 +363,21 @@ void mcSimple_isosurfaceFromField(
               break;
           }
         }
-        /* Look in the triangulation table for the triangles corresponding to
-         * this cube configuration. */
-        for (int j = 0; j < MC_SIMPLE_MAX_TRIANGLES; ++j) {
+        /* Look in the patch table for the patches corresponding to this cube
+         * configuration. */
+        for (int i = 0; i < MC_PATCH_MAX_PATCHES; ++i) {
           mcFace face;
-          if (mcSimple_triangulationTable[cube].triangles[j].edges[0] == -1)
-            break;  /* No more triangles */
-          mcFace_init(&face, 3);
-          mcSimpleTriangle triangle =
-            mcSimple_triangulationTable[cube].triangles[j];
-          face.indices[0] = vertexIndices[triangle.edges[0]];
-          face.indices[1] = vertexIndices[triangle.edges[1]];
-          face.indices[2] = vertexIndices[triangle.edges[2]];
+          const mcPatch_Patch *patch = &mcPatch_patchTable[cube].patches[i];
+          fprintf(stderr, "patch->numEdgeIntersections: %d\n", patch->numEdgeIntersections);
+          if (patch->numEdgeIntersections == 0)
+            break;  /* No more patches */
+          /* Add the vertex indices to the face */
+          mcFace_init(&face, patch->numEdgeIntersections);
+          for (int j = 0; j < patch->numEdgeIntersections; ++j) {
+            if (patch->edgeIntersections[j] == -1)
+              break;
+            face.indices[j] = vertexIndices[patch->edgeIntersections[j]];
+          }
           mcMesh_addFace(mesh, &face);
           mcFace_destroy(&face);
         }

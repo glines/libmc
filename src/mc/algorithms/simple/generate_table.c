@@ -29,7 +29,7 @@
 #include <mc/algorithms/common/cube.h>
 #include <mc/algorithms/simple/common.h>
 
-#include "../common/cube_tables.h"
+#include "../common/canonical_cube_orientations.h"
 
 #define get_byte(num, byte) (((num) & (0xff << (8 * byte))) >> (8 * byte))
 
@@ -202,10 +202,10 @@ void computeTriangleList(
     case MC_CUBE_CANONICAL_ORIENTATION_12:
       /* This configuration has three samples under the isosurface in an "L"
        * shape, and a fourth sample apart from the other three. */
-      make_triangle(4, 7, 8);
       make_triangle(0, 3, 10);
       make_triangle(0, 10, 9);
       make_triangle(9, 10, 11);
+      make_triangle(4, 7, 8);
       break;
     case MC_CUBE_CANONICAL_ORIENTATION_13:
       /* This is the case with two quads facing each other. Two ambiguous edges
@@ -224,16 +224,6 @@ void computeTriangleList(
       make_triangle(5, 11, 6);
       break;
   }
-  fprintf(stderr, "triangleList before: {\n");
-  for (int i = 0; i < MC_SIMPLE_MAX_TRIANGLES; ++i) {
-    fprintf(stderr, "  { ");
-    for (int j = 0; j < 3; ++j) {
-      fprintf(stderr, "%2d, ",
-          triangleList->triangles[i].edges[j]);
-    }
-    fprintf(stderr, "}, \n");
-  }
-  fprintf(stderr, "}\n");
 
   /* Rotate the canonical triangles back into our cube's orientation */
   for (int i = 0; i < MC_SIMPLE_MAX_TRIANGLES; ++i) {
@@ -300,26 +290,20 @@ void printTriangulationTable(
   for (unsigned int cube = 0; cube <= 0xFF; ++cube) {
     fprintf(stdout,
         "  { .triangles = \n"
-        "    {\n"
-        "      { .edges = { %d, %d, %d } },\n"
-        "      { .edges = { %d, %d, %d } },\n"
-        "      { .edges = { %d, %d, %d } },\n"
-        "      { .edges = { %d, %d, %d } },\n"
+        "    {\n");
+    for (unsigned int i = 0; i < MC_SIMPLE_MAX_TRIANGLES; ++i) {
+      fprintf(stdout,
+          "      { .edges = { ");
+      for (unsigned int j = 0; j < 3; ++j) {
+        fprintf(stdout,
+            "%d, ",
+            triangulationTable[cube].triangles[i].edges[j]);
+      }
+      fprintf(stdout, "} },\n");
+    }
+    fprintf(stdout,
         "    },\n"
-        "  },\n",
-        triangulationTable[cube].triangles[0].edges[0],
-        triangulationTable[cube].triangles[0].edges[1],
-        triangulationTable[cube].triangles[0].edges[2],
-        triangulationTable[cube].triangles[1].edges[0],
-        triangulationTable[cube].triangles[1].edges[1],
-        triangulationTable[cube].triangles[1].edges[2],
-        triangulationTable[cube].triangles[2].edges[0],
-        triangulationTable[cube].triangles[2].edges[1],
-        triangulationTable[cube].triangles[2].edges[2],
-        triangulationTable[cube].triangles[3].edges[0],
-        triangulationTable[cube].triangles[3].edges[1],
-        triangulationTable[cube].triangles[3].edges[2]
-        );
+        "  },\n");
   }
   fprintf(stdout,
       "};\n");
@@ -345,25 +329,6 @@ int main(int argc, char **argv) {
 
     /* Compute the triangulation list for this configuration */
     computeTriangleList(cube, &triangulationTable[cube]);
-
-    fprintf(stderr, "cube: 0x%02x\n", cube);
-    fprintf(stderr, "edgeList: { ");
-    for (int i = 0; i < MC_CUBE_NUM_EDGES; ++i) {
-      fprintf(stderr, "%2d", edgeTable[cube].edges[i]);
-      if (i != MC_CUBE_NUM_EDGES - 1)
-        fprintf(stderr, ", ");
-    }
-    fprintf(stderr, " } \n");
-    fprintf(stderr, "triangleList: {\n");
-    for (int i = 0; i < MC_SIMPLE_MAX_TRIANGLES; ++i) {
-      fprintf(stderr, "  { ");
-      for (int j = 0; j < 3; ++j) {
-        fprintf(stderr, "%2d, ",
-            triangulationTable[cube].triangles[i].edges[j]);
-      }
-      fprintf(stderr, "}, \n");
-    }
-    fprintf(stderr, "}\n");
 
 #ifndef NDEBUG
     /* Ensure that the edge and triangulation tables agree */
@@ -393,12 +358,12 @@ int main(int argc, char **argv) {
 
   /* Print the edge table */
   printEdgeTable(edgeTable);
-
   fprintf(stdout, "\n");
 
   /* Print the triangulation table */
   printTriangulationTable(triangulationTable);
 
+  /* Free our resources */
   free(edgeTable);
   free(triangulationTable);
 }

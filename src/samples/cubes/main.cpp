@@ -149,6 +149,9 @@ void main_loop() {
           case SDLK_c:
             demo.cubeObject->setAlgorithm(MC_CUBERILLE);
             break;
+          case SDLK_p:
+            demo.cubeObject->setAlgorithm(MC_PATCH_MARCHING_CUBES);
+            break;
 #define INTENSITY_DELTA 0.1f
           case SDLK_COMMA:
             demo.cubeObject->setIntensity(

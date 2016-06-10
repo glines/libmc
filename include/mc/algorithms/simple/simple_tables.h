@@ -21,62 +21,12 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef MC_MESH_H_
-#define MC_MESH_H_
+#ifndef MC_ALGORITHMS_SIMPLE_SIMPLE_TABLES_H_
+#define MC_ALGORITHMS_SIMPLE_SIMPLE_TABLES_H_
 
-#include "vector.h"
+#include <mc/algorithms/simple/common.h>
 
-typedef struct mcVertex {
-  mcVec3 pos;
-  mcVec3 norm;
-} mcVertex;
-
-typedef struct mcFace {
-  unsigned int *indices;
-  unsigned int numIndices;
-} mcFace;
-
-void mcFace_init(
-    mcFace *self,
-    unsigned int numIndices);
-
-void mcFace_copy(
-    mcFace *self,
-    const mcFace *other);
-
-void mcFace_move(
-    mcFace *self,
-    mcFace *other);
-
-void mcFace_destroy(
-    mcFace *self);
-
-typedef struct mcMesh {
-  mcVertex *vertices;
-  mcFace *faces;
-  unsigned int numVertices, numFaces, numIndices;
-  unsigned int sizeVertices, sizeFaces;
-  int isTriangleMesh;
-} mcMesh;
-
-void mcMesh_init(
-    mcMesh *self);
-
-void mcMesh_destroy(
-    mcMesh *self);
-
-void mcMesh_growVertices(
-    mcMesh *self);
-
-void mcMesh_growFaces(
-    mcMesh *self);
-
-unsigned int mcMesh_addVertex(
-    mcMesh *self,
-    const mcVertex *vertex);
-
-void mcMesh_addFace(
-    mcMesh *self,
-    const mcFace *face);
+extern const mcSimpleEdgeList mcSimple_edgeTable[];
+extern const mcSimpleTriangleList mcSimple_triangulationTable[];
 
 #endif

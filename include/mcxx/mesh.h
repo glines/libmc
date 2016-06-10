@@ -42,6 +42,10 @@ namespace mc {
 
       unsigned int numFaces() const { return m_internal->numFaces; }
       const mcFace &face(unsigned int i) const { return m_internal->faces[i]; }
+
+      unsigned int numIndices() const { return m_internal->numIndices; }
+
+      bool isTriangleMesh() const { return m_internal->isTriangleMesh; }
   };
 }
 

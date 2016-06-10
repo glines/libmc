@@ -26,7 +26,9 @@
 #define MC_CUBE_HAVE_TABLES
 #include <mc/algorithms/common/cube.h>
 
-#include "cube_tables.h"
+#include "canonical_cube_orientations.h"
+
+#include "cube_tables.c"
 
 const int MC_CUBE_NUM_CANONICAL_ORIENTATIONS = 15;
 

@@ -26,14 +26,19 @@
 
 #define MC_SIMPLE_MAX_TRIANGLES 4
 
+/* FIXME: This should be renamed mcSimple_EdgeIntersectionList */
 typedef struct mcSimpleEdgeList {
+  /* FIXME: edges should be renamed edgeIntersections */
   int edges[12];
 } mcSimpleEdgeList;
 
+/* FIXME: This should be renamed mcSimple_Triangle */
 typedef struct mcSimpleTriangle {
+  /* FIXME: edges should be renamed edgeIntersections */
   int edges[3];
 } mcSimpleTriangle;
 
+/* FIXME: This should be renamed mcSimple_TriangleList */
 typedef struct mcSimpleTriangleList {
   mcSimpleTriangle triangles[MC_SIMPLE_MAX_TRIANGLES];
 } mcSimpleTriangleList;

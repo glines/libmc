@@ -143,6 +143,9 @@ void main_loop() {
           case SDLK_m:
             demo.cubeObject->setAlgorithm(MC_SIMPLE_MARCHING_CUBES);
             break;
+          case SDLK_d:
+            demo.cubeObject->setAlgorithm(MC_DUAL_MARCHING_CUBES);
+            break;
           case SDLK_s:
             demo.cubeObject->setAlgorithm(MC_ELASTIC_SURFACE_NETS);
             break;

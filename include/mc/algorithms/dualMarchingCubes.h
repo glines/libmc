@@ -21,44 +21,9 @@
  * IN THE SOFTWARE.
  */
 
-#include <math.h>
+#ifndef MC_ALGORITHMS_DUAL_MARCHING_CUBES_H_
+#define MC_ALGORITHMS_DUAL_MARCHING_CUBES_H_
 
-#include <mc/vector.h>
+#include "./dualMarchingCubes/dualMarchingCubes.h"
 
-void mcVec3_subtract(const mcVec3 *u, const mcVec3 *v, mcVec3 *w) {
-  w->x = u->x - v->x;
-  w->y = u->y - v->y;
-  w->z = u->z - v->z;
-}
-
-mcVec3 mcVec3_lerp(const mcVec3 *u, const mcVec3 *v, float a) {
-  mcVec3 result;
-  result.x = (1.0f - a) * u->x + a * v->x;
-  result.y = (1.0f - a) * u->y + a * v->y;
-  result.z = (1.0f - a) * u->z + a * v->z;
-  return result;
-}
-
-float mcVec3_length(const mcVec3 *u) {
-  return sqrt(u->x * u->x + u->y * u->y + u->z * u->z);
-}
-
-void mcVec3_normalize(const mcVec3 *u, mcVec3 *v) {
-  float length = mcVec3_length(u);
-  v->x = u->x / length;
-  v->y = u->y / length;
-  v->z = u->z / length;
-}
-
-void mcVec3_cross(const mcVec3 *u, const mcVec3 *v, mcVec3 *w) {
-  w->x = u->y * v->z - u->z * v->y;
-  w->y = u->z * v->x - u->x * v->z;
-  w->z = u->x * v->y - u->y * v->x;
-}
-
-/**
- * Computes the dot product of the given vectors and returns the result.
- */
-float mcVec3_dot(const mcVec3 *u, const mcVec3 *v) {
-  return u->x * v->x + u->y * v->y + u->z * v->z;
-}
+#endif

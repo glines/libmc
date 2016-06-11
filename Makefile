@@ -15,6 +15,18 @@ build-html:
 		emconfigure cmake .. && \
 		emmake make -j $(num_threads)
 
+.PHONY: build-gcov
+build-gcov:
+	mkdir -p ./build-gcov
+	export CXXFLAGS="-fprofile-arcs -ftest-coverage" ; \
+	export CFLAGS="-fprofile-arcs -ftest-coverage" ; \
+	cd ./build-gcov && cmake .. && make VERBOSE=1 -j $(num_threads)
+
+.PHONY: docs
+docs:
+	mkdir -p ./docs
+	doxygen
+
 .PHONY: upload
 upload: build-html
 	export targets=$$( \
@@ -32,3 +44,4 @@ upload: build-html
 clean:
 	-rm -rf ./build
 	-rm -rf ./build-html
+	-rm -rf ./build-gcov

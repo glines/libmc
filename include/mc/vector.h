@@ -28,10 +28,40 @@ typedef struct mcVec3 {
   float x, y, z;
 } mcVec3;
 
+/**
+ * Computes the componentwise subtraction u - v and stores the result in w.
+ */
+void mcVec3_subtract(const mcVec3 *u, const mcVec3 *v, mcVec3 *w);
+
+/**
+ * Linearly interpolates between the two vectors using the given a as a weight
+ * and returns the result.
+ *
+ * The result is computed as u * (1.0f - a) + v * a.
+ */
 mcVec3 mcVec3_lerp(const mcVec3 *u, const mcVec3 *v, float a);
 
+/**
+ * Computes the length of the given vector and returns the result.
+ */
 float mcVec3_length(const mcVec3 *u);
 
-void mcVec3_normalize(mcVec3 *u);
+/**
+ * Normalizes the vector u and stores the result in v.
+ *
+ * Note that u and v may point to the same vector.
+ */
+void mcVec3_normalize(const mcVec3 *u, mcVec3 *v);
+
+/**
+ * Computes the cross product for the given vectors u and v and stores the
+ * resulting vector in w.
+ */
+void mcVec3_cross(const mcVec3 *u, const mcVec3 *v, mcVec3 *w);
+
+/**
+ * Computes the dot product of the given vectors and returns the result.
+ */
+float mcVec3_dot(const mcVec3 *u, const mcVec3 *v);
 
 #endif

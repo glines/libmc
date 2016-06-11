@@ -39,7 +39,8 @@ namespace mc { namespace samples {
       mcAlgorithmFlag algorithm,
       const glm::vec3 &position, const glm::quat &orientation)
     : SceneObject(position, orientation),
-      m_scan(file)  // Read the scan from image files
+      m_scan(file),  // Read the scan from image files
+      m_resX(res_x), m_resY(res_y), m_resZ(res_z)
   {
     m_init();
 
@@ -112,7 +113,7 @@ namespace mc { namespace samples {
     auto mesh = m_isosurfaceBuilder.buildIsosurface(
         m_scan.scalarField(),  // scalarField
         MC_SIMPLE_MARCHING_CUBES,  // algorithm
-        m_scan.xRes(), m_scan.yRes(), m_scan.zRes(),  // res
+        m_resX, m_resY, m_resZ,  // res
         Vec3(-1.0f, -1.0f, -1.0f),  // min
         Vec3(1.0f, 1.0f, 1.0f)  // max
         );

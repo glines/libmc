@@ -322,7 +322,7 @@ void mcPatch_isosurfaceFromField(
               /* Interpolate between the gradiants to approximate the surface
                * normal */
               vertex.norm = mcVec3_lerp(&gradiants[0], &gradiants[1], weight);
-              mcVec3_normalize(&vertex.norm);
+              mcVec3_normalize(&vertex.norm, &vertex.norm);
               /* Add this vertex to the mesh */
               vertexIndices[edge] = mcMesh_addVertex(mesh, &vertex);
             }

@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include <mc/algorithms/cuberille.h>
+#include <mc/algorithms/dualMarchingCubes.h>
 #include <mc/algorithms/elasticSurfaceNet.h>
 #include <mc/algorithms/patch.h>
 #include <mc/algorithms/simple.h>
@@ -126,6 +127,13 @@ const mcMesh *mcIsosurfaceBuilder_isosurfaceFromFieldWithArgs(
   switch (algorithm) {
     case MC_SIMPLE_MARCHING_CUBES:
       mcSimple_isosurfaceFromField(
+          sf, args,
+          x_res, y_res, z_res,
+          min, max,
+          mesh);
+      break;
+    case MC_DUAL_MARCHING_CUBES:
+      mcDualMarchingCubes_isosurfaceFromField(
           sf, args,
           x_res, y_res, z_res,
           min, max,

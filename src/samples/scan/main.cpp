@@ -228,7 +228,7 @@ int main(int argc, char **argv) {
           glm::vec3(1.0f, 0.0f, 0.0f)),  // orientation
         glm::vec3(0.0f, 0.0f, 0.0f)  // followPoint
         ));
-  demo.res = 8;
+  demo.res = 128;
   demo.scanObject = std::shared_ptr<ScanObject>(
       new ScanObject("./assets/scans/cthead",
         demo.res, demo.res, demo.res));

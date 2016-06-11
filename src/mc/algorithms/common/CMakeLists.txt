@@ -18,6 +18,7 @@ endforeach(table_file)
 add_library(mc_algorithms_common STATIC
     cube.c
     cube_definitions.c
+    dual.c
     surfaceNet.c
     )
 add_dependencies(mc_algorithms_common

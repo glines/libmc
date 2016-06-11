@@ -1,4 +1,5 @@
 if(DEFINED ENV{EMSCRIPTEN})
+  # TODO: Move some of these compiler flags into executable-specific flags
   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -s USE_SDL=2 -s USE_SDL_IMAGE=2 -s SDL2_IMAGE_FORMATS='[\"png\"]' -s DISABLE_EXCEPTION_CATCHING=0")
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -O2 -s USE_SDL=2 -s USE_SDL_IMAGE=2 -s SDL2_IMAGE_FORMATS='[\"png\"]' -s ASSERTIONS=1 -s ALLOW_MEMORY_GROWTH=1")
 
@@ -9,17 +10,24 @@ if(DEFINED ENV{EMSCRIPTEN})
   # GLM Mathematics Library
   find_package(GLM REQUIRED)
 
+  # PNG Image Library
+  find_package(PNG REQUIRED)
+
   set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 
   include_directories(SYSTEM
       ${GLM_INCLUDE_DIR}
+      ${PNG_INCLUDE_DIRS}
       )
 else()
+  # GLEW library
+  find_package(GLEW REQUIRED)
+
   # GLM Mathematics Library
   find_package(GLM REQUIRED)
 
-  # GLEW library
-  find_package(GLEW REQUIRED)
+  # PNG Image Library
+  find_package(PNG REQUIRED)
 
   # SDL2 library
   find_package(SDL2 REQUIRED)
@@ -27,6 +35,7 @@ else()
   include_directories(SYSTEM
       ${GLEW_INCLUDE_DIR}
       ${GLM_INCLUDE_DIR}
+      ${PNG_INCLUDE_DIRS}
       ${SDL2_INCLUDE_DIR}
       )
 endif()
@@ -38,4 +47,5 @@ add_executable(implicit
     )
 
 add_subdirectory("./cubes")
+add_subdirectory("./scan")
 add_subdirectory("./torus")

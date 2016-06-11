@@ -117,15 +117,6 @@ namespace mc {namespace samples { namespace cubes {
   void CubeObject::m_generateWireframe(const Mesh *mesh) {
     // Copy the vertices from the mesh
     WireframeVertex *vertices = new WireframeVertex[mesh->numVertices()];
-    /* TODO: Get this loop working
-    unsigned int i = 0;
-    for (auto vertex : mesh->vertices()) {
-      vertices[i].pos[0] = vertex.x;
-      vertices[i].pos[1] = vertex.y;
-      vertices[i].pos[2] = vertex.z;
-      ++i;
-    }
-    */
     for (unsigned int i = 0; i < mesh->numVertices(); ++i) {
       auto vertex = mesh->vertex(i);
       vertices[i].pos[0] = vertex.pos.x;
@@ -148,16 +139,17 @@ namespace mc {namespace samples { namespace cubes {
     delete[] vertices;
     unsigned int *indices = new unsigned int[mesh->numIndices() * 2];
     unsigned int currentIndex = 0;
-    // Copy the face indices from the mesh
+    // Create lines from the face indices of the mesh
     for (unsigned int i = 0; i < mesh->numFaces(); ++i) {
       auto face = mesh->face(i);
       for (unsigned int j = 0; j < face.numIndices; ++j) {
+        assert(currentIndex < mesh->numIndices() * 2);
         indices[currentIndex++] = face.indices[j];
+        assert(currentIndex < mesh->numIndices() * 2);
         indices[currentIndex++] = face.indices[(j + 1) % face.numIndices];
       }
     }
-    fprintf(stderr, "mesh->numFaces(): %d\n", mesh->numFaces());
-    // Send the triangle indices to the GL
+    // Send the line indices to the GL
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_wireframeIndices);
     FORCE_ASSERT_GL_ERROR();
     glBufferData(
@@ -338,7 +330,7 @@ namespace mc {namespace samples { namespace cubes {
     // Generate point data to send to the GL for visual debugging
     m_generateDebugPoints(mesh);
 
-    // Generate triangle wireframe data and send it to the GL
+    // Generate wireframe data and send it to the GL
     m_generateWireframe(mesh);
 
     // Generate surface normal lines and send them to the GL

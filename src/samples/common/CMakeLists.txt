@@ -2,6 +2,7 @@ add_library(samples_common STATIC
     arcballCamera.cpp
     camera.cpp
     glError.cpp
+    meshObject.cpp
     perspectiveCamera.cpp
     scene.cpp
     sceneObject.cpp

@@ -150,16 +150,16 @@ void main_loop() {
                 demo.cubeObject->intensity() + INTENSITY_DELTA);
             fprintf(stderr, "intensity: %g\n", demo.cubeObject->intensity());
             break;
+*/
           case SDLK_w:
-            demo.cubeObject->setDrawWireframe(!demo.cubeObject->isDrawWireframe());
+            demo.scanObject->setDrawWireframe(!demo.scanObject->isDrawWireframe());
             break;
           case SDLK_n:
-            demo.cubeObject->setDrawNormals(!demo.cubeObject->isDrawNormals());
+            demo.scanObject->setDrawNormals(!demo.scanObject->isDrawNormals());
             break;
           case SDLK_o:
-            demo.cubeObject->setDrawOpaque(!demo.cubeObject->isDrawOpaque());
+            demo.scanObject->setDrawOpaque(!demo.scanObject->isDrawOpaque());
             break;
-*/
         }
         switch (event.key.keysym.scancode) {
 /*

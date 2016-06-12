@@ -27,38 +27,22 @@
 #include <GL/glew.h>
 #include <mcxx/isosurfaceBuilder.h>
 
-#include "../common/sceneObject.h"
+#include "../common/meshObject.h"
 #include "scan.h"
 
 namespace mc { namespace samples {
   class ShaderProgram;
-  class ScanObject : public SceneObject {
+  class ScanObject : public MeshObject {
     private:
       unsigned int m_resX, m_resY, m_resZ;
       mcAlgorithmFlag m_algorithm;
       Scan m_scan;
       IsosurfaceBuilder m_isosurfaceBuilder;
-      GLuint m_wireframeVertices, m_wireframeIndices;
-      unsigned int m_numWireframeLines;
-
-      typedef struct WireframeVertex {
-        float pos[3];
-        float color[3];
-      } WireframeVertex;
 
       void m_init();
 
-      void m_generateWireframe(const Mesh *mesh);
       void m_update();
 
-#define DECLARE_SHADER(shader) \
-        static std::shared_ptr<ShaderProgram> m_ ## shader ## Shader()
-
-DECLARE_SHADER(wireframe);
-
-      void m_drawWireframe(
-            const glm::mat4 &modelView,
-            const glm::mat4 &projection) const;
     public:
       ScanObject(
           const std::string &file,
@@ -68,10 +52,7 @@ DECLARE_SHADER(wireframe);
           mcAlgorithmFlag algorithm = MC_SIMPLE_MARCHING_CUBES,
           const glm::vec3 &position = glm::vec3(0.0f, 0.0f, 0.0f),
           const glm::quat &orientation = glm::quat());
-
-      void draw(const glm::mat4 &modelWorld,
-          const glm::mat4 &worldView, const glm::mat4 &projection,
-          float alpha, bool debug) const;
+      ~ScanObject();
   };
 } }
 

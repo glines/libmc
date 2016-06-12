@@ -30,33 +30,27 @@
 #include <mcxx/scalarField.h>
 #include <memory>
 
-#include "../common/sceneObject.h"
+#include "../common/meshObject.h"
 
 namespace mc { namespace samples {
   class ShaderProgram;
   namespace cubes {
-    class CubeObject : public SceneObject {
+    class CubeObject : public MeshObject {
       private:
         IsosurfaceBuilder m_builder;
         Mesh m_mesh;
         unsigned int m_cube;
         GLuint m_cubeWireframeVertices, m_cubeWireframeIndices,
-               m_wireframeVertices, m_wireframeIndices,
-               m_surfaceNormalVertices, m_pointBuffer,
-               m_vertexBuffer, m_indexBuffer;
+               m_pointBuffer;
         unsigned int m_numTriangles, m_numVertices, m_numPoints,
                      m_numWireframeLines;
         unsigned int m_resX, m_resY, m_resZ;
         mcAlgorithmFlag m_algorithm;
-        bool m_isDrawScalarField, m_isDrawWireframe, m_isDrawNormals,
-             m_isDrawOpaque;
+        bool m_isDrawScalarField;
         float m_intensity;
 
         void m_generateCubeWireframe();
-        void m_generateWireframe(const Mesh *mesh);
-        void m_generateSurfaceNormals(const Mesh *mesh);
         void m_generateDebugPoints(const Mesh *mesh);
-        void m_generateTriangles(const Mesh *mesh);
 
         void m_update();
 
@@ -65,31 +59,14 @@ namespace mc { namespace samples {
 
         DECLARE_SHADER(point);
         DECLARE_SHADER(wireframe);
-        DECLARE_SHADER(gouraud);
-        DECLARE_SHADER(phong);
 
         void m_drawCubeWireframe(
-            const glm::mat4 &modelView,
-            const glm::mat4 &projection) const;
-        void m_drawWireframe(
-            const glm::mat4 &modelView,
-            const glm::mat4 &projection) const;
-        void m_drawSurfaceNormals(
             const glm::mat4 &modelView,
             const glm::mat4 &projection) const;
         void m_drawDebugPoints(
             const glm::mat4 &modelView,
             const glm::mat4 &projection) const;
-        void m_drawSurface(
-            const glm::mat4 &modelView,
-            const glm::mat4 &projection,
-            const glm::mat4 &modelViewProjection,
-            const glm::mat4 &normalTransform) const;
 
-        typedef struct Vertex {
-          float pos[3];
-          float norm[3];
-        } Vertex;
         typedef struct WireframeVertex {
           float pos[3];
           float color[3];
@@ -153,51 +130,6 @@ namespace mc { namespace samples {
          */
         void setDrawScalarField(bool flag) {
           m_isDrawScalarField = flag;
-        }
-
-        /**
-         * Returns true if the the wireframe of the triangle mesh is being
-         * drawn. Returns false otherwise.
-         */
-        bool isDrawWireframe() const {
-          return m_isDrawWireframe;
-        }
-
-        /**
-         * Returns true if the the surface normals are being drawn (as lines).
-         * Returns false otherwise.
-         */
-        bool isDrawNormals() const {
-          return m_isDrawNormals;
-        }
-
-        /**
-         * Sets whether or not surface normal lines are to be drawn.
-         */
-        void setDrawNormals(bool flag) {
-          m_isDrawNormals = flag;
-        }
-
-        /**
-         * Sets whether or not a wireframe of the triangle mesh is to be drawn.
-         */
-        void setDrawWireframe(bool flag) {
-          m_isDrawWireframe = flag;
-        }
-
-        /**
-         * Returns true if the opaque surface (with lighting) is being drawn.
-         * Returns false otherwise.
-         */
-        bool isDrawOpaque() {
-          return m_isDrawOpaque;
-        }
-
-        /**
-         * Sets whether or not the opaque surface is to be drawn.
-         */
-        void setDrawOpaque(bool flag) {
-          m_isDrawOpaque = flag;
         }
 
         /**

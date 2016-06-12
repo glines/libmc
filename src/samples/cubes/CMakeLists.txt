@@ -10,15 +10,19 @@ target_link_libraries(cubes
     )
 
 if(DEFINED ENV{EMSCRIPTEN})
-  # TODO: Use preloading instead
   set(EMSCRIPTEN_FLAGS
       "-s USE_SDL=2"
      )
   string (REPLACE ";" " " EMSCRIPTEN_FLAGS "${EMSCRIPTEN_FLAGS}")
+  set(EMSCRIPTEN_LINK_FLAGS
+      "--preload-file ${CMAKE_CURRENT_SOURCE_DIR}/assets@/assets"
+      "--preload-file ${CMAKE_CURRENT_SOURCE_DIR}/../common/assets/shaders@/assets/shaders"
+     )
+  string (REPLACE ";" " " EMSCRIPTEN_LINK_FLAGS "${EMSCRIPTEN_LINK_FLAGS}")
   set_target_properties(cubes PROPERTIES
       SUFFIX ".html"
       COMPILE_FLAGS "${EMSCRIPTEN_FLAGS}"
-      LINK_FLAGS "${EMSCRIPTEN_FLAGS} --embed-file ${CMAKE_CURRENT_SOURCE_DIR}/assets@/assets"
+      LINK_FLAGS "${EMSCRIPTEN_FLAGS} ${EMSCRIPTEN_LINK_FLAGS}"
       )
 else()
   set_property(TARGET cubes PROPERTY CXX_STANDARD 11)

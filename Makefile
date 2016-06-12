@@ -13,7 +13,7 @@ build-html:
 	mkdir -p ./build-html
 	cd ./build-html && \
 		emconfigure cmake .. && \
-		emmake make -j $(num_threads)
+		emmake make VERBOSE=1 -j $(num_threads)
 
 .PHONY: build-gcov
 build-gcov:

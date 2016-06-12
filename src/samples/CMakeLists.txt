@@ -1,8 +1,4 @@
 if(DEFINED ENV{EMSCRIPTEN})
-  # TODO: Move some of these compiler flags into executable-specific flags
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -s USE_SDL=2 -s USE_SDL_IMAGE=2 -s SDL2_IMAGE_FORMATS='[\"png\"]' -s DISABLE_EXCEPTION_CATCHING=0")
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -O2 -s USE_SDL=2 -s USE_SDL_IMAGE=2 -s SDL2_IMAGE_FORMATS='[\"png\"]' -s ASSERTIONS=1 -s ALLOW_MEMORY_GROWTH=1")
-
   # Temporarily disable the default Emscripten behavior of ignoring system
   # include directories so that we can include the header-only GLM library
   set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE BOTH)
@@ -10,14 +6,10 @@ if(DEFINED ENV{EMSCRIPTEN})
   # GLM Mathematics Library
   find_package(GLM REQUIRED)
 
-  # PNG Image Library
-  find_package(PNG REQUIRED)
-
   set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 
   include_directories(SYSTEM
       ${GLM_INCLUDE_DIR}
-      ${PNG_INCLUDE_DIRS}
       )
 else()
   # GLEW library

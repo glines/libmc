@@ -219,7 +219,7 @@ int main(int argc, char **argv) {
   demo.scene = new Scene;
   demo.camera = std::shared_ptr<ArcballCamera>(
       new ArcballCamera(
-        90.0f,  // fovy
+        78.0f * ((float)M_PI / 180.0f),  // fovy
         0.1f,  // near
         1000.0f,  // far
         glm::vec3(0.0f, -2.0f, 0.0f),  // position
@@ -231,7 +231,13 @@ int main(int argc, char **argv) {
   demo.res = 128;
   demo.scanObject = std::shared_ptr<ScanObject>(
       new ScanObject("./assets/scans/cthead",
-        demo.res, demo.res, demo.res));
+        demo.res, demo.res, demo.res,  // resolution
+        MC_SIMPLE_MARCHING_CUBES,  // algorithm
+        glm::vec3(0.0f, 0.0f, 0.0f),  // position
+        glm::angleAxis(
+          (float)M_PI,
+          glm::vec3(0.0f, 1.0f, 0.0f))  // orientation
+        ));
   demo.scene->addObject(demo.scanObject);
 
 #ifdef __EMSCRIPTEN__

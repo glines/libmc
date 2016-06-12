@@ -11,10 +11,15 @@ target_link_libraries(cubes
 
 if(DEFINED ENV{EMSCRIPTEN})
   # TODO: Use preloading instead
+  set(EMSCRIPTEN_FLAGS
+      "-s USE_SDL=2"
+     )
+  string (REPLACE ";" " " EMSCRIPTEN_FLAGS "${EMSCRIPTEN_FLAGS}")
   set_target_properties(cubes PROPERTIES
       SUFFIX ".html"
-      LINK_FLAGS "--embed-file ${CMAKE_CURRENT_SOURCE_DIR}/assets@/assets -s ASSERTIONS=1 -s ALLOW_MEMORY_GROWTH=1 -s DISABLE_EXCEPTION_CATCHING=0")
-  target_compile_options(cubes PRIVATE -std=c++11)
+      COMPILE_FLAGS "${EMSCRIPTEN_FLAGS}"
+      LINK_FLAGS "${EMSCRIPTEN_FLAGS} --embed-file ${CMAKE_CURRENT_SOURCE_DIR}/assets@/assets"
+      )
 else()
   set_property(TARGET cubes PROPERTY CXX_STANDARD 11)
   set_property(TARGET cubes PROPERTY CXX_STANDARD_REQUIRED ON)

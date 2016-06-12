@@ -22,7 +22,7 @@
  */
 
 #include <mc/algorithms/common/dual.h>
-#include <mc/algorithms/simple.h>
+#include <mc/algorithms/patch.h>
 
 void mcDualMarchingCubes_isosurfaceFromField(
     mcScalarFieldWithArgs sf, const void *args,
@@ -34,7 +34,7 @@ void mcDualMarchingCubes_isosurfaceFromField(
   mcMesh *dualMesh = mesh;
 
   mcMesh_init(&cubesMesh);
-  mcSimple_isosurfaceFromField(
+  mcPatch_isosurfaceFromField(
       sf, args,
       x_res, y_res, z_res,
       min, max,

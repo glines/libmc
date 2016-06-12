@@ -21,6 +21,7 @@
  * IN THE SOFTWARE.
  */
 
+#include <cstdio>
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "arcballCamera.h"

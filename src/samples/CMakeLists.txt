@@ -18,6 +18,9 @@ else()
   # GLM Mathematics Library
   find_package(GLM REQUIRED)
 
+  # Lua library
+  find_package(Lua REQUIRED)
+
   # PNG Image Library
   find_package(PNG REQUIRED)
 
@@ -27,6 +30,7 @@ else()
   include_directories(SYSTEM
       ${GLEW_INCLUDE_DIR}
       ${GLM_INCLUDE_DIR}
+      ${LUA_INCLUDE_DIR}
       ${PNG_INCLUDE_DIRS}
       ${SDL2_INCLUDE_DIR}
       )
@@ -34,10 +38,7 @@ endif()
 
 add_subdirectory("./common")
 
-add_executable(implicit
-    implicit.cpp
-    )
-
 add_subdirectory("./cubes")
+add_subdirectory("./implicit")
 add_subdirectory("./scan")
 add_subdirectory("./torus")

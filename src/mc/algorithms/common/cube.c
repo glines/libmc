@@ -30,11 +30,35 @@
 
 #include "cube_tables.c"
 
-/* FIXME: Move this to cube_definitions.h and use it within
- * generate_cube_tables.c */
-const int MC_CUBE_NUM_CANONICAL_ORIENTATION_INVERSIONS = 15;
+/* NOTE: This is a little bit awkward, but it is difficult to export the
+ * generated list of orientations as an enum type. */
+const unsigned int mcCube_canonicalOrientations[] = {
+  MC_CUBE_CANONICAL_ORIENTATION_0,
+  MC_CUBE_CANONICAL_ORIENTATION_1,
+  MC_CUBE_CANONICAL_ORIENTATION_2,
+  MC_CUBE_CANONICAL_ORIENTATION_3,
+  MC_CUBE_CANONICAL_ORIENTATION_4,
+  MC_CUBE_CANONICAL_ORIENTATION_5,
+  MC_CUBE_CANONICAL_ORIENTATION_6,
+  MC_CUBE_CANONICAL_ORIENTATION_7,
+  MC_CUBE_CANONICAL_ORIENTATION_8,
+  MC_CUBE_CANONICAL_ORIENTATION_9,
+  MC_CUBE_CANONICAL_ORIENTATION_10,
+  MC_CUBE_CANONICAL_ORIENTATION_11,
+  MC_CUBE_CANONICAL_ORIENTATION_12,
+  MC_CUBE_CANONICAL_ORIENTATION_13,
+  MC_CUBE_CANONICAL_ORIENTATION_14,
+  MC_CUBE_CANONICAL_ORIENTATION_15,
+  MC_CUBE_CANONICAL_ORIENTATION_16,
+  MC_CUBE_CANONICAL_ORIENTATION_17,
+  MC_CUBE_CANONICAL_ORIENTATION_18,
+  MC_CUBE_CANONICAL_ORIENTATION_19,
+  MC_CUBE_CANONICAL_ORIENTATION_20,
+  MC_CUBE_CANONICAL_ORIENTATION_21,
+  MC_CUBE_CANONICAL_ORIENTATION_22,
+};
 
-/* FIXME: This is a little bit awkward, but it is difficult to export the
+/* NOTE: This is a little bit awkward, but it is difficult to export the
  * generated list of orientations as an enum type. */
 const unsigned int mcCube_canonicalOrientationInversions[] = {
   MC_CUBE_CANONICAL_ORIENTATION_INVERSION_0,

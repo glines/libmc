@@ -26,9 +26,8 @@
 
 #include <mc/algorithms/common/cube_definitions.h>
 
-extern const int MC_CUBE_NUM_CANONICAL_ORIENTATION_INVERSIONS;
+extern const unsigned int mcCube_canonicalOrientations[];
 extern const unsigned int mcCube_canonicalOrientationInversions[];
-/* TODO: add mcCube_canonicalOrientations */
 
 typedef struct mcCubeEdgeList {
   int edges[12];

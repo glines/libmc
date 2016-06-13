@@ -25,6 +25,9 @@
 #define MC_CUBE_NUM_EDGES 12
 #define MC_CUBE_NUM_FACES 6
 
+#define MC_CUBE_NUM_CANONICAL_ORIENTATIONS 23
+#define MC_CUBE_NUM_CANONICAL_ORIENTATION_INVERSIONS 15
+
 /**
  * The numbering of the cube faces is based on the numbering of the faces on a
  * 6-sided die with 1 facing front and 3 facing top.

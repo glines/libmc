@@ -42,8 +42,7 @@ namespace mc { namespace samples {
         unsigned int m_cube;
         GLuint m_cubeWireframeVertices, m_cubeWireframeIndices,
                m_pointBuffer;
-        unsigned int m_numTriangles, m_numVertices, m_numPoints,
-                     m_numWireframeLines;
+        unsigned int m_numPoints;
         unsigned int m_resX, m_resY, m_resZ;
         mcAlgorithmFlag m_algorithm;
         bool m_isDrawScalarField;

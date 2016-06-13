@@ -59,6 +59,8 @@ namespace mc { namespace samples {
   MeshObject::~MeshObject() {}
 
   void MeshObject::setMesh(const mc::Mesh &mesh) {
+    m_numVertices = mesh.numVertices();
+
     // Generate wireframe data and send it to the GL
     m_generateWireframe(mesh);
 

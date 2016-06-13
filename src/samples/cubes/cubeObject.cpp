@@ -159,7 +159,6 @@ namespace mc {namespace samples { namespace cubes {
         Vec3(-1.0f, -1.0f, -1.0f),  // min
         Vec3(1.0f, 1.0f, 1.0f)  // max
         );
-    m_numVertices = mesh->numVertices();
 
     // Generate point data to send to the GL for visual debugging
     m_generateDebugPoints(mesh);

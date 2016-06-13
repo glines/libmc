@@ -78,6 +78,97 @@ void computeRotationTable(int axis, unsigned int *table) {
   }
 }
 
+void computeCanonicalOrientations(
+    const unsigned int *x_table,
+    const unsigned int *y_table,
+    const unsigned int *z_table,
+    unsigned int *list,
+    unsigned int *table,
+    unsigned int *rotation_table)
+{
+  unsigned int listIndex;
+
+  memset(table, -1, sizeof(unsigned int) * 256);
+  memset(rotation_table, 0, sizeof(unsigned int) * 256);
+  listIndex = 0;
+
+  /* Rotations in the rotation table are encoded as follows. Starting from the
+   * low-order byte, the first byte represents the number of rotations about
+   * the z-axis, the second byte represents the number of rotations about the
+   * x-axis, and the third byte represents the number of rotations about the
+   * y-axis. Thus, the first three bytes represent 90-degree Euler angles in
+   * zxy order.
+   *
+   * If the inverse rotation is desired, simply apply the corresponding number
+   * of reverse rotations in the yxz order.
+   */
+
+  /* Iterate over all possible cube configurations */
+  for (unsigned int cube = 0; cube <= 0xff; ++cube) {
+    int canonical = -1;
+    /* Iterate through all six possible directions the front face of the cube
+     * can point */
+    for (mcCubeFace face = 0; face < MC_CUBE_NUM_FACES; ++face) {
+      unsigned int rotated, sequence;
+      rotated = cube;
+      /* Initialize the rotation sequence */
+      sequence = 0;
+      /* Determine the face direction and rotate accordingly */
+      switch (face) {
+        case MC_CUBE_FACE_LEFT:
+          rotated = z_table[rotated];
+          sequence = incr_byte(sequence, 0);
+        case MC_CUBE_FACE_BACK:
+          rotated = z_table[rotated];
+          sequence = incr_byte(sequence, 0);
+        case MC_CUBE_FACE_RIGHT:
+          rotated = z_table[rotated];
+          sequence = incr_byte(sequence, 0);
+        case MC_CUBE_FACE_FRONT:
+          break;
+        case MC_CUBE_FACE_BOTTOM:
+          rotated = x_table[rotated];
+          rotated = x_table[rotated];
+          sequence = incr_byte(sequence, 1);
+          sequence = incr_byte(sequence, 1);
+        case MC_CUBE_FACE_TOP:
+          rotated = x_table[rotated];
+          sequence = incr_byte(sequence, 1);
+          break;
+      }
+      /* Rotate about the Y axis four times */
+      for (int j = 0; j < 4; ++j) {
+        if (table[rotated] != -1) {
+          if (canonical == -1) {
+            /* We found the canonical orientation for this cube */
+            canonical = table[rotated];
+            table[cube] = canonical;
+          } else {
+            /* All entries in the table must agree with our canonical */
+            assert(table[rotated] == canonical);
+          }
+        }
+        if (rotated == canonical) {
+          /* We found the rotation sequence that brings us into the canonical
+           * orientation for this cube */
+          /* Store the rotation sequence */
+          rotation_table[cube] = sequence;
+        }
+        rotated = y_table[rotated];
+        sequence = incr_byte(sequence, 2);
+      }
+    }
+    if (canonical == -1) {
+      /* We could not find the current cube configuration in the table, so this
+       * cube configuration defines a canonical cube orientation */
+      canonical = cube;
+      list[listIndex++] = canonical;
+      table[cube] = canonical;
+    }
+  }
+  assert(listIndex == 23);
+}
+
 void computeCanonicalOrientationInversions(
     const unsigned int *x_table,
     const unsigned int *y_table,
@@ -98,7 +189,7 @@ void computeCanonicalOrientationInversions(
    * x-axis, and the third byte represents the number of rotations about the
    * y-axis. Thus, the first three bytes represent 90-degree Euler angles in
    * zxy order.  The fourth byte is 0x01 if the cube was inverted, and 0x00
-   * otherwis.
+   * otherwise.
    *
    * If the inverse rotation is desired, simply apply the corresponding number
    * of reverse rotations in the yxz order.
@@ -296,6 +387,29 @@ void printRotationTable(int axis, const unsigned int *table, FILE *fp) {
   fprintf(fp, "};\n");
 }
 
+void printCanonicalOrientationList(const unsigned int *list, FILE *fp) {
+  fprintf(fp, "typedef enum mcCubeCanonicalOrientation {\n");
+  for (int i = 0; i < 23; ++i) {
+    fprintf(fp, "  MC_CUBE_CANONICAL_ORIENTATION_%d = 0x%02x,\n",
+        i, list[i]);
+  }
+  fprintf(fp, "} mcCubeCanonicalOrientation;\n");
+}
+
+void printCanonicalOrientationTable(const unsigned int *table, FILE *fp) {
+  fprintf(fp,
+      "const unsigned int mcCube_canonicalOrientationTable[] = {\n");
+  printCubeCharTable(table, fp);
+  fprintf(fp, "};\n");
+}
+
+void printCanonicalRotationSequenceTable(const unsigned int *table, FILE *fp) {
+  fprintf(fp,
+      "const unsigned int mcCube_canonicalRotationSequenceTable[] = {\n");
+  printCubeIntTable(table, fp);
+  fprintf(fp, "};\n");
+}
+
 void printCanonicalOrientationInversionList(const unsigned int *list, FILE *fp) {
   fprintf(fp, "typedef enum mcCubeCanonicalOrientationInversion {\n");
   for (int i = 0; i < 15; ++i) {
@@ -312,7 +426,7 @@ void printCanonicalOrientationInversionTable(const unsigned int *table, FILE *fp
   fprintf(fp, "};\n");
 }
 
-void printCanonicalRotationInversionTable(const unsigned int *table, FILE *fp) {
+void printCanonicalRotationInversionSequenceTable(const unsigned int *table, FILE *fp) {
   fprintf(fp,
       "const unsigned int mcCube_canonicalRotationInversionSequenceTable[] = {\n");
   printCubeIntTable(table, fp);
@@ -368,6 +482,9 @@ int main(int argc, char **argv) {
   TableFile tableFile;
   /* Allocate stack memory for each table */
   unsigned int x_table[256], y_table[256], z_table[256],
+               canonical_orientation_list[23],
+               canonical_orientation_table[256],
+               canonical_rotation_table[256],
                canonical_orientation_inversion_list[15],
                canonical_orientation_inversion_table[256],
                canonical_rotation_inversion_table[256],
@@ -397,14 +514,19 @@ int main(int argc, char **argv) {
   computeRotationTable(Y_AXIS, y_table);
   computeRotationTable(Z_AXIS, z_table);
 
+  /* Compute the cannonical orientation tables */
+  computeCanonicalOrientations(
+      x_table, y_table, z_table,
+      canonical_orientation_list,
+      canonical_orientation_table,
+      canonical_rotation_table);
+
   /* Compute the cannonical orientation inversion tables */
   computeCanonicalOrientationInversions(
       x_table, y_table, z_table,
       canonical_orientation_inversion_list,
       canonical_orientation_inversion_table,
       canonical_rotation_inversion_table);
-
-  /* TODO: Compute the cannonical orientation tables */
 
   /* Compute the X, Y, and Z edge rotation tables */
   computeEdgeRotationTable(X_AXIS, x_edge_table);
@@ -419,6 +541,9 @@ int main(int argc, char **argv) {
   /* Print the tables */
   /* NOTE: stdout is used because Emscripten's filesystem model makes using
    * fopen() difficult */
+  /* NOTE: Some computation might be wasted because we need to run this program
+   * once for each file generated. This is acceptable since our compile times
+   * mostly depend on the performance of Emscripten's Javascript optimizer. */
   switch (tableFile) {
     case CUBE_TABLES_C:
       {
@@ -429,10 +554,16 @@ int main(int argc, char **argv) {
         fprintf(stdout, "\n");
         printRotationTable(Z_AXIS, z_table, stdout);
         fprintf(stdout, "\n");
+        printCanonicalOrientationTable(
+            canonical_orientation_table, stdout);
+        fprintf(stdout, "\n");
+        printCanonicalRotationSequenceTable(
+            canonical_rotation_table, stdout);
+        fprintf(stdout, "\n");
         printCanonicalOrientationInversionTable(
             canonical_orientation_inversion_table, stdout);
         fprintf(stdout, "\n");
-        printCanonicalRotationInversionTable(
+        printCanonicalRotationInversionSequenceTable(
             canonical_rotation_inversion_table, stdout);
         fprintf(stdout, "\n");
         printEdgeRotationTable(X_AXIS, 0, x_edge_table, stdout);
@@ -457,6 +588,9 @@ int main(int argc, char **argv) {
         fprintf(stdout,
             "#ifndef MC_ALGORITHMS_COMMON_CANONICAL_CUBE_ORIENTATIONS_H_\n"
             "#define MC_ALGORITHMS_COMMON_CANONICAL_CUBE_ORIENTATIONS_H_\n\n");
+        printCanonicalOrientationList(
+            canonical_orientation_list, stdout);
+        fprintf(stdout, "\n");
         printCanonicalOrientationInversionList(
             canonical_orientation_inversion_list, stdout);
         /* Print the include guard */

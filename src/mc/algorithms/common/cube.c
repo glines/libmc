@@ -30,26 +30,28 @@
 
 #include "cube_tables.c"
 
-const int MC_CUBE_NUM_CANONICAL_ORIENTATIONS = 15;
+/* FIXME: Move this to cube_definitions.h and use it within
+ * generate_cube_tables.c */
+const int MC_CUBE_NUM_CANONICAL_ORIENTATION_INVERSIONS = 15;
 
 /* FIXME: This is a little bit awkward, but it is difficult to export the
  * generated list of orientations as an enum type. */
-const unsigned int mcCubeCanonicalOrientations[] = {
-  MC_CUBE_CANONICAL_ORIENTATION_0,
-  MC_CUBE_CANONICAL_ORIENTATION_1,
-  MC_CUBE_CANONICAL_ORIENTATION_2,
-  MC_CUBE_CANONICAL_ORIENTATION_3,
-  MC_CUBE_CANONICAL_ORIENTATION_4,
-  MC_CUBE_CANONICAL_ORIENTATION_5,
-  MC_CUBE_CANONICAL_ORIENTATION_6,
-  MC_CUBE_CANONICAL_ORIENTATION_7,
-  MC_CUBE_CANONICAL_ORIENTATION_8,
-  MC_CUBE_CANONICAL_ORIENTATION_9,
-  MC_CUBE_CANONICAL_ORIENTATION_10,
-  MC_CUBE_CANONICAL_ORIENTATION_11,
-  MC_CUBE_CANONICAL_ORIENTATION_12,
-  MC_CUBE_CANONICAL_ORIENTATION_13,
-  MC_CUBE_CANONICAL_ORIENTATION_14,
+const unsigned int mcCube_canonicalOrientationInversions[] = {
+  MC_CUBE_CANONICAL_ORIENTATION_INVERSION_0,
+  MC_CUBE_CANONICAL_ORIENTATION_INVERSION_1,
+  MC_CUBE_CANONICAL_ORIENTATION_INVERSION_2,
+  MC_CUBE_CANONICAL_ORIENTATION_INVERSION_3,
+  MC_CUBE_CANONICAL_ORIENTATION_INVERSION_4,
+  MC_CUBE_CANONICAL_ORIENTATION_INVERSION_5,
+  MC_CUBE_CANONICAL_ORIENTATION_INVERSION_6,
+  MC_CUBE_CANONICAL_ORIENTATION_INVERSION_7,
+  MC_CUBE_CANONICAL_ORIENTATION_INVERSION_8,
+  MC_CUBE_CANONICAL_ORIENTATION_INVERSION_9,
+  MC_CUBE_CANONICAL_ORIENTATION_INVERSION_10,
+  MC_CUBE_CANONICAL_ORIENTATION_INVERSION_11,
+  MC_CUBE_CANONICAL_ORIENTATION_INVERSION_12,
+  MC_CUBE_CANONICAL_ORIENTATION_INVERSION_13,
+  MC_CUBE_CANONICAL_ORIENTATION_INVERSION_14,
 };
 
 void mcCube_edgeVertices(unsigned int edge, unsigned int *vertices) {
@@ -378,42 +380,42 @@ unsigned int mcCube_cubeConfigurationFromSamples(float *samples) {
   return cube;
 }
 
-unsigned int mcCube_canonicalOrientation(unsigned int cube) {
+unsigned int mcCube_canonicalOrientationInversion(unsigned int cube) {
   assert(cube <= 0xff);
-  return mcCubeCanonicalOrientationTable[cube];
+  return mcCube_canonicalOrientationInversionTable[cube];
 }
 
-unsigned int mcCube_canonicalRotation(unsigned int cube) {
+unsigned int mcCube_canonicalRotationInversionSequence(unsigned int cube) {
   assert(cube <= 0xff);
-  return mcCubeCanonicalRotationTable[cube];
+  return mcCube_canonicalRotationInversionSequenceTable[cube];
 }
 
 unsigned int mcCube_rotateEdgeX(unsigned int edge) {
   assert(edge < MC_CUBE_NUM_EDGES);
-  return mcCubeEdgeRotationTableX[edge];
+  return mcCube_edgeRotationTableX[edge];
 }
 
 unsigned int mcCube_rotateEdgeY(unsigned int edge) {
   assert(edge < MC_CUBE_NUM_EDGES);
-  return mcCubeEdgeRotationTableY[edge];
+  return mcCube_edgeRotationTableY[edge];
 }
 
 unsigned int mcCube_rotateEdgeZ(unsigned int edge) {
   assert(edge < MC_CUBE_NUM_EDGES);
-  return mcCubeEdgeRotationTableZ[edge];
+  return mcCube_edgeRotationTableZ[edge];
 }
 
 unsigned int mcCube_rotateEdgeReverseX(unsigned int edge) {
   assert(edge < MC_CUBE_NUM_EDGES);
-  return mcCubeEdgeReverseRotationTableX[edge];
+  return mcCube_edgeReverseRotationTableX[edge];
 }
 
 unsigned int mcCube_rotateEdgeReverseY(unsigned int edge) {
   assert(edge < MC_CUBE_NUM_EDGES);
-  return mcCubeEdgeReverseRotationTableY[edge];
+  return mcCube_edgeReverseRotationTableY[edge];
 }
 
 unsigned int mcCube_rotateEdgeReverseZ(unsigned int edge) {
   assert(edge < MC_CUBE_NUM_EDGES);
-  return mcCubeEdgeReverseRotationTableZ[edge];
+  return mcCube_edgeReverseRotationTableZ[edge];
 }

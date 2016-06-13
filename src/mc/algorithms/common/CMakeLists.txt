@@ -1,5 +1,4 @@
 add_executable(generate_cube_tables
-    cube_definitions.c
     generate_cube_tables.c
     )
 foreach(table_file cube_tables.c canonical_cube_orientations.h)
@@ -17,7 +16,6 @@ endforeach(table_file)
 
 add_library(mc_algorithms_common STATIC
     cube.c
-    cube_definitions.c
     dual.c
     surfaceNet.c
     )

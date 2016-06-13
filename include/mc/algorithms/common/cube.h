@@ -26,8 +26,9 @@
 
 #include <mc/algorithms/common/cube_definitions.h>
 
-extern const int MC_CUBE_NUM_CANONICAL_ORIENTATIONS;
-extern const unsigned int mcCubeCanonicalOrientations[];
+extern const int MC_CUBE_NUM_CANONICAL_ORIENTATION_INVERSIONS;
+extern const unsigned int mcCube_canonicalOrientationInversions[];
+/* TODO: add mcCube_canonicalOrientations */
 
 typedef struct mcCubeEdgeList {
   int edges[12];
@@ -116,10 +117,22 @@ void mcCube_vertexRelativePosition(unsigned int vertex, unsigned int *pos);
 unsigned int mcCube_cubeConfigurationFromSamples(float *samples);
 
 /**
- * This routine returns the canonical orientation of the given cube. This
- * canonical orientation is retrieved from a table generated at compile time.
+ * This routine returns the canonical orientation+inversion of the given cube.
+ * This canonical representation of the cube is retrieved from a table
+ * generated at compile time.
+ *
+ * The related function mcCube_canonicalRotationInversionSequence() gives the
+ * rotation sequence and inversion used to transform the cube to this canonical
+ * representation.
+ *
+ * This routine is not to be confused with mcCube_canonicalOrientation(),
+ * which does not perform any inversion. Inverting the cube results in fewer
+ * possible cases at the cost of some face ambiguity problems.
+ *
+ * \sa mcCube_canonicalRotationInversionSequence()
+ * \sa mcCube_canonicalOrientation()
  */
-unsigned int mcCube_canonicalOrientation(unsigned int cube);
+unsigned int mcCube_canonicalOrientationInversion(unsigned int cube);
 
 /**
  * This routine returns the encoded rotation sequence and inversion needed to
@@ -135,8 +148,15 @@ unsigned int mcCube_canonicalOrientation(unsigned int cube);
  *
  * If the inverse rotation is desired, simply apply the corresponding number
  * of reverse rotations in the yxz order.
+ *
+ * This routine is not to be confused with mcCube_canonicalRotationSequence(),
+ * which does not perform any inversion. Inverting the cube results in fewer
+ * possible cases at the cost of some face ambiguity problems.
+ *
+ * \sa mcCube_canonicalOrientationInversion()
+ * \sa mcCube_canonicalRotationSequence()
  */
-unsigned int mcCube_canonicalRotation(unsigned int cube);
+unsigned int mcCube_canonicalRotationInversionSequence(unsigned int cube);
 
 /**
  * Rotates the given cube about the x-axis by 90-degrees and returns the

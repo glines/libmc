@@ -21,9 +21,9 @@
  * IN THE SOFTWARE.
  */
 
-extern const unsigned int MC_CUBE_NUM_VERTICES;
-extern const unsigned int MC_CUBE_NUM_EDGES;
-extern const unsigned int MC_CUBE_NUM_FACES;
+#define MC_CUBE_NUM_VERTICES 8
+#define MC_CUBE_NUM_EDGES 12
+#define MC_CUBE_NUM_FACES 6
 
 /**
  * The numbering of the cube faces is based on the numbering of the faces on a

@@ -192,21 +192,22 @@ void main_loop() {
             demo.cubeObject->setCube((demo.cubeObject->cube() - 1) % 256);
             break;
           case SDL_SCANCODE_PAGEUP:
-            for (int i = MC_CUBE_NUM_CANONICAL_ORIENTATIONS - 1; i >= 0; --i) {
-              if (mcCubeCanonicalOrientations[i] < demo.cubeObject->cube()) {
-                fprintf(stdout, "mcCubeCanonicalOrientations[%d]: 0x%02x\n",
-                    i, mcCubeCanonicalOrientations[i]);
-                demo.cubeObject->setCube(mcCubeCanonicalOrientations[i]);
+            for (int i = MC_CUBE_NUM_CANONICAL_ORIENTATION_INVERSIONS - 1; i >= 0; --i) {
+              if (mcCube_canonicalOrientationInversions[i] < demo.cubeObject->cube()) {
+                fprintf(stdout, "mcCube_canonicalOrientationInversions[%d]: 0x%02x\n",
+                    i, mcCube_canonicalOrientationInversions[i]);
+                demo.cubeObject->setCube(
+                    mcCube_canonicalOrientationInversions[i]);
                 break;
               }
             }
             break;
           case SDL_SCANCODE_PAGEDOWN:
-            for (int i = 0; i < MC_CUBE_NUM_CANONICAL_ORIENTATIONS; ++i) {
-              if (mcCubeCanonicalOrientations[i] > demo.cubeObject->cube()) {
-                fprintf(stdout, "mcCubeCanonicalOrientations[%d]: 0x%02x\n",
-                    i, mcCubeCanonicalOrientations[i]);
-                demo.cubeObject->setCube(mcCubeCanonicalOrientations[i]);
+            for (int i = 0; i < MC_CUBE_NUM_CANONICAL_ORIENTATION_INVERSIONS; ++i) {
+              if (mcCube_canonicalOrientationInversions[i] > demo.cubeObject->cube()) {
+                fprintf(stdout, "mcCube_canonicalOrientationInversions[%d]: 0x%02x\n",
+                    i, mcCube_canonicalOrientationInversions[i]);
+                demo.cubeObject->setCube(mcCube_canonicalOrientationInversions[i]);
                 break;
               }
             }

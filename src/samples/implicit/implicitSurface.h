@@ -52,26 +52,39 @@ namespace mc { namespace samples {
 
         static const int BUFFER_SIZE = 2048;
 
-        typedef struct FileAndBuffer {
-          FILE *fp;
-          char buff[BUFFER_SIZE];
-        } FileAndBuffer;
-
         class LuaScalarField : public ScalarField {
           private:
+            typedef struct FileAndBuffer {
+              FILE *fp;
+              char buff[BUFFER_SIZE];
+            } FileAndBuffer;
+
             lua_State *m_lua;
+            bool m_valid;
 
             void m_initLua();
-            static const char *m_luaReader(
+            static const char *m_luaStringReader(
+                lua_State *L,
+                const char **code,
+                size_t *size);
+            bool m_readLuaString(const char *code);
+            static const char *m_luaFileReader(
                 lua_State *L,
                 FileAndBuffer *data,
                 size_t *size);
-            void m_readLuaFile(FILE *fp);
+            bool m_readLuaFile(FILE *fp);
             void m_closeLua();
 
+            bool m_checkValid();
+
+            static constexpr const char *sfFunction = "sf";
+
           public:
+            LuaScalarField(const char *code);
             LuaScalarField(FILE *fp);
             ~LuaScalarField();
+
+            bool valid() const { return m_valid; }
 
             float operator()(float x, float y, float z) const;
         };
@@ -86,8 +99,15 @@ namespace mc { namespace samples {
         Language language() { return m_language; }
         void setLanguage(Language language);
 
-        void setCode(const char *file);
-        void setCode(FILE *fp);
+        /**
+         * Sets the code for the implicit isosurface function. Returns true
+         * upon success, and false otherwise.
+         *
+         * If the code is invalid or otherwise fails to run, then the implicit
+         * isosurface function remains unchanged.
+         */
+        bool setCode(const char *code);
+        bool setCode(FILE *fp);
     };
   }
 } }

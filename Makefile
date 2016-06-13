@@ -1,7 +1,7 @@
 num_cpus = $(shell grep -c "^processor" /proc/cpuinfo)
 num_threads = $(shell echo $$(($(num_cpus) + 1)))
 
-all: build build-html
+all: build build-html docs
 
 .PHONY: build
 build:
@@ -9,11 +9,11 @@ build:
 	cd ./build && cmake .. && make -j $(num_threads)
 
 .PHONY: build-html
-build-html:
+build-html: lua-js
 	mkdir -p ./build-html
 	cd ./build-html && \
 		emconfigure cmake .. && \
-		emmake make VERBOSE=1 -j $(num_threads)
+		emmake make -j $(num_threads)
 
 .PHONY: build-gcov
 build-gcov:
@@ -21,6 +21,17 @@ build-gcov:
 	export CXXFLAGS="-fprofile-arcs -ftest-coverage" ; \
 	export CFLAGS="-fprofile-arcs -ftest-coverage" ; \
 	cd ./build-gcov && cmake .. && make VERBOSE=1 -j $(num_threads)
+
+.PHONY: lua-js
+lua-js:
+	mkdir -p ./extern/lua-js-{build,install}
+	cd ./extern/lua-js-build && \
+	tar xvzf ../lua-5.3.3.tar.gz && \
+	cd ./lua-5.3.3 && \
+  sed -i 's|^INSTALL_TOP=.*$$|INSTALL_TOP= ../../../lua-js-install|' ./Makefile && \
+  sed -i 's|^CC=.*$$|CC= emcc|' ./src/Makefile && \
+	emmake make -j $(num_threads) generic && \
+	emmake make install
 
 .PHONY: docs
 docs:
@@ -45,3 +56,4 @@ clean:
 	-rm -rf ./build
 	-rm -rf ./build-html
 	-rm -rf ./build-gcov
+	-rm -rf ./extern/lua-js-{build,install}

@@ -76,6 +76,13 @@ void init_sdl() {
         SDL_GetError());
     exit(EXIT_FAILURE);
   }
+#ifdef __EMSCRIPTEN__
+  // Ignore keyboard events so that the textarea will work
+  SDL_EventState(SDL_KEYDOWN, SDL_IGNORE);
+  SDL_EventState(SDL_KEYUP, SDL_IGNORE);
+  SDL_EventState(SDL_TEXTEDITING, SDL_IGNORE);
+  SDL_EventState(SDL_TEXTINPUT, SDL_IGNORE);
+#endif
 }
 
 void init_gl() {
@@ -154,6 +161,19 @@ void main_loop() {
   }
 }
 
+#ifdef __EMSCRIPTEN__
+extern "C" {
+  /*
+   * The code from our web interface changed, so we can update the implicit
+   * surface object.
+   */
+  void update_code(const char *code) {
+    fprintf(stderr, "update_code called\n");
+    demo.surface->setCode(code);
+  }
+}
+#endif
+
 int main(int argc, char **argv) {
   // Initialize the graphics
   init_sdl();
@@ -175,30 +195,23 @@ int main(int argc, char **argv) {
         ));
   demo.surface = std::shared_ptr<ImplicitSurface>(
       new ImplicitSurface());
-  demo.surface->setCode("./assets/scripts/lua/sphere.lua");
+
+  const char *file = "./assets/scripts/lua/sphere.lua";
+  FILE *fp = fopen(file, "r");
+  if (fp == nullptr) {
+    fprintf(stderr, "Could not open code file '%s'\n", file);
+    return EXIT_FAILURE;
+  }
+  bool success = demo.surface->setCode(fp);
+  if (!success) {
+    fprintf(stderr, "Failed to set initial isosurface code\n");
+  }
   demo.scene->addObject(demo.surface);
-
-  // Test a lua script
-  int result = luaL_loadfile(demo.lua, "./assets/scripts/lua/test.lua");
-  if (result != LUA_OK) {
-    fprintf(stderr, "Failed to load Lua file.\n");
-    return EXIT_FAILURE;
-  }
-
-  result = lua_pcall(demo.lua, 0, 0, 0);
-  if (result != LUA_OK) {
-    fprintf(stderr, "Failed to call Lua file.\n");
-    return EXIT_FAILURE;
-  }
-
-  lua_getglobal(demo.lua, "f");
-  lua_pushinteger(demo.lua, 42);
-  lua_call(demo.lua, 1, 1);
-  auto integer = lua_tointeger(demo.lua, -1);
-  lua_pop(demo.lua, 1);
-  fprintf(stderr, "integer: %d\n", integer);
+  fclose(fp);
+  fprintf(stderr, "made it here\n");
 
 #ifdef __EMSCRIPTEN__
+  EM_ASM( window.emscriptenReady() );  // FIXME: This doesn't work
   emscripten_set_main_loop(main_loop, 0, 1);
 #else
   while (1) {

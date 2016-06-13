@@ -23,9 +23,12 @@
 
 extern "C" {
 #include "lauxlib.h"
+#include "lualib.h"
 }
 
 #include <cassert>
+#include <cstdlib>
+#include <cstring>
 #include <mcxx/vector.h>
 
 #include "implicitSurface.h"
@@ -44,7 +47,7 @@ namespace mc { namespace samples { namespace implicit {
      * updated, or when some parameter that affects how the isosurface mesh is
      * extracted is changed. */
 
-    // TODO: Re-evaluate the isosurface extraction algorithm
+    // Re-evaluate the isosurface extraction algorithm
     const Mesh *mesh = m_builder.buildIsosurface(
         *m_sf,  // scalarField
         MC_SIMPLE_MARCHING_CUBES,  // algorithm
@@ -57,23 +60,20 @@ namespace mc { namespace samples { namespace implicit {
     this->setMesh(*mesh);
   }
 
-  void ImplicitSurface::setCode(const char *file) {
-    FILE *fp;
-    fp = fopen(file, "r");
-    if (fp == nullptr) {
-      fprintf(stderr, "Could not open code file '%s'\n", file);
-      return;
-    }
-    this->setCode(fp);
-    fclose(fp);
-  }
-
-  void ImplicitSurface::setCode(FILE *fp) {
+  bool ImplicitSurface::setCode(const char *code) {
+    bool success = false;
     switch (m_language) {
       case Language::LUA:
-        /* Load the Lua code from the given file pointer */
-        m_sf = std::shared_ptr<ScalarField>(
-            new LuaScalarField(fp));
+        {
+          /* Load the Lua code from the given string */
+          LuaScalarField *sf = new LuaScalarField(code);
+          if (sf->valid()) {
+            m_sf = std::shared_ptr<ScalarField>(sf);
+            success = true;
+          } else {
+            delete sf;
+          }
+        }
         break;
       case Language::JAVASCRIPT:
         fprintf(stderr, "Javascript language not yet supported\n");
@@ -81,13 +81,43 @@ namespace mc { namespace samples { namespace implicit {
         break;
     }
 
-    /* Update the isosurface now that the implicit function has changed */
-    m_update();
+    if (success) {
+      /* Update the isosurface now that the implicit function has changed */
+      m_update();
+    }
+
+    return success;
+  }
+
+  bool ImplicitSurface::setCode(FILE *fp) {
+    /* Read the entire file into a C string and call the other method. */
+    fseek(fp, 0, SEEK_END);
+    long length = ftell(fp);
+    rewind(fp);
+    char *code = (char*)malloc(length+1);
+    length = fread(code, 1, length, fp);
+    code[length] = '\0';
+    fprintf(stderr, "code: %s\n", code);
+    bool result = this->setCode(code);
+    free(code);
+    return result;
+  }
+
+  ImplicitSurface::LuaScalarField::LuaScalarField(const char *code) {
+    m_initLua();
+    if (m_readLuaString(code))
+      m_valid = m_checkValid();
+    else
+      m_valid = false;
   }
 
   ImplicitSurface::LuaScalarField::LuaScalarField(FILE *fp) {
+    // XXX: I don't think this code is being used
     m_initLua();
-    m_readLuaFile(fp);
+    if (m_readLuaFile(fp))
+      m_valid = m_checkValid();
+    else
+      m_valid = false;
   }
 
   ImplicitSurface::LuaScalarField::~LuaScalarField() {
@@ -101,9 +131,43 @@ namespace mc { namespace samples { namespace implicit {
       fprintf(stderr, "Failed to allocate a new Lua state\n");
       exit(EXIT_FAILURE);
     }
+    /*
+    // Open the math library
+    luaL_requiref(m_lua,
+        "math",  // modname
+        luaopen_math,  // openf
+        1  // global
+        );
+    lua_pop(m_lua, 1);
+    */
+    luaL_openlibs(m_lua);
   }
 
-  const char *ImplicitSurface::LuaScalarField::m_luaReader(
+  const char *ImplicitSurface::LuaScalarField::m_luaStringReader(
+      lua_State *L,
+      const char **code,
+      size_t *size)
+  {
+    if (*code != nullptr) {
+      *size = strlen(*code);
+      const char *result = *code;
+      *code = nullptr;
+      return result;
+    }
+    return 0;
+  }
+
+  bool ImplicitSurface::LuaScalarField::m_readLuaString(const char *code) {
+    luaL_loadstring(m_lua, code);
+    int result = lua_pcall(m_lua, 0, 0, 0);
+    if (result != LUA_OK) {
+      fprintf(stderr, "Failed to read Lua string.\n");
+      return false;
+    }
+    return true;
+  }
+
+  const char *ImplicitSurface::LuaScalarField::m_luaFileReader(
       lua_State *L,
       FileAndBuffer *data,
       size_t *size)
@@ -112,19 +176,21 @@ namespace mc { namespace samples { namespace implicit {
     return data->buff;
   }
 
-  void ImplicitSurface::LuaScalarField::m_readLuaFile(FILE *fp) {
+  bool ImplicitSurface::LuaScalarField::m_readLuaFile(FILE *fp) {
     FileAndBuffer data;
     data.fp = fp;
     lua_load(m_lua,
-        (lua_Reader)m_luaReader,  // reader
+        (lua_Reader)m_luaFileReader,  // reader
         &data,  // data
         "ImplicitSurface::ScalarField::m_readLuaFile",  // source
-        NULL  // mode
+        nullptr  // mode
         );
     int result = lua_pcall(m_lua, 0, 0, 0);
     if (result != LUA_OK) {
       fprintf(stderr, "Failed to call Lua file.\n");
+      return false;
     }
+    return true;
   }
 
   void ImplicitSurface::LuaScalarField::m_closeLua() {
@@ -132,10 +198,33 @@ namespace mc { namespace samples { namespace implicit {
     lua_close(m_lua);
   }
 
+  bool ImplicitSurface::LuaScalarField::m_checkValid() {
+    // Look for the scalar field function in the global scope
+    lua_getglobal(m_lua, sfFunction);
+    if (!lua_isfunction(m_lua, -1)) {
+      fprintf(stderr, "The scalar field function '%s' was not defined in Lua\n",
+          sfFunction);
+      lua_pop(m_lua, 1);
+      return false;
+    }
+    // Call the function and check for valid output
+    lua_pushnumber(m_lua, 0.0);
+    lua_pushnumber(m_lua, 0.0);
+    lua_pushnumber(m_lua, 0.0);
+    lua_call(m_lua, 3, 1);
+    if (!lua_isnumber(m_lua, -1)) {
+      fprintf(stderr, "The scalar field function '%s' did not return a number",
+          sfFunction);
+      lua_pop(m_lua, 1);
+      return false;
+    }
+    lua_pop(m_lua, 1);
+    return true;
+  }
+
   float ImplicitSurface::LuaScalarField::operator()(
       float x, float y, float z) const
   {
-    static const char *sfFunction = "sf";
     // Pass our three arguments and call the scalar field function
     lua_getglobal(m_lua, sfFunction);
     if (!lua_isfunction(m_lua, -1)) {
@@ -155,7 +244,7 @@ namespace mc { namespace samples { namespace implicit {
       return 0.0f;
     }
     float result = lua_tonumber(m_lua, -1);
-    fprintf(stderr, "result: %g\n", result);
+    lua_pop(m_lua, 1);
     return result;
   }
 } } }

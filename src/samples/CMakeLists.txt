@@ -8,8 +8,14 @@ if(DEFINED ENV{EMSCRIPTEN})
 
   set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 
+  # Lua library
+  set(LUA_DIR "${CMAKE_SOURCE_DIR}/extern/lua-js-install")
+  set(LUA_INCLUDE_DIR "${LUA_DIR}/include")
+  set(LUA_LIBRARIES "${LUA_DIR}/lib/liblua.a")
+
   include_directories(SYSTEM
       ${GLM_INCLUDE_DIR}
+      ${LUA_INCLUDE_DIR}
       )
 else()
   # GLEW library

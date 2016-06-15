@@ -32,6 +32,8 @@
 
 #include "simple_tables.c"
 
+#include <mc/algorithms/simple/simple.h>
+
 #define max(a, b) ((a) > (b) ? (a) : (b))
 
 #define mod(a, b) ((a) % (b) < 0 ? (a) % (b) + (b) : (a) % (b))

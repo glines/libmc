@@ -35,6 +35,7 @@ typedef enum mcAlgorithmFlag {
   MC_CUBERILLE,
   MC_SNAP_MARCHING_CUBES,
   MC_PATCH_MARCHING_CUBES,
+  MC_NIELSON_DUAL,
 } mcAlgorithmFlag;
 
 typedef float (*mcScalarField)(float x, float y, float z);

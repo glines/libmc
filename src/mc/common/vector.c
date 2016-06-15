@@ -25,10 +25,22 @@
 
 #include <mc/vector.h>
 
+void mcVec3_add(const mcVec3 *u, const mcVec3 *v, mcVec3 *w) {
+  w->x = u->x + v->x;
+  w->y = u->y + v->y;
+  w->z = u->z + v->z;
+}
+
 void mcVec3_subtract(const mcVec3 *u, const mcVec3 *v, mcVec3 *w) {
   w->x = u->x - v->x;
   w->y = u->y - v->y;
   w->z = u->z - v->z;
+}
+
+void mcVec3_scalarProduct(float a, const mcVec3 *u, mcVec3 *v) {
+  v->x = a * u->x;
+  v->y = a * u->y;
+  v->z = a * u->z;
 }
 
 mcVec3 mcVec3_lerp(const mcVec3 *u, const mcVec3 *v, float a) {

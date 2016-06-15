@@ -116,6 +116,48 @@ void mcCube_vertexRelativePosition(unsigned int vertex, unsigned int *pos);
 unsigned int mcCube_cubeConfigurationFromSamples(float *samples);
 
 /**
+ * This routine returns the canonical orientation of the given cube.  This
+ * canonical representation of the cube is retrieved from a table generated at
+ * compile time.
+ *
+ * The related function mcCube_canonicalRotationSequence() gives the rotation
+ * sequence used to transform the cube to this canonical representation.
+ *
+ * This routine is not to be confused with
+ * mcCube_canonicalOrientationInversion(), which performs inversion as well as
+ * rotation. Inverting the cube results in fewer possible cases at the cost of
+ * some face ambiguity problems.
+ *
+ * \sa mcCube_canonicalRotationSequence()
+ * \sa mcCube_canonicalOrientationInversion()
+ */
+unsigned int mcCube_canonicalOrientation(unsigned int cube);
+
+/**
+ * This routine returns the encoded rotation sequence needed to bring the given
+ * cube to its canonical orientation. This rotation sequence is retrieved from
+ * a table generated at compile time.
+ *
+ * Rotation sequences are encoded as follows. Starting from the low-order byte,
+ * the first byte represents the number of rotations about the z-axis, the
+ * second byte represents the number of rotations about the x-axis, and the
+ * third byte represents the number of rotations about the y-axis.  Thus, the
+ * first three bytes represent 90-degree Euler angles in zxy order.
+ *
+ * If the inverse rotation is desired, simply apply the corresponding number
+ * of reverse rotations in the yxz order.
+ *
+ * This routine is not to be confused with
+ * mcCube_canonicalRotationInversionSequence(), which performs inversion as
+ * well as rotation. Inverting the cube results in fewer possible cases at the
+ * cost of some face ambiguity problems.
+ *
+ * \sa mcCube_canonicalOrientation()
+ * \sa mcCube_canonicalRotationInversionSequence()
+ */
+unsigned int mcCube_canonicalRotationSequence(unsigned int cube);
+
+/**
  * This routine returns the canonical orientation+inversion of the given cube.
  * This canonical representation of the cube is retrieved from a table
  * generated at compile time.
@@ -143,7 +185,7 @@ unsigned int mcCube_canonicalOrientationInversion(unsigned int cube);
  * second byte represents the number of rotations about the x-axis, and the
  * third byte represents the number of rotations about the y-axis.  Thus, the
  * first three bytes represent 90-degree Euler angles in zxy order.  The fourth
- * byte is 0x01 if the cube was inverted, and 0x00 otherwis.
+ * byte is 0x01 if the cube was inverted, and 0x00 otherwise.
  *
  * If the inverse rotation is desired, simply apply the corresponding number
  * of reverse rotations in the yxz order.

@@ -28,6 +28,7 @@
 #include <mc/algorithms/cuberille.h>
 #include <mc/algorithms/dualMarchingCubes.h>
 #include <mc/algorithms/elasticSurfaceNet.h>
+#include <mc/algorithms/nielsonDual.h>
 #include <mc/algorithms/patch.h>
 #include <mc/algorithms/simple.h>
 #include <mc/isosurfaceBuilder.h>
@@ -157,6 +158,13 @@ const mcMesh *mcIsosurfaceBuilder_isosurfaceFromFieldWithArgs(
       break;
     case MC_PATCH_MARCHING_CUBES:
       mcPatch_isosurfaceFromField(
+          sf, args,
+          x_res, y_res, z_res,
+          min, max,
+          mesh);
+      break;
+    case MC_NIELSON_DUAL:
+      mcNielsonDual_isosurfaceFromField(
           sf, args,
           x_res, y_res, z_res,
           min, max,

@@ -50,7 +50,7 @@ namespace mc { namespace samples { namespace implicit {
     // Re-evaluate the isosurface extraction algorithm
     const Mesh *mesh = m_builder.buildIsosurface(
         *m_sf,  // scalarField
-        MC_SIMPLE_MARCHING_CUBES,  // algorithm
+        MC_NIELSON_DUAL,  // algorithm
         10, 10, 10,  // res
         Vec3(-1.0f, -1.0f, -1.0f),  // min
         Vec3(1.0f, 1.0f, 1.0f)  // max

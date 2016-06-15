@@ -29,9 +29,19 @@ typedef struct mcVec3 {
 } mcVec3;
 
 /**
- * Computes the componentwise subtraction u - v and stores the result in w.
+ * Computes the componentwise sum u + v and stores the result in w.
+ */
+void mcVec3_add(const mcVec3 *u, const mcVec3 *v, mcVec3 *w);
+
+/**
+ * Computes the componentwise difference u - v and stores the result in w.
  */
 void mcVec3_subtract(const mcVec3 *u, const mcVec3 *v, mcVec3 *w);
+
+/**
+ * Computes the scalar product au and stores the result in v.
+ */
+void mcVec3_scalarProduct(float a, const mcVec3 *u, mcVec3 *v);
 
 /**
  * Linearly interpolates between the two vectors using the given a as a weight

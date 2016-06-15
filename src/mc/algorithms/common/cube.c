@@ -404,6 +404,16 @@ unsigned int mcCube_cubeConfigurationFromSamples(float *samples) {
   return cube;
 }
 
+unsigned int mcCube_canonicalOrientation(unsigned int cube) {
+  assert(cube <= 0xff);
+  return mcCube_canonicalOrientationTable[cube];
+}
+
+unsigned int mcCube_canonicalRotationSequence(unsigned int cube) {
+  assert(cube <= 0xff);
+  return mcCube_canonicalRotationSequenceTable[cube];
+}
+
 unsigned int mcCube_canonicalOrientationInversion(unsigned int cube) {
   assert(cube <= 0xff);
   return mcCube_canonicalOrientationInversionTable[cube];

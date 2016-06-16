@@ -100,8 +100,10 @@ void mcNielsonDual_isosurfaceFromField(
       memset(currentLine, -1, sizeof(Voxel) * (x_res + 1));
 #endif
       for (int x = -1; x < (int)x_res; ++x) {
+#ifndef NDEBUG
         /* Set canary values for our voxel vertex indices */
         memset(currentVoxel, -1, sizeof(Voxel));
+#endif
         /* Determine the cube configuration index by iterating over the eight
          * cube vertices */
         unsigned int cube = 0;
@@ -283,12 +285,23 @@ void mcNielsonDual_isosurfaceFromField(
             /* FIXME: Enough information is available beforehand to determine the
              * winding order. We should be able to extract the winding order from
              * a table. */
-            /* Add a quad to the mesh */
+            int winding = mcNielsonDual_windingTable[(edge << 8) + cube];
             quad.indices[0] = vertexIndices[0];
-            quad.indices[1] = vertexIndices[1];
             quad.indices[2] = vertexIndices[3];
-            quad.indices[3] = vertexIndices[2];
+            if (winding == faces[0]) {
+              quad.indices[1] = vertexIndices[1];
+              quad.indices[3] = vertexIndices[2];
+            } else {
+              /* The winding table must agree with the faces adjacent to this
+               * edge */
+              assert(winding == faces[1]);
+              quad.indices[1] = vertexIndices[2];
+              quad.indices[3] = vertexIndices[1];
+            }
+            /* Add the quad to the mesh */
             mcMesh_addFace(mesh, &quad);
+            /* TODO: Support triangulated meshes. */
+            /* TODO: Determine the best triangulation based on angles. */
           }
         }
         /* Make the current voxel the previous one */

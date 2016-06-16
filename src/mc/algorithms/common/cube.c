@@ -106,18 +106,18 @@ void mcCube_edgeFaces(unsigned int edge, unsigned int *faces) {
     int faces[2];
   } FacePair;
   static const FacePair table[] = {
-    { .faces = { 0, 4 } },  /* Edge 0 */
+    { .faces = { 0, 3 } },  /* Edge 0 */
     { .faces = { 0, 1 } },  /* Edge 1 */
     { .faces = { 0, 2 } },  /* Edge 2 */
-    { .faces = { 0, 3 } },  /* Edge 3 */
-    { .faces = { 4, 5 } },  /* Edge 4 */
+    { .faces = { 4, 0 } },  /* Edge 3 */
+    { .faces = { 3, 5 } },  /* Edge 4 */
     { .faces = { 1, 5 } },  /* Edge 5 */
     { .faces = { 2, 5 } },  /* Edge 6 */
-    { .faces = { 3, 5 } },  /* Edge 7 */
+    { .faces = { 5, 4 } },  /* Edge 7 */
     { .faces = { 3, 4 } },  /* Edge 8 */
-    { .faces = { 1, 4 } },  /* Edge 9 */
-    { .faces = { 2, 3 } },  /* Edge 10 */
-    { .faces = { 1, 2 } },  /* Edge 11 */
+    { .faces = { 1, 3 } },  /* Edge 9 */
+    { .faces = { 4, 2 } },  /* Edge 10 */
+    { .faces = { 2, 1 } },  /* Edge 11 */
   };
   assert (edge < 12);
   faces[0] = table[edge].faces[0];

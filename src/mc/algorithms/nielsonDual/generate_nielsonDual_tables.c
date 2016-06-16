@@ -502,6 +502,43 @@ void computeVertexIndexLookupTable(
   }
 }
 
+void computeWindingTable(int *table)
+{
+  /* NOTE: This table is larger than it needs to be. We only use two bits from
+   * the cube configuration index. */
+  /* Iterate over all cube edges */
+  for (int edge = 0; edge < MC_CUBE_NUM_EDGES; ++edge) {
+    /* Iterate over all voxel cube configurations */
+    for (int cube = 0; cube <= 0xff; ++cube) {
+      unsigned int vertices[2], values[2];
+      /* TODO: Determine the sign of this edge */
+      /* NOTE: The edge vertices are always given from least to greatest vertex
+       * index. */
+      mcCube_edgeVertices(edge, vertices);
+      for (int i = 0; i < 2; ++i) {
+        values[i] = mcCube_vertexValue(vertices[i], cube);
+      }
+      if (values[0] == values[1]) {
+        /* No isosurface intersection at this edge */
+        table[(edge << 8) + cube] = -1;
+        continue;
+      }
+      /* FIXME: I'm very uncertain about the convention used for encoding
+       * isosurface sign of the cube configuration here. I thought this
+       * inequality should be the other way. Maybe something is backwards
+       * around here. */
+      int sign = values[1] > values[0] ? 1 : 0;
+      unsigned int faces[2];
+      mcCube_edgeFaces(edge, faces);
+      if (sign) {
+        table[(edge << 8) + cube] = faces[0];
+      } else {
+        table[(edge << 8) + cube] = faces[1];
+      }
+    }
+  }
+}
+
 void printVertexTable(const mcNielsonDualVertexList *table) {
   fprintf(stdout, "const mcNielsonDualVertexList mcNielsonDual_vertexTable[] = {\n");
   /* Iterate over all cubes in the table */
@@ -580,7 +617,17 @@ void printMidpointVertexTable(mcNielsonDualCookedVertexList *table) {
 void printVertexIndexLookupTable(int *table) {
   fprintf(stdout, "const int mcNielsonDual_vertexIndexLookupTable[] = {\n");
   for (int i = 0; i < MC_CUBE_NUM_EDGES * 0x100; ++i) {
-    fprintf(stdout, "  %2d,  /* 0x%06x */\n", table[i], i);
+    fprintf(stdout, "  %2d,  /* Edge: %d, Cube: 0x%02x */\n",
+        table[i], i >> 8, i & 0xff);
+  }
+  fprintf(stdout, "};\n");
+}
+
+void printWindingTable(int *table) {
+  fprintf(stdout, "const int mcNielsonDual_windingTable[] = {\n");
+  for (int i = 0; i < MC_CUBE_NUM_EDGES * 0x100; ++i) {
+    fprintf(stdout, "  %2d,  /* Edge: %d, Cube: 0x%02x */\n",
+        table[i], i >> 8, i & 0xff);
   }
   fprintf(stdout, "};\n");
 }
@@ -588,20 +635,23 @@ void printVertexIndexLookupTable(int *table) {
 int main(int argc, char **argv) {
   mcNielsonDualVertexList *vertexTable;
   mcNielsonDualCookedVertexList *midpointVertexTable;
-  int *vertexIndexLookupTable;
+  int *vertexIndexLookupTable, *windingTable;
 
-  /* Allocate memory our tables */
+  /* Allocate for memory our tables */
   vertexTable = (mcNielsonDualVertexList*)malloc(
       sizeof(mcNielsonDualVertexList) * 256);
   midpointVertexTable = (mcNielsonDualCookedVertexList*)malloc(
       sizeof(mcNielsonDualCookedVertexList) * 256);
   vertexIndexLookupTable = (int*)malloc(
       sizeof(int) * MC_CUBE_NUM_EDGES * 256);
+  windingTable = (int*)malloc(
+      sizeof(int) * MC_CUBE_NUM_EDGES * 256);
 
   /* Compute the tables */
   computeVertexTable(vertexTable);
   computeMidpointVertexTable(vertexTable, midpointVertexTable);
   computeVertexIndexLookupTable(vertexTable, vertexIndexLookupTable);
+  computeWindingTable(windingTable);
 
   /* Print the tables */
   printVertexTable(vertexTable);
@@ -609,4 +659,12 @@ int main(int argc, char **argv) {
   printMidpointVertexTable(midpointVertexTable);
   fprintf(stdout, "\n");
   printVertexIndexLookupTable(vertexIndexLookupTable);
+  fprintf(stdout, "\n");
+  printWindingTable(windingTable);
+
+  /* Free table memory */
+  free(windingTable);
+  free(vertexIndexLookupTable);
+  free(midpointVertexTable);
+  free(vertexTable);
 }

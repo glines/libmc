@@ -40,7 +40,7 @@ namespace mc { namespace samples { namespace implicit {
     : MeshObject(position, orientation),
       m_language(ImplicitSurface::Language::LUA)
   {
-    this->setDrawOpaque(false);
+    this->setDrawOpaque(true);
   }
 
   void ImplicitSurface::m_update() {

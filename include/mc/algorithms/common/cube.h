@@ -38,13 +38,20 @@ typedef struct mcCubeEdgeList {
  * on that edge in vertices.
  *
  * These indices are based on the numbering scheme described by the original
- * marching cubes paper by Lorensen.
+ * marching cubes paper by Lorensen. These vertex numbers are always given from
+ * least to greatest; a few of the algorithms depend on this behavior. For
+ * example, the Nielson MC-Dual algorithm relies on this behavior to determine
+ * vertex winding order about the edges.
  */
 void mcCube_edgeVertices(unsigned int edge, unsigned int *vertices);
 
 /**
  * This routine determines the two cube faces that the given edge lies on and
  * returns the indices of those faces in faces.
+ *
+ * The edge faces are given in a specific order that suggests winding order.
+ * The winding order is right-handed with the surface normal pointing from
+ * least vertex index to greatest vertex index.
  */
 void mcCube_edgeFaces(unsigned int edge, unsigned int *faces);
 

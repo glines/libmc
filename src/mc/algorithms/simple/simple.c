@@ -262,7 +262,7 @@ void mcSimple_isosurfaceFromField(
               unsigned int vertices[2];
               float values[2];
               mcVec3 latticePos[2];
-              mcVec3 gradiants[2];
+              mcVec3 gradients[2];
               /* Find the cube vertices on this edge */
               mcCube_edgeVertices(edge, vertices);
               for (unsigned int i = 0; i < 2; ++i) {
@@ -288,13 +288,13 @@ void mcSimple_isosurfaceFromField(
                                         args));
 #endif
                 values[i] = samples[j];
-                /* Calculate the surface normal by estimating the gradiant of
+                /* Calculate the surface normal by estimating the gradient of
                  * the scalar field at the cube vertices, and then
-                 * interpolating between the two gradiants. (see Lorensen,
+                 * interpolating between the two gradients. (see Lorensen,
                  * "Marching Cubes: A High Resolution 3D Surface Construction
                  * Algorihm") */
                 /* FIXME: I'm not so sure delta_x is the correct divisor */
-                gradiants[i].x =
+                gradients[i].x =
                   (samples[abs[0] + ((abs[0] < x_res - 1) ? 1 : 0)
                            + abs[1] * x_res
                            + ((sampleSliceIndex + pos[2]) % 4) * x_res * y_res]
@@ -303,7 +303,7 @@ void mcSimple_isosurfaceFromField(
                              + ((sampleSliceIndex + pos[2]) % 4) * x_res * y_res]
                   ) / delta_x;
                 /* FIXME: I'm not so sure delta_y is the correct divisor */
-                gradiants[i].y =
+                gradients[i].y =
                   (samples[abs[0]
                            + (abs[1] + ((abs[1] < y_res - 1) ? 1 : 0)) * x_res
                            + ((sampleSliceIndex + pos[2]) % 4) * x_res * y_res]
@@ -312,7 +312,7 @@ void mcSimple_isosurfaceFromField(
                              + ((sampleSliceIndex + pos[2]) % 4) * x_res * y_res]
                   ) / delta_y;
                 /* FIXME: I'm not so sure delta_z is the correct divisor */
-                gradiants[i].z =
+                gradients[i].z =
                   (samples[abs[0]
                            + abs[1] * x_res
                            + ((sampleSliceIndex + pos[2] + ((abs[2] < z_res - 1) ? 1 : 0)) % 4)
@@ -329,9 +329,9 @@ void mcSimple_isosurfaceFromField(
                * lattice points, so we interpolate between these points. */
               mcVertex vertex;
               vertex.pos = mcVec3_lerp(&latticePos[0], &latticePos[1], weight);
-              /* Interpolate between the gradiants to approximate the surface
+              /* Interpolate between the gradients to approximate the surface
                * normal */
-              vertex.norm = mcVec3_lerp(&gradiants[0], &gradiants[1], weight);
+              vertex.norm = mcVec3_lerp(&gradients[0], &gradients[1], weight);
               mcVec3_normalize(&vertex.norm, &vertex.norm);
               /* Add this vertex to the mesh */
               vertexIndices[edge] = mcMesh_addVertex(mesh, &vertex);

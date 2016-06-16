@@ -46,7 +46,7 @@ typedef struct mcNielsonDualVertexList {
 } mcNielsonDualVertexList;
 
 typedef struct mcNielsonDualCookedVertex {
-  mcVec3 pos;
+  mcVec3 pos, norm;
 } mcNielsonDualCookedVertex;
 
 typedef struct mcNielsonDualCookedVertexList {

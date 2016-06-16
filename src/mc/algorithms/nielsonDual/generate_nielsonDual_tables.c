@@ -39,8 +39,8 @@ void computeVertexList(int cube, mcNielsonDualVertexList *list) {
   /* Initialize the list with all values -1 */
   memset(list, -1, sizeof(mcNielsonDualVertexList));
 
-  /* TODO: Determine this cube's canonical orientation */
-  /* FIXME: We need a routine for determining the canonical orientation without inversion */
+  /* Determine this cube's canonical orientation and the rotation sequence that
+   * brings it into that orientation */
   unsigned int canonical = mcCube_canonicalOrientation(cube);
   unsigned int sequence = mcCube_canonicalRotationSequence(cube);
 
@@ -395,6 +395,8 @@ void computeVertexList(int cube, mcNielsonDualVertexList *list) {
       }
     }
     /* TODO: Rotate the face connections back */
+    /* NOTE: We might not need the face connectivity. I have not found a use
+     * for it yet. */
   }
 }
 
@@ -448,6 +450,55 @@ void computeMidpointVertexList(
         (1.0f / (float)numEdgeIntersections), &midpoint, &midpoint);
     /* Store the computed midpoint as the cooked vertex position */
     midpointVertexList->vertices[i].pos = midpoint;
+    /* We estimate the surface normal at this vertex by calculating the normal
+     * of the surface patch. Note that because the surface patch vertices are
+     * not necessarily co-planar, we can get a better estimate by averaging the
+     * normals for more than one triangle.
+     */
+    mcVec3 normal;
+    int numTriangles = 0;
+    normal.x = normal.y = normal.z = 0.0f;
+    assert(vertex->edgeIntersections[0] != -1);
+    assert(vertex->edgeIntersections[1] != -1);
+    assert(vertex->edgeIntersections[2] != -1);
+    /* Iterate through triangles in the triangle fan that makes this patch and
+     * compute all of their normals */
+    for (int j = 0; j + 2 < MC_CUBE_NUM_EDGES; ++j) {
+      if (vertex->edgeIntersections[j + 2] == -1)
+        break;  /* No more triangles to consider */
+      numTriangles += 1;
+      mcVec3 points[3];
+      /* Compute the three points of this triangle */
+      for (int k = 0; k < 3; ++k) {
+        int edge;
+        unsigned int vertexIndices[2];
+        mcVec3 vertices[2];
+        if (k == 0)
+          edge = vertex->edgeIntersections[0];
+        else
+          edge = vertex->edgeIntersections[j + k];
+        /* The edge intersection point is halfway between the cube vertices */
+        mcCube_edgeVertices(edge, vertexIndices);
+        for (int l = 0; l < 2; ++l) {
+          unsigned int pos[3];
+          mcCube_vertexRelativePosition(vertexIndices[l], pos);
+          vertices[l].x = pos[0] ? 1.0f : 0.0f;
+          vertices[l].y = pos[1] ? 1.0f : 0.0f;
+          vertices[l].z = pos[2] ? 1.0f : 0.0f;
+        }
+        points[k] = mcVec3_lerp(&vertices[0], &vertices[1], 0.5f);
+      }
+      mcVec3 tangent[2], triangleNormal;
+      /* Compute the tangent vectors and normal */
+      mcVec3_subtract(&points[1], &points[0], &tangent[0]);
+      mcVec3_subtract(&points[2], &points[0], &tangent[1]);
+      mcVec3_cross(&tangent[1], &tangent[0], &triangleNormal);
+      mcVec3_normalize(&triangleNormal, &triangleNormal);
+      mcVec3_add(&normal, &triangleNormal, &normal);
+    }
+    /* Average the triangle normals for our vertex normal */
+    mcVec3_scalarProduct(1.0f / (float)numTriangles, &normal, &normal);
+    midpointVertexList->vertices[i].norm = normal;
   }
 }
 
@@ -599,6 +650,17 @@ void printMidpointVertexTable(mcNielsonDualCookedVertexList *table) {
           table[cube].vertices[i].pos.x,
           table[cube].vertices[i].pos.y,
           table[cube].vertices[i].pos.z
+          );
+      /* Print the surface normal */
+      fprintf(stdout,
+          "        .norm = {\n"
+          "          .x = %f,\n"
+          "          .y = %f,\n"
+          "          .z = %f,\n"
+          "        },\n",
+          table[cube].vertices[i].norm.x,
+          table[cube].vertices[i].norm.y,
+          table[cube].vertices[i].norm.z
           );
       fprintf(stdout,
           "      },\n");

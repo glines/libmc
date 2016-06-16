@@ -25,7 +25,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>  /* XXX */
+#include <string.h>
 
 #include <mc/algorithms/common/cube.h>
 
@@ -160,23 +160,15 @@ void mcNielsonDual_isosurfaceFromField(
             vertex.pos.x = min->x + ((float)x + list->vertices[i].pos.x) * delta_x;
             vertex.pos.y = min->y + ((float)y + list->vertices[i].pos.y) * delta_y;
             vertex.pos.z = min->z + ((float)z + list->vertices[i].pos.z) * delta_z;
-            /* TODO: Compute the surface normal at this vertex */
+            /* The normal is also retrieved from the table */
+            /* TODO: Support computing more accurate normals from sample values */
+            vertex.norm = list->vertices[i].norm;
             /* Add this vertex to the mesh */
             vertexIndex = mcMesh_addVertex(mesh, &vertex);
             /* Store this vertex index in our buffers */
             currentVoxel->vertexIndices[i] = vertexIndex;
             currentLine[x + 1].vertexIndices[i] = vertexIndex;
             currentSlice[(x + 1) + (y + 1) * (x_res + 1)].vertexIndices[i] = vertexIndex;
-            /* XXX: Draw a small triangle around this vertex for debugging
-             * purposes */
-            vertex.pos.x += delta_x * 0.1;
-            mcMesh_addVertex(mesh, &vertex);
-            vertex.pos.y += delta_y * 0.1;
-            mcMesh_addVertex(mesh, &vertex);
-            triangle.indices[0] = vertexIndex;
-            triangle.indices[1] = vertexIndex + 1;
-            triangle.indices[2] = vertexIndex + 2;
-            mcMesh_addFace(mesh, &triangle);
           }
           /* TODO: Iterate over the three edges for which we have generated
            * enough vertices to make its respective quad. */
@@ -280,11 +272,10 @@ void mcNielsonDual_isosurfaceFromField(
             assert(lookupIndex != -1);
             assert(voxel->vertexIndices[lookupIndex] != -1);
             vertexIndices[3] = voxel->vertexIndices[lookupIndex];
-            /* TODO: Note the signs of the samples on this edge to determine the
-             * correct winding order. */
-            /* FIXME: Enough information is available beforehand to determine the
-             * winding order. We should be able to extract the winding order from
-             * a table. */
+            /* The signs of the samples on this edge to determine the correct
+             * winding order. Enough information is available to quickly
+             * determine the winding order from our winding order lookup table,
+             * which returns the next face in the correct winding. */
             int winding = mcNielsonDual_windingTable[(edge << 8) + cube];
             quad.indices[0] = vertexIndices[0];
             quad.indices[2] = vertexIndices[3];

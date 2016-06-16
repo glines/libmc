@@ -94,7 +94,6 @@ namespace mc { namespace samples {
       // Normalize the click coordinates
       float x = float(event.x) / float(windowWidth);
       float y = float(windowHeight - event.y) / float(windowHeight);
-      fprintf(stderr, "x: %g,  y: %g\n", x, y);
       // Update the final arcball position
       m_arcballFinal = m_arcballPosition(x, y);
       // Compute the rotation, from [Shoemake 1992]

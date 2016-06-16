@@ -34,7 +34,8 @@
  *
  * Note that when viewing the 1 side of a cube from the front in this manner,
  * the left face of the cube is side 2. That is to say, left and right are
- * considered relative to the cube not relative to the viewer.
+ * considered relative to the cube not relative to the viewer. This is easiest
+ * to understand with an actual die in hand.
  */
 typedef enum mcCubeFace {
   MC_CUBE_FACE_FRONT = 0,

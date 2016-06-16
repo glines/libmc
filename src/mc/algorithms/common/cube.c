@@ -453,3 +453,9 @@ unsigned int mcCube_rotateEdgeReverseZ(unsigned int edge) {
   assert(edge < MC_CUBE_NUM_EDGES);
   return mcCube_edgeReverseRotationTableZ[edge];
 }
+
+unsigned int mcCube_translateEdge(unsigned int edge, unsigned int face) {
+  assert(edge < MC_CUBE_NUM_EDGES);
+  assert(face < MC_CUBE_NUM_FACES);
+  return mcCube_edgeTranslationTable[(face << 4) + edge];
+}

@@ -21,9 +21,11 @@
  * IN THE SOFTWARE.
  */
 
+#include <assert.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>  /* XXX */
 
 #include <mc/algorithms/common/cube.h>
 
@@ -49,12 +51,18 @@ void mcNielsonDual_isosurfaceFromField(
     const mcVec3 *min, const mcVec3 *max,
     mcMesh *mesh)
 {
-  mcFace triangle;
+  mcFace triangle, quad;
   mcFace_init(&triangle, 3);
+  mcFace_init(&quad, 4);
   float delta_x = fabs(max->x - min->x) / (float)(x_res - 1);
   float delta_y = fabs(max->y - min->y) / (float)(y_res - 1);
   float delta_z = fabs(max->z - min->z) / (float)(z_res - 1);
-  /* We allocate some buffers to facilitate constructing mesh topology */
+  /* We allocate some buffers to facilitate constructing mesh topology.
+   *
+   * Note that the buffers extend beyond the cube lattice structure specified
+   * by the input parameters. This is because we use phantom sample points
+   * above the isosurface for the edge cases to avoid the problem of
+   * inaccessible buffers and nonmanifold geometry. */
   /* This struct defines the connecting vector interface between a voxel cube
    * and the voxel cube in the next slice. */
   typedef struct Voxel {
@@ -66,187 +74,238 @@ void mcNielsonDual_isosurfaceFromField(
     int vertexIndices[MC_NIELSON_DUAL_MAX_VERTICES];
     int cube;
   } Voxel;
-  Voxel *prevSlice = (Voxel*)malloc(
-      sizeof(Voxel) * (x_res - 1) * (y_res - 1));
+  Voxel *previousSlice = (Voxel*)malloc(
+      sizeof(Voxel) * (x_res + 1) * (y_res + 1));
   Voxel *currentSlice = (Voxel*)malloc(
-      sizeof(Voxel) * (x_res - 1) * (y_res - 1));
-  Voxel *prevLine = (Voxel*)malloc(sizeof(Voxel) * (x_res - 1));
-  Voxel *currentLine = (Voxel*)malloc(sizeof(Voxel) * (x_res - 1));
-  Voxel *prevVoxel  = (Voxel*)malloc(sizeof(Voxel));
+      sizeof(Voxel) * (x_res + 1) * (y_res + 1));
+  Voxel *previousLine = (Voxel*)malloc(sizeof(Voxel) * (x_res + 1));
+  Voxel *currentLine = (Voxel*)malloc(sizeof(Voxel) * (x_res + 1));
+  Voxel *previousVoxel  = (Voxel*)malloc(sizeof(Voxel));
   Voxel *currentVoxel  = (Voxel*)malloc(sizeof(Voxel));
-  /* TODO: Fill the previous voxel buffers with cubes consisntet with a lattice
-   * grid that extends beyond the minimum and maximum resolution resolutions,
-   * with samples beyond the resolutions always above the isosurface.
-   *
-   * NOTE: We would also need to fudge voxel cubes past the maximum resolution
-   * by looping to the very edge of the sample lattice. Without doing so, a lot
-   * of the samples at the edges would be ignored.
-   *
-   * NOTE: What if the user wants non-manifold geometry?
-   */
-  /* TODO: Iterate over the cube lattice*/
-  for (int z = 0; z < z_res; ++z) {
-    for (int y = 0; y < y_res; ++y) {
-      for (int x = 0; x < x_res; ++x) {
+#ifndef NDEBUG
+  /* Set canary values for our vertex indices */
+  memset(previousSlice, -1, sizeof(Voxel) * (x_res + 1) * (y_res + 1));
+  memset(previousLine, -1, sizeof(Voxel) * (x_res + 1));
+  memset(previousVoxel, -1, sizeof(Voxel));
+#endif
+  /* Iterate over the cube lattice */
+  for (int z = -1; z < (int)z_res; ++z) {
+#ifndef NDEBUG
+    /* Set canary values for our slice vertex indices */
+    memset(currentSlice, -1, sizeof(Voxel) * (x_res + 1) * (y_res + 1));
+#endif
+    for (int y = -1; y < (int)y_res; ++y) {
+#ifndef NDEBUG
+      /* Set canary values for our line vertex indices */
+      memset(currentLine, -1, sizeof(Voxel) * (x_res + 1));
+#endif
+      for (int x = -1; x < (int)x_res; ++x) {
+        /* Set canary values for our voxel vertex indices */
+        memset(currentVoxel, -1, sizeof(Voxel));
         /* Determine the cube configuration index by iterating over the eight
          * cube vertices */
         unsigned int cube = 0;
         for (unsigned int vertex = 0; vertex < 8; ++vertex) {
-          unsigned int pos[3];
+          int pos[3];
           float sample;
           /* Determine this vertex's relative position in the cube and sample
            * that point */
           /* TODO: Cache these sample values (see
            * src/mc/algorihms/patch/patch.c for example). */
-          mcCube_vertexRelativePosition(vertex, pos);
-          sample = sf(min->x + (x + pos[0]) * delta_x,
-              min->y + (y + pos[1]) * delta_y,
-              min->z + (z + pos[2]) * delta_z,
-              args);
+          mcCube_vertexRelativePosition(vertex, (unsigned int*)pos);
+          if ((x + pos[0] < 0) || (y + pos[1] < 0) || (z + pos[2] < 0)
+              || (x + pos[0] >= x_res) || (y + pos[1] >= y_res) || (z + pos[2] >= z_res))
+          {
+            /* TODO: Fill the previous voxel buffers with cubes consistent with
+             * a lattice grid that extends beyond the minimum and maximum
+             * resolution resolutions, with samples beyond the resolutions
+             * always above the isosurface.
+             *
+             * NOTE: We would also need to fudge voxel cubes past the maximum
+             * resolution by looping to the very edge of the sample lattice.
+             * Without doing so, a lot of the samples at the edges would be
+             * ignored.
+             *
+             * NOTE: What if the user wants non-manifold geometry?
+             */
+            sample = 1.0f;
+          } else {
+            sample = sf(min->x + (x + pos[0]) * delta_x,
+                min->y + (y + pos[1]) * delta_y,
+                min->z + (z + pos[2]) * delta_z,
+                args);
+          }
           /* Add the bit this vertex contributes to the cube */
           cube |= (sample >= 0.0f ? 1 : 0) << vertex;
         }
-        fprintf(stderr, "cube: 0x%02x\n", cube);
         /* Store this cube configuration in our buffers */
         currentVoxel->cube = cube;
-        currentLine[x].cube = cube;
-        currentSlice[x + y * (x_res - 1)].cube = cube;
-        if (cube == 0x00 || cube == 0xff)
-          continue;  /* Skip the trivial cases */
-        /* Look up vertices we need to generate for the given cube
-         * configuration */
-        const mcNielsonDualCookedVertexList *list =
-          &mcNielsonDual_midpointVertexTable[cube];
-        int vertexIndex;
-        for (int i = 0; i < list->numVertices; ++i) {
-          mcVertex vertex;
-          /* NOTE: The table has enough information to know the exact position
-           * of this vertex. We can add it to the mesh as is. The surface
-           * normal can be estimated at this point by interpolation of lattice
-           * gradiants, or even something simpler. */
-          /* TODO: Compute the surface normal at this vertex */
-          vertex.pos.x = min->x + ((float)x + list->vertices[i].pos.x) * delta_x;
-          vertex.pos.y = min->y + ((float)y + list->vertices[i].pos.y) * delta_y;
-          vertex.pos.z = min->z + ((float)z + list->vertices[i].pos.z) * delta_z;
-          /* Add this vertex to the mesh */
-          vertexIndex = mcMesh_addVertex(mesh, &vertex);
-          /* Store this vertex index in our buffers */
-          currentVoxel->vertexIndices[i] = vertexIndex;
-          currentLine[x].vertexIndices[i] = vertexIndex;
-          currentSlice[x + y * (x_res - 1)].vertexIndices[i] = vertexIndex;
-          /* XXX: Draw a small triangle around this vertex for debugging
-           * purposes */
-          vertex.pos.x += delta_x * 0.1;
-          mcMesh_addVertex(mesh, &vertex);
-          vertex.pos.y += delta_y * 0.1;
-          mcMesh_addVertex(mesh, &vertex);
-          triangle.indices[0] = vertexIndex;
-          triangle.indices[1] = vertexIndex + 1;
-          triangle.indices[2] = vertexIndex + 2;
-          mcMesh_addFace(mesh, &triangle);
-        }
-#if 0
-        /* TODO: Iterate over the three edges for which we have generated
-         * enough vertices to make its respective quad. */
-        for (int i = 0; i < 3; ++i) {
-          int edge, faces[2];
-          switch (i) {
-            case 0:
-              edge = 0;
-              faces[0] = MC_CUBE_FACE_FRONT;
-              faces[1] = MC_CUBE_FACE_BOTTOM;
-              break;
-            case 1:
-              edge = 3;
-              faces[0] = MC_CUBE_FACE_FRONT;
-              faces[1] = MC_CUBE_FACE_RIGHT;
-              break;
-            case 2:
-              edge = 8;
-              faces[0] = MC_CUBE_FACE_BOTTOM;
-              faces[1] = MC_CUBE_FACE_RIGHT;
-              break;
+        currentLine[x + 1].cube = cube;
+        currentSlice[(x + 1) + (y + 1) * (x_res + 1)].cube = cube;
+        if (cube != 0x00 && cube != 0xff) { /* Skip the trivial cases */
+          /* Look up vertices we need to generate for the given cube
+           * configuration */
+          const mcNielsonDualCookedVertexList *list =
+            &mcNielsonDual_midpointVertexTable[cube];
+          int vertexIndex;
+          for (int i = 0; i < list->numVertices; ++i) {
+            mcVertex vertex;
+            /* NOTE: The table has enough information to know the exact position
+             * of this vertex. We can add it to the mesh as is. The surface
+             * normal can be estimated at this point by interpolation of lattice
+             * gradiants, or even something simpler. */
+            /* Compute the absolute position of this vertex */
+            vertex.pos.x = min->x + ((float)x + list->vertices[i].pos.x) * delta_x;
+            vertex.pos.y = min->y + ((float)y + list->vertices[i].pos.y) * delta_y;
+            vertex.pos.z = min->z + ((float)z + list->vertices[i].pos.z) * delta_z;
+            /* TODO: Compute the surface normal at this vertex */
+            /* Add this vertex to the mesh */
+            vertexIndex = mcMesh_addVertex(mesh, &vertex);
+            /* Store this vertex index in our buffers */
+            currentVoxel->vertexIndices[i] = vertexIndex;
+            currentLine[x + 1].vertexIndices[i] = vertexIndex;
+            currentSlice[(x + 1) + (y + 1) * (x_res + 1)].vertexIndices[i] = vertexIndex;
+            /* XXX: Draw a small triangle around this vertex for debugging
+             * purposes */
+            vertex.pos.x += delta_x * 0.1;
+            mcMesh_addVertex(mesh, &vertex);
+            vertex.pos.y += delta_y * 0.1;
+            mcMesh_addVertex(mesh, &vertex);
+            triangle.indices[0] = vertexIndex;
+            triangle.indices[1] = vertexIndex + 1;
+            triangle.indices[2] = vertexIndex + 2;
+            mcMesh_addFace(mesh, &triangle);
           }
-          int lookupIndex, vertexIndices[4];
-          Voxel *voxel;
-          /* Get the vertex index for this edge */
-          voxel = currentVoxel;
-          lookupIndex = mcNielsonDual_vertexIndexLookupTable[
-            (edge << 8) + cube];
-          if (voxel->vertexIndices[lookupIndex] == -1) {
-            /* This edge does not have an associated vertex, so it must not
-             * intersect the isosurface. Skip this edge. */
-            continue;
-          }
-          vertexIndices[0] = voxel->vertexIndices[lookupIndex];
-          /* Find the two voxel cubes for the easy cases */
-          for (int j = 0; j < 2; ++j) {
-            switch (faces[j]) {
-              case MC_CUBE_FACE_FRONT:
-                voxel = &prevLine[x];
+          /* TODO: Iterate over the three edges for which we have generated
+           * enough vertices to make its respective quad. */
+          for (int i = 0; i < 3; ++i) {
+            int edge, faces[2];
+            int skip = 0;
+            switch (i) {
+              case 0:
+                edge = 0;
+                faces[0] = MC_CUBE_FACE_FRONT;
+                faces[1] = MC_CUBE_FACE_BOTTOM;
+                if (y < 0 || z < 0)
+                  skip = 1;
                 break;
-              case MC_CUBE_FACE_BOTTOM:
-                voxel = &prevSlice[x + y * (x_res - 1)];
+              case 1:
+                edge = 3;
+                faces[0] = MC_CUBE_FACE_FRONT;
+                faces[1] = MC_CUBE_FACE_RIGHT;
+                if (x < 0 || y < 0)
+                  skip = 1;
                 break;
-              case MC_CUBE_FACE_RIGHT:
-                voxel = prevVoxel;
+              case 2:
+                edge = 8;
+                faces[0] = MC_CUBE_FACE_BOTTOM;
+                faces[1] = MC_CUBE_FACE_RIGHT;
+                if (x < 0 || z < 0)
+                  skip = 1;
                 break;
             }
-            /* TODO: Use the mcNielsonDual_vertexIndexLookupTable to find the
-             * vertex indices for each of the voxels on the interfacing faces, as
-             * well as the voxel diagonal to this edge */
-            /* NOTE: The flip edge of the given face/edge combination is
-             * the given edge with respect to the cube on the other side of
-             * the given face. */
+            if (skip)
+              break;  /* Skip edge cases where we have not generated vertices in
+                         the neighboring voxel */
+            int lookupIndex, vertexIndices[4];
+            Voxel *voxel;
+            /* Get the vertex index for this edge */
+            voxel = currentVoxel;
             lookupIndex = mcNielsonDual_vertexIndexLookupTable[
-              (mcCube_flipEdge(faces[j], edge) << 8) + voxel->cube];
-            /* Find the vertex index for this voxel. This index must exist. */
-            assert(voxel->vertices[lookupIndex] != -1);
-            vertexIndices[j + 1] = voxel->vertices[lookupIndex];
-          }
-          /* Find the voxel cube diagonal to this edge */
-          switch (edge) {
-            case 0:
-              /* The diagonal cube is on the bottom-front */
-              if (y > 0) {
-                voxel = &prevSlice[x + (y - 1) * (x_res - 1)];
-              } else {
-                 /* FIXME: Use special logic for cubes past the sample lattice */
-                assert(false);
+              (edge << 8) + cube];
+            if (lookupIndex == -1) {
+              /* This edge does not have an associated vertex, so it must not
+               * intersect the isosurface. Skip this edge. */
+              /* TODO: Add an assertion here that checks the sample values? */
+              continue;
+            }
+            assert(voxel->vertexIndices[lookupIndex] != -1);
+            vertexIndices[0] = voxel->vertexIndices[lookupIndex];
+            /* Find the cubes near this edge for the two easy cases */
+            for (int j = 0; j < 2; ++j) {
+              switch (faces[j]) {
+                case MC_CUBE_FACE_FRONT:
+                  assert(y >= 0);
+                  voxel = &previousLine[(x + 1)];
+                  break;
+                case MC_CUBE_FACE_BOTTOM:
+                  assert(z >= 0);
+                  voxel = &previousSlice[(x + 1) + (y + 1) * (x_res + 1)];
+                  break;
+                case MC_CUBE_FACE_RIGHT:
+                  assert(x >= 0);
+                  voxel = previousVoxel;
+                  break;
               }
-              break;
-            case 3:
-              /* The diagonal cube is on the front-right */
-              if (x > 0) {
-                voxel = &prevLine[x - 1];
-              } else {
-                 /* FIXME: Use special logic for cubes past the sample lattice */
-                assert(false);
-              }
-            case 8:
-              if (x > 0) {
+              /* Use the mcNielsonDual_vertexIndexLookupTable to find the vertex
+               * indices for this edge and voxel cube configuration. */
+              /* NOTE: The translated edge of the given face/edge combination is
+               * the index of the given edge with respect to the voxel cube on
+               * the other side of the given face. */
+              lookupIndex = mcNielsonDual_vertexIndexLookupTable[
+                (mcCube_translateEdge(edge, faces[j]) << 8) + voxel->cube];
+              /* Find the vertex index for this voxel. This index must exist. */
+              assert(lookupIndex != -1);
+              assert(voxel->vertexIndices[lookupIndex] != -1);
+              vertexIndices[j + 1] = voxel->vertexIndices[lookupIndex];
+            }
+            /* Find the voxel cube diagonal to this edge, which is somewhat more
+             * complicated */
+            switch (edge) {
+              case 0:
+                /* The diagonal cube is on the bottom-front */
+                assert(y >= 0);
+                assert(z >= 0);
+                voxel = &previousSlice[(x + 1) + (y + 1 - 1) * (x_res + 1)];
+                break;
+              case 3:
+                /* The diagonal cube is on the front-right */
+                assert(x >= 0);
+                assert(y >= 0);
+                voxel = &previousLine[x + 1 - 1];
+                break;
+              case 8:
                 /* The diagonal cube is on the bottom-right */
-                cubes[2] = prevSlice[(x - 1) + y * (x_res - 1)];
-              } else {
-                 /* FIXME: Use special logic for cubes past the sample lattice */
-                assert(false);
-              }
+                assert(x >= 0);
+                assert(z >= 0);
+                voxel = &previousSlice[(x + 1 - 1) + (y + 1) * (x_res + 1)];
+                break;
+            }
+            lookupIndex = mcNielsonDual_vertexIndexLookupTable[
+              (mcCube_translateEdge(mcCube_translateEdge(edge, faces[0]), faces[1]) << 8)
+                + voxel->cube];
+            /* Find the vertex index for this voxel. This index must exist. */
+            assert(lookupIndex != -1);
+            assert(voxel->vertexIndices[lookupIndex] != -1);
+            vertexIndices[3] = voxel->vertexIndices[lookupIndex];
+            /* TODO: Note the signs of the samples on this edge to determine the
+             * correct winding order. */
+            /* FIXME: Enough information is available beforehand to determine the
+             * winding order. We should be able to extract the winding order from
+             * a table. */
+            /* Add a quad to the mesh */
+            quad.indices[0] = vertexIndices[0];
+            quad.indices[1] = vertexIndices[1];
+            quad.indices[2] = vertexIndices[3];
+            quad.indices[3] = vertexIndices[2];
+            mcMesh_addFace(mesh, &quad);
           }
-          lookupIndex = mcNielsonDual_vertexIndexLookupTable[
-            (mc_cube_flipEdge(faces[1], mcCube_flipEdge(faces[0], edge)) << 8)
-              + voxel->cube];
-          /* Find the vertex index for this voxel. This index must exist. */
-          assert(voxel->vertices[lookupIndex] != -1);
-          vertexIndices[3] = voxel->vertices[lookupIndex];
-          /* TODO: Note the signs of the samples on this edge to determine the
-           * correct winding order. */
-          /* FIXME: Enough information is available beforehand to determine the
-           * winding order. We should be able to extract the winding order from
-           * a table. */
         }
-#endif
+        /* Make the current voxel the previous one */
+        Voxel *temp = previousVoxel;
+        previousVoxel = currentVoxel;
+        currentVoxel = temp;
       }
+      /* Make the current line the previous one */
+      Voxel *temp = previousLine;
+      previousLine = currentLine;
+      currentLine = temp;
     }
+    /* Make the current slice the previous one */
+    Voxel *temp = previousSlice;
+    previousSlice = currentSlice;
+    currentSlice = temp;
   }
   mcFace_destroy(&triangle);
+  mcFace_destroy(&quad);
 }

@@ -339,6 +339,66 @@ void computeReverseEdgeRotationTable(
   }
 }
 
+void computeEdgeTranslationTable(int *table) {
+  /* Initialize the table with -1 */
+  memset(table, -1, sizeof(int) * MC_CUBE_NUM_FACES * 16);
+  /* Iterate over all edges to populate the table */
+  for (unsigned int edge = 0; edge < MC_CUBE_NUM_EDGES; ++edge) {
+    switch (edge) {
+      case 0:
+        table[(MC_CUBE_FACE_FRONT << 4) + 0] = 4;
+        table[(MC_CUBE_FACE_BOTTOM << 4) + 0] = 2;
+        break;
+      case 1:
+        table[(MC_CUBE_FACE_FRONT << 4) + 1] = 5;
+        table[(MC_CUBE_FACE_LEFT << 4) + 1] = 3;
+        break;
+      case 2:
+        table[(MC_CUBE_FACE_FRONT << 4) + 2] = 6;
+        table[(MC_CUBE_FACE_TOP << 4) + 2] = 0;
+        break;
+      case 3:
+        table[(MC_CUBE_FACE_FRONT << 4) + 3] = 7;
+        table[(MC_CUBE_FACE_RIGHT << 4) + 3] = 1;
+        break;
+      case 4:
+        table[(MC_CUBE_FACE_BOTTOM << 4) + 4] = 6;
+        table[(MC_CUBE_FACE_BACK << 4) + 4] = 0;
+        break;
+      case 5:
+        table[(MC_CUBE_FACE_LEFT << 4) + 5] = 7;
+        table[(MC_CUBE_FACE_BACK << 4) + 5] = 1;
+        break;
+      case 6:
+        table[(MC_CUBE_FACE_TOP << 4) + 6] = 4;
+        table[(MC_CUBE_FACE_BACK << 4) + 6] = 2;
+        break;
+      case 7:
+        table[(MC_CUBE_FACE_RIGHT << 4) + 7] = 5;
+        table[(MC_CUBE_FACE_BACK << 4) + 7] = 3;
+        break;
+      case 8:
+        table[(MC_CUBE_FACE_BOTTOM << 4) + 8] = 10;
+        table[(MC_CUBE_FACE_RIGHT << 4) + 8] = 9;
+        break;
+      case 9:
+        table[(MC_CUBE_FACE_LEFT << 4) + 9] = 8;
+        table[(MC_CUBE_FACE_BOTTOM << 4) + 9] = 11;
+        break;
+      case 10:
+        table[(MC_CUBE_FACE_TOP << 4) + 10] = 8;
+        table[(MC_CUBE_FACE_RIGHT << 4) + 10] = 11;
+        break;
+      case 11:
+        table[(MC_CUBE_FACE_LEFT << 4) + 11] = 10;
+        table[(MC_CUBE_FACE_TOP << 4) + 11] = 9;
+        break;
+      default:
+        assert(0);
+    }
+  }
+}
+
 void printCubeCharTable(const unsigned int *table, FILE *fp) {
   /* Iterate over all possible cube configurations and print the table */
   for (unsigned int cube = 0; cube <= 0xff; cube += 8) {
@@ -461,6 +521,24 @@ void printEdgeRotationTable(
   fprintf(fp, "};\n");
 }
 
+void printEdgeTranslationTable(const int *table, FILE *fp) {
+  fprintf(fp, "const int mcCube_edgeTranslationTable[] = {\n");
+  /* Iterate over all entries in the table. Note that not all entries are valid
+   * face/edge combinations, but they are needed to preserve the indexing. */
+  const int perRow = 8;
+  for (int i = 0; i < MC_CUBE_NUM_FACES * 16; i += perRow) {
+    fprintf(fp, "  ");
+    for (int j = 0; j < perRow; ++j) {
+      fprintf(fp, " %2d,", table[i + j]);
+      if (j == perRow - 1)
+        fprintf(fp, "\n");
+      else
+        fprintf(fp, " ");
+    }
+  }
+  fprintf(fp, "};\n");
+}
+
 void print_usage() {
   fprintf(stderr,
       "Usage:\n"
@@ -494,6 +572,7 @@ int main(int argc, char **argv) {
                x_reverse_edge_table[MC_CUBE_NUM_EDGES],
                y_reverse_edge_table[MC_CUBE_NUM_EDGES],
                z_reverse_edge_table[MC_CUBE_NUM_EDGES];
+  int edge_translation_table[MC_CUBE_NUM_FACES * 16];
 
   /* Parse command line arguments to determine which table we are generating */
   if (argc != 2) {
@@ -538,6 +617,9 @@ int main(int argc, char **argv) {
   computeReverseEdgeRotationTable(y_edge_table, y_reverse_edge_table);
   computeReverseEdgeRotationTable(z_edge_table, z_reverse_edge_table);
 
+  /* Compute the edge translation table */
+  computeEdgeTranslationTable(edge_translation_table);
+
   /* Print the tables */
   /* NOTE: stdout is used because Emscripten's filesystem model makes using
    * fopen() difficult */
@@ -577,6 +659,8 @@ int main(int argc, char **argv) {
         printEdgeRotationTable(Y_AXIS, 1, y_reverse_edge_table, stdout);
         fprintf(stdout, "\n");
         printEdgeRotationTable(Z_AXIS, 1, z_reverse_edge_table, stdout);
+        fprintf(stdout, "\n");
+        printEdgeTranslationTable(edge_translation_table, stdout);
       }
       break;
     case CANONICAL_CUBE_ORIENTATIONS_H:

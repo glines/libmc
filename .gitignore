@@ -9,6 +9,9 @@
 core
 
 # extern files
-extern/codemirror-5.15.2
-extern/lua-js-build
-extern/lua-js-install
+/extern/codemirror-5.15.2
+/extern/lua-js-build
+/extern/lua-js-install
+
+# sandbox files
+/sandbox

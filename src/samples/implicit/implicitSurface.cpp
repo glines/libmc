@@ -40,6 +40,7 @@ namespace mc { namespace samples { namespace implicit {
     : MeshObject(position, orientation),
       m_language(ImplicitSurface::Language::LUA)
   {
+    this->setDrawOpaque(false);
   }
 
   void ImplicitSurface::m_update() {
@@ -51,7 +52,7 @@ namespace mc { namespace samples { namespace implicit {
     const Mesh *mesh = m_builder.buildIsosurface(
         *m_sf,  // scalarField
         MC_NIELSON_DUAL,  // algorithm
-        10, 10, 10,  // res
+        20, 20, 20,  // res
         Vec3(-1.0f, -1.0f, -1.0f),  // min
         Vec3(1.0f, 1.0f, 1.0f)  // max
         );

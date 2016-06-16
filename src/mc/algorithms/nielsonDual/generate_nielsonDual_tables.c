@@ -436,7 +436,7 @@ void computeMidpointVertexList(
       mcCube_edgeVertices(edge, vertices);
       for (int k = 0; k < 2; ++k) {
         int pos[3];
-        mcCube_vertexRelativePosition(vertices[k], pos);
+        mcCube_vertexRelativePosition(vertices[k], (unsigned int*)pos);
         vertexPoints[k].x = pos[0] ? 1.0f : 0.0f;
         vertexPoints[k].y = pos[1] ? 1.0f : 0.0f;
         vertexPoints[k].z = pos[2] ? 1.0f : 0.0f;
@@ -496,6 +496,7 @@ void computeVertexIndexLookupTable(
           }
         }
       }
+      /* Store the vertex index in the lookup table */
       lookupTable[(edge << 8) + cube] = vertexIndex;
     }
   }

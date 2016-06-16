@@ -238,4 +238,12 @@ unsigned int mcCube_rotateEdgeReverseY(unsigned int edge);
  */
 unsigned int mcCube_rotateEdgeReverseZ(unsigned int edge);
 
+/* Translates the edge of the given face/edge combination into that edge's
+ * index with respect to the voxel cube on the other side of the given face.
+ *
+ * If the given face does not include the given edge, (i.e. the two voxel cubes
+ * on that face do not share the given edge) then this routine returns the
+ * pseudo index -1. */
+unsigned int mcCube_translateEdge(unsigned int edge, unsigned int face);
+
 #endif

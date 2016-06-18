@@ -43,6 +43,8 @@ void mcFace_copy(
     mcFace *self,
     const mcFace *other)
 {
+  /* FIXME: Check if "self" has already been initialized and if it has do
+   * something about it */
   /* Allocate memory for the indices and copy them */
   /* TODO: This malloc is a prime candidate for a pool allocator */
   self->indices =

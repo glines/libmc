@@ -21,27 +21,24 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef MCXX_SCALAR_FIELD_H_
-#define MCXX_SCALAR_FIELD_H_
+#include <glm/gtc/matrix_transform.hpp>
 
-extern "C" {
-#include <mc/scalarField.h>
-}
+#include "orthographicCamera.h"
 
-namespace mc {
-  /**
-   * An abstract class that serves as a functor equivalent for mcScalarField.
-   */
-  class ScalarField {
-    private:
-      mcScalarField m_sf;
-    protected:
-      ScalarField();
-    public:
-      ScalarField(mcScalarField sf);
+namespace mc { namespace samples {
+  OrthographicCamera::OrthographicCamera(
+      float left, float right, float bottom, float top,
+      float near, float far,
+      const glm::vec3 &position, const glm::quat &orientation)
+    : Camera(position, orientation),
+    m_left(left), m_right(right), m_bottom(bottom), m_top(top),
+    m_near(near), m_far(far)
+  {
+  }
 
-      virtual float operator()(float x, float y, float z) const;
-  };
-}
-
-#endif
+  glm::mat4 OrthographicCamera::projection(float aspect, float alpha) const {
+    /* TODO: Adjust the dimensions of our ortho projection to preserve the
+     * aspect ratio. */
+    return glm::ortho(m_left, m_right, m_bottom, m_top, m_near, m_far);
+  }
+} }

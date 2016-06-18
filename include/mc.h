@@ -24,7 +24,25 @@
 #ifndef MC_H_
 #define MC_H_
 
-#include "./mc/isosurfaceBuilder.h"
-#include "./mc/mesh.h"
+/**
+ * \defgroup libmc libmc (C API)
+ */
+
+/**
+ * \addtogroup libmc
+ * @{
+ */
+
+/** \file mc.h
+ *
+ * This is the main include file for the C API of libmc.
+ */
+
+#include <mc/isosurfaceBuilder.h>
+#include <mc/mesh.h>
+#include <mc/scalarField.h>
+#include <mc/vector.h>
+
+/** @} */
 
 #endif

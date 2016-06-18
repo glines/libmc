@@ -24,6 +24,41 @@
 #ifndef MC_ALGORITHMS_NIELSON_DUAL_H_
 #define MC_ALGORITHMS_NIELSON_DUAL_H_
 
-#include "./nielsonDual/nielsonDual.h"
+/**
+ * \addtogroup libmc
+ * @{
+ */
+
+/**
+ * \addtogroup algorithms
+ * @{
+ */
+
+/**
+ * \defgroup nielsonDual Marching Cubes Dual (Nielson)
+ *
+ * An implementation of the the dual of the midpoint marching cubes algorithm,
+ * as described by Nielson in \cite Nielson:1991.
+ */
+
+/**
+ * \addtogroup nielsonDual
+ * @{
+ */
+
+/** \file mc/algorithms/nielsonDual.h
+ *
+ * This is a convenience header which includes all of the headers needed to use
+ * the dual of the midpoint isosurface extraction algorithm. See the
+ * documentation for each of these included files for more information.
+ */
+
+#include <mc/algorithms/nielsonDual/nielsonDual.h>
+
+/** @} */
+
+/** @} */
+
+/** @} */
 
 #endif

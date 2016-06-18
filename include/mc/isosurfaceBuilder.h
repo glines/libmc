@@ -24,23 +24,21 @@
 #ifndef MC_ISOSURFACE_BUILDER_H_
 #define MC_ISOSURFACE_BUILDER_H_
 
+/**
+ * \addtogroup libmc
+ * @{
+ */
+
+/** \file mc/isosurfaceBuilder.h
+ *
+ * \todo Move unrelated definitions in this file to other headers.
+ */
+
 #include <stdint.h>
 
-#include "mesh.h"
-
-typedef enum mcAlgorithmFlag {
-  MC_SIMPLE_MARCHING_CUBES = 1,
-  MC_DUAL_MARCHING_CUBES,
-  MC_ELASTIC_SURFACE_NETS,
-  MC_CUBERILLE,
-  MC_SNAP_MARCHING_CUBES,
-  MC_PATCH_MARCHING_CUBES,
-  MC_NIELSON_DUAL,
-} mcAlgorithmFlag;
-
-typedef float (*mcScalarField)(float x, float y, float z);
-typedef float (*mcScalarFieldWithArgs)(
-    float x, float y, float z, const void *args);
+#include <mc/algorithms.h>
+#include <mc/mesh.h>
+#include <mc/scalarField.h>
 
 typedef struct mcScalarLattice {
   float *lattice;
@@ -94,5 +92,7 @@ const mcMesh *mcIsosurfaceBuilder_isosurfaceFromCloud(
     mcIsosurfaceBuilder *self,
     mcScalarCloud sc,
     mcAlgorithmFlag algorithm);
+
+/** @} */
 
 #endif

@@ -202,6 +202,8 @@ void main_loop() {
                 !demo.cubeObject->isDrawScalarField());
             break;
 */
+          default:
+            ;
         }
         break;
       case SDL_QUIT:

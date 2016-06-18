@@ -1,0 +1,161 @@
+/** \mainpage
+ *
+ * Welcome to the documentation for libmc, a C/C++ library for isosurface
+ * extraction. This documentation covers all public interfaces of the C and C++ 
+ *
+ * \section about About
+ * libmc is a general purpose library for isosurface extraction. This library
+ * can generate smooth meshes from various types of volume data. The isosurface
+ * extraction algorithms implemented by libmc are widely applicable in medical
+ * imaging, geodetics, virtual reality, computer games, and other exciting
+ * fields.
+ *
+ * libmc derives its name from the popular marching cubes algorithm, but
+ * marching cubes is only one of many algorithms that libmc implements. Thus,
+ * it is just as appropriate to refer to the library as "Lib Eleven-Hundred" as
+ * it is "Lib Marching Cubes." Similarly, the companion C++ library libmcxx may
+ * just as well be called "Lib Eleven-Hundred Twenty."
+ *
+ * libmc strives to be a general purpose library while at the same time
+ * exposing a simple and easy to use interface. It is hoped that this creates
+ * opportunities to use robust, performant isosurface extraction algorithms in
+ * areas where other libraries would be too broad in scope or restrictively
+ * licensed.
+ *
+ * \section getting_started Getting Started
+ * libmc is intended to be quick and easy to get started with. The primary
+ * function of libmc is isosurface extraction, that is, constructing a surface
+ * mesh from sampled data.  The idea is that if you can provide some input data
+ * (as a function, sample lattice, point cloud, etc.), then libmc can generate
+ * your isosurface mesh.
+ *
+ * \subsection quick_start Quick Start
+ * If you already have libmc installed, perhaps from a package provided by your
+ * Linux distribution, then getting started is easy. The following C code
+ * includes the libmc library and invokes some libmc calls to generate a mesh.
+ *
+ * \include samples/quickstart.c
+ *
+ * This section covers the fundamentals of using libmc to generate a surface
+ * mesh, without delving into the details of the library or the specifics of
+ * any algorithms.
+ *
+ *
+ * \subsection compiling Compiling libmc
+ * \todo This process needs to be tested on Ubuntu, etc.
+ *
+ * The libmc library itself does not require anything other than a C99
+ * compiler. The C++ bindings for libmc, called libmcxx, require a C++11
+ * compiler.
+ *
+ * Most of the libmc example programs depend on more than one library, some of
+ * which include GLEW, GLM, SDL2, SDL2_image, and Lua 5.
+ */
+
+/** \page preliminaries Preliminaries
+ * \tableofcontents
+ *
+ * \section code_style Code Style
+ * As of now, the C/C++ code style used by libmc is defined by the coding
+ * habits of its sole author, and by extension the style used in most of the
+ * source files of libmc. Any prospective contributors should make an effort to
+ * loosely follow this style, although this is by no means a prerequisite for
+ * contributing.
+ *
+ * If source contributions become more common in the future, a coding style
+ * will be codified here. The most likely candidate for a coding style is the
+ * one used by Google.
+ *
+ * \section geometrical_conventions Geometrical Conventions
+ *
+ * With any computer graphics software, there is always more than one
+ * convention to choose from when representing 3D data, and libmc is no
+ * exception. This page lists some of the conventions that libmc uses
+ * internally as well as in its C interfaces.
+ *
+ * The conventions listed on this page should be regarded as the authoritative
+ * source when authoring libmc code; if any code is found that does not observe
+ * these conventions, it should be regarded as a bug in that code. This
+ * centralized strategy for documenting conventions is used because libmc
+ * contains a myriad of algorithms which may or may not always agree.
+ *
+ * \subsection coordinate_system Coordinate System
+ * libmc uses a right-handed Cartesian coordinate system with an axis naming
+ * convention familiar to scientific, engineering, and CAD applications.
+ * Namely, the x and y axes are regarded as tangent to the ground plane, and
+ * the z-axis is regarded as pointing "up." Programs such as Blender and
+ * AutoCAD use this convention.
+ *
+ * This is in contrast to the axis naming convention used by programs such as
+ * Maya, 3ds Max, or certain game engines, which regard y as the "up"
+ * direction. Care must be taken not to use the y-axis for "up" while using
+ * libmc.
+ *
+ * \todo Some flags might be added in the future to enable "y is up" when
+ * exporting meshes from libmc.
+ *
+ * \subsection cube_conventions Cube Conventions
+ * Since libmc uses voxel cubes extensively in many of its algorithms,
+ * including marching cubes, the conventions used for describing cubes are very
+ * important. The conventions listed here are used in the routines declared in
+ * mc/algorithms/common/cube.h, which are in turn used throughout many libmc
+ * algorithms.
+ *
+ * Many of these conventions are drawn from the literature on marching cubes,
+ * particularly the original maching cubes paper by Lorensen.
+ * \cite Lorensen:1987 The original Lorensen paper uses one-based indexing, but
+ * since libmc is a C library these enumerations are modified to use zero-based
+ * indexing.
+ *
+ * \subsubsection cube_vertices Cube Vertices
+ * Cube vertices are enumerated as in the original Lorensen paper on marching
+ * cubes, with the necessary modification to use zero-based indexing rather
+ * than one-based indexing.
+ *
+ * \subsubsection cube_edges Cube Edges
+ * Cube edges are enumerated as in the original Lorensen paper on marching
+ * cubes, again modified to use zero-based indexing rather than one-based
+ * indexing.
+ *
+ * \subsubsection cube_faces Cube Faces
+ * Cube faces are enumerated as they are on a standard 6-sided die, modified to
+ * use zero-based indexing rather than one-based indexing.
+ */
+
+/** \page algorithms Algorithms
+ * \tableofcontents
+ *
+ * \section isosurface_extraction_algorithms Isosurface Extraction Algorithms
+ *
+ * \subsection original_lorensen Original Marching Cubes (Lorensen)
+ * The original marching cubes is described by Lorensen and Cline in
+ * \cite Lorensen:1987, although an earlier paper by FIXME describes a similar
+ * algorithm albeit without lookup tables.
+ *
+ * \subsubsection original_lorensen_parameters Parameters
+ *
+ * \subsubsection original_lorensen_performance Performance
+ * \subsubsection original_lorensen_example Example
+ *
+ * libmc uses the enum value MC_ORIGINAL_MARCHING_CUBES for this algorithm.
+ *
+ * The marching cubes algorithm as originally described has some well
+ * documented problems related to broken geometry produced by ambigous
+ * triangulations. This is because the original algorithm inverts the
+ * isosurface values to reduce the number of cases to consider.
+ * \cite Nielson:1991 libmc's implementation of the original marching cubes
+ * algorithm includes these shortcomings for completeness. As such,
+ * MC_ORIGINAL_MARCHING_CUBES not very useful in practical applications.
+ *
+ *
+ * \subsection asypmotic_decider Asymptotic Decider Marching Cubes (Nielson)
+ * \subsection halfway_mc Halfway Marching Cubes (Nielson)
+ * \subsection nielson_dual Marching Cubes Dual (Nielson)
+ * \subsection nielson_dual_dual Marching Cubes Dual of the Dual (Nielson)
+ * \subsection cuberille Cuberille
+ * \subsection elastic_surface_nets Elastic Surface Nets
+ */
+
+/** \page demos Demos
+ * 
+ */

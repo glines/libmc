@@ -165,7 +165,7 @@
         update_code(cm.getDoc().getValue());
       };
       var cm = CodeMirror(document.body, {
-        value: "function myScript(){return 100;}\n",
+        value: "sf = function (x, y, z)\n  r = 1.0;\n  return x*x + y*y + z*z - r*r;\n  end\n",
         mode:  "text/x-lua"
       });
       cm.on("change",

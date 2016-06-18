@@ -24,6 +24,26 @@
 #ifndef MC_MESH_H_
 #define MC_MESH_H_
 
+/**
+ * \addtogroup libmc
+ * @{
+ */
+
+/**
+ * \defgroup mcMesh mcMesh
+ */
+
+/**
+ * \addtogroup mcMesh
+ * @{
+ */
+
+/** \file mc/mesh.h
+ *
+ * This file contains definitions for the mcMesh structure and the structures
+ * that it contains.
+ */
+
 #include "vector.h"
 
 typedef struct mcVertex {
@@ -36,10 +56,31 @@ typedef struct mcFace {
   unsigned int numIndices;
 } mcFace;
 
+/**
+ * Initializes a mcFace structure.
+ *
+ * Since libmc supports any number of edges for a face, it becomes necessary to
+ * dynamically allocate the appropriate number of face indices for any given
+ * face structure. Because dynamically allocating memory for many such small
+ * structures would incur a high overhead cost, the library maintains an
+ * internal pool of memory for common face sizes such as triangles and quads.
+ */
 void mcFace_init(
     mcFace *self,
     unsigned int numIndices);
 
+/**
+ * Copies a mcFace structure into another mcFace structure.
+ *
+ * \param self The mcFace structure being initalized with the copied data.
+ * \param other The mcFace structure whose data is to be copied.
+ *
+ * This routine is analogous to a copy constructor in C++; the face structure
+ * pointed to by \p self should be uninitialized before this routine is called.
+ * After this routine is called, \p self should be treated as an initialized
+ * mcFace structure, and should eventually be destroyed with a call to
+ * mcFace_destroy().
+ */
 void mcFace_copy(
     mcFace *self,
     const mcFace *other);
@@ -78,5 +119,9 @@ unsigned int mcMesh_addVertex(
 void mcMesh_addFace(
     mcMesh *self,
     const mcFace *face);
+
+/** @} */
+
+/** @} */
 
 #endif

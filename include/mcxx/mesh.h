@@ -24,11 +24,26 @@
 #ifndef MCXX_MESH_H_
 #define MCXX_MESH_H_
 
+/**
+ * \addtogroup libmcxx
+ * @{
+ */
+
+/** \file mcxx/mesh.h
+ *
+ * This header contains the C++ wrapper around the mcMesh data structure from
+ * libmc.
+ */
+
 extern "C" {
 #include <mc/mesh.h>
 }
 
 namespace mc {
+  /**
+   * The Mesh class is a C++ wrapper for the mcMesh data structure from the C API
+   * of libmc.
+   */
   class Mesh {
     private:
       const mcMesh *m_internal;
@@ -48,5 +63,7 @@ namespace mc {
       bool isTriangleMesh() const { return m_internal->isTriangleMesh; }
   };
 }
+
+/** @} */
 
 #endif

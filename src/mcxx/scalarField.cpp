@@ -21,9 +21,23 @@
  * IN THE SOFTWARE.
  */
 
-#include "../../include/mcxx/scalarField.h"
+#include <cassert>
+
+#include <mcxx/scalarField.h>
 
 namespace mc {
-  ScalarField::ScalarField() {
+  ScalarField::ScalarField()
+    : m_sf(nullptr)
+  {
+  }
+
+  ScalarField::ScalarField(mcScalarField sf)
+    : m_sf(sf)
+  {
+  }
+
+  float ScalarField::operator()(float x, float y, float z) const {
+    assert(m_sf != nullptr);
+    return m_sf(x, y, z);
   }
 }

@@ -24,7 +24,42 @@
 #ifndef MC_ALGORITHMS_CUBERILLE_H_
 #define MC_ALGORITHMS_CUBERILLE_H_
 
-#include "cuberille/cuberille.h"
+/**
+ * \addtogroup libmc
+ * @{
+ */
+
+/**
+ * \addtogroup algorithms
+ * @{
+ */
+
+/**
+ * \defgroup cuberille Cuberille
+ *
+ * This is the cuberille isosurface extraction algorithm, as described by
+ * Nielson \cite Nielson:1991, FIXME
+ */
+
+/**
+ * \addtogroup cuberille
+ * @{
+ */
+
+/** \file mc/algorithms/cuberille.h
+ *
+ * This is a convenience header which includes all of the headers needed to use
+ * the cuberille isosurface extraction algorithm. See the documentation for
+ * each of these included files for more information.
+ */
+
+#include <mc/algorithms/cuberille/cuberille.h>
+
+/** @} */
+
+/** @} */
+
+/** @} */
 
 #endif
 

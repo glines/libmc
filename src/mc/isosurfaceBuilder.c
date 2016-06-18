@@ -126,7 +126,41 @@ const mcMesh *mcIsosurfaceBuilder_isosurfaceFromFieldWithArgs(
   mcMesh_init(mesh);
   /* TODO: Determine the isosurface generation algorithm to use */
   switch (algorithm) {
+    case MC_CPU_PERFORMANCE_ALGORITHM:
+      /* TODO */
+      assert(0);
+      break;
+    case MC_DEFAULT_ALGORITHM:
+    case MC_CPU_BALANCE_ALGORITHM:
+      /* TODO */
+      assert(0);
+      break;
+    case MC_CPU_QUALITY_ALGORITHM:
+      /* TODO */
+      assert(0);
+      break;
+    case MC_GPGPU_PERFORMANCE_ALGORITHM:
+      /* TODO */
+      assert(0);
+      break;
+    case MC_GPGPU_BALANCE_ALGORITHM:
+      /* TODO */
+      assert(0);
+      break;
+    case MC_GPGPU_QUALITY_ALGORITHM:
+      /* TODO */
+      assert(0);
+      break;
+    case MC_LOW_MEMORY_ALGORITHM:
+      /* TODO */
+      assert(0);
+      break;
+    case MC_MIDPOINT_MARCHING_CUBES:
+      /* TODO */
+      assert(0);
+      break;
     case MC_SIMPLE_MARCHING_CUBES:
+    case MC_ORIGINAL_MARCHING_CUBES:
       mcSimple_isosurfaceFromField(
           sf, args,
           x_res, y_res, z_res,
@@ -152,6 +186,7 @@ const mcMesh *mcIsosurfaceBuilder_isosurfaceFromFieldWithArgs(
           sf, args,
           x_res, y_res, z_res,
           min, max,
+          NULL,  /* TODO: Pass the params into this function */
           mesh);
       break;
     case MC_SNAP_MARCHING_CUBES:
@@ -179,6 +214,8 @@ const mcMesh *mcIsosurfaceBuilder_isosurfaceFromLattice(
     mcScalarLattice sl,
     mcAlgorithmFlag algorithm)
 {
+  /* TODO */
+  return NULL;
 }
 
 const mcMesh *mcIsosurfaceBuilder_isosurfaceFromCloud(
@@ -186,4 +223,6 @@ const mcMesh *mcIsosurfaceBuilder_isosurfaceFromCloud(
     mcScalarCloud sc,
     mcAlgorithmFlag algorithm)
 {
+  /* TODO */
+  return NULL;
 }

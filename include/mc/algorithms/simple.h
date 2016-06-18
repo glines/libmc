@@ -24,7 +24,36 @@
 #ifndef MC_ALGORITHMS_SIMPLE_H_
 #define MC_ALGORITHMS_SIMPLE_H_
 
+/**
+ * \addtogroup libmc
+ * @{
+ */
+
+/**
+ * \addtogroup algorithms
+ * @{
+ */
+
+/**
+ * \defgroup simple simple
+ *
+ * This is an implementation of the original marching cubes algorithm as
+ * described by Lorensen and Cline. \cite Lorensen:1987.
+ */
+
+/**
+ * \addtogroup simple
+ * @{
+ */
+
 #include "simple/common.h"
 #include "simple/simple.h"
+
+/** @} */
+
+/** @} */
+
+/** @} */
+
 
 #endif

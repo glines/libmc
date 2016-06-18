@@ -21,9 +21,27 @@
  * IN THE SOFTWARE.
  */
 
+/**
+ * \defgroup libmcxx libmcxx (C++ API)
+ */
+
+/**
+ * \addtogroup libmcxx
+ * @{
+ */
+
+/** \file mcxx.h
+ *
+ * This is the main include file for the C++ API of libmc. The C++ API uses the
+ * C API internally to implement all of its functionality. This, this API
+ * amounts to a C++ wrapper around libmc.
+ */
+
 #ifndef MCXX_H_
 #define MCXX_H_
 
 #include "./mcxx/isosurfaceBuilder.h"
+
+/** @} */
 
 #endif

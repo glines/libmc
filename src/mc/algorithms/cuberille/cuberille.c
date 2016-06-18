@@ -32,18 +32,14 @@
 #include <mc/algorithms/cuberille/cuberille.h>
 #include <mc/mesh.h>
 
-/**
- * Implementation of a simple "cuberille" isosurface extraction algorithm as
- * described by <https://0fps.net/2012/07/12/smooth-voxel-terrain-part-2/>.
- * This algorithm is the precursor to elastic surface nets and other "dual"
- * methods.
- */
 void mcCuberille_isosurfaceFromField(
     mcScalarFieldWithArgs sf, const void *args,
     unsigned int res_x, unsigned int res_y, unsigned int res_z,
     const mcVec3 *min, const mcVec3 *max,
+    mcCuberilleParams *params,
     mcMesh *mesh)
 {
+  /* FIXME: Read the params */
   mcSurfaceNet surfaceNet;
   mcFace triangle;
   float delta_x = fabs(max->x - min->x) / (float)(res_x - 1);

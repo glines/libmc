@@ -24,6 +24,27 @@
 #ifndef MC_ALGORITHMS_NIELSON_DUAL_NIELSON_DUAL_H_
 #define MC_ALGORITHMS_NIELSON_DUAL_NIELSON_DUAL_H_
 
+/**
+ * \addtogroup libmc
+ * @{
+ */
+
+/**
+ * \addtogroup algorithms
+ * @{
+ */
+
+/**
+ * \addtogroup nielsonDual
+ * @{
+ */
+
+/** \file mc/algorithms/nielsonDual/nielsonDual.h
+ *
+ * This header file contains all of the declarations needed to use the dual of
+ * the midpoint marching cubes as described by Nielson in \cite Nielson:1991.
+ */
+
 #include <mc/isosurfaceBuilder.h>
 
 void mcNielsonDual_isosurfaceFromField(
@@ -31,5 +52,11 @@ void mcNielsonDual_isosurfaceFromField(
     unsigned int x_res, unsigned int y_res, unsigned int z_res,
     const mcVec3 *min, const mcVec3 *max,
     mcMesh *mesh);
+
+/** @} */
+
+/** @} */
+
+/** @} */
 
 #endif

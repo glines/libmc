@@ -3,6 +3,7 @@ add_library(samples_common STATIC
     camera.cpp
     glError.cpp
     meshObject.cpp
+    orthographicCamera.cpp
     perspectiveCamera.cpp
     scene.cpp
     sceneObject.cpp

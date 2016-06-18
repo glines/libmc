@@ -21,27 +21,23 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef MCXX_SCALAR_FIELD_H_
-#define MCXX_SCALAR_FIELD_H_
+#ifndef MC_SAMPLES_COMMON_OTHOGRAPHIC_CAMERA_H_
+#define MC_SAMPLES_COMMON_OTHOGRAPHIC_CAMERA_H_
 
-extern "C" {
-#include <mc/scalarField.h>
-}
+#include "camera.h"
 
-namespace mc {
-  /**
-   * An abstract class that serves as a functor equivalent for mcScalarField.
-   */
-  class ScalarField {
+namespace mc { namespace samples {
+  class OrthographicCamera : public Camera {
     private:
-      mcScalarField m_sf;
-    protected:
-      ScalarField();
+      float m_left, m_right, m_bottom, m_top, m_near, m_far;
     public:
-      ScalarField(mcScalarField sf);
+      OrthographicCamera(float left, float right, float bottom, float top,
+          float near = 0.1f, float far = 1000.0f,
+          const glm::vec3 &position = glm::vec3(0.0f, 0.0f, 0.0f),
+          const glm::quat &orientation = glm::quat());
 
-      virtual float operator()(float x, float y, float z) const;
+      glm::mat4 projection(float aspect, float alpha = 1.0f) const;
   };
-}
+} }
 
 #endif

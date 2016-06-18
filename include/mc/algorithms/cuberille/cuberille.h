@@ -26,10 +26,38 @@
 
 #include <mc/isosurfaceBuilder.h>
 
+/**
+ * A parameter structure that can optionally be passed into the cuberille
+ * isosurface extraction algorithm.
+ */
+typedef struct mcCuberilleParams {
+  /** This field \em must be set to the value MC_CUBERILLE_PARAMS or a runtime
+   * error will occur. */
+  mcAlgorithmParamsType type;
+} mcCuberilleParams;
+
+/**
+ * Initializes the given \p params structure with the default parameters for
+ * the cuberille isosurface extraction algorithm.
+ *
+ * The specific values of these default parameters depends on the version of
+ * the libmc library used.
+ */
+void mcCuberilleParams_default(mcCuberilleParams *params);
+
+/**
+ * This routine implements the "cuberille" isosurface extraction algorithm as
+ * described in FIXME.  This algorithm is the precursor to elastic surface nets
+ * and other "dual" methods.
+ *
+ * \todo Find a good reference for the cuberille isosurface extraction
+ * algorithm.
+ */
 void mcCuberille_isosurfaceFromField(
     mcScalarFieldWithArgs sf, const void *args,
     unsigned int res_x, unsigned int res_y, unsigned int res_z,
     const mcVec3 *min, const mcVec3 *max,
+    mcCuberilleParams *params,
     mcMesh *mesh);
 
 #endif

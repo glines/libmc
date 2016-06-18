@@ -36,7 +36,9 @@ lua-js:
 .PHONY: docs
 docs:
 	mkdir -p ./docs
-	doxygen
+	(cat Doxyfile ; \
+	echo "PROJECT_NUMBER=\"$$(git describe --always --dirty)\"") \
+	| doxygen -
 
 .PHONY: upload
 upload: build-html

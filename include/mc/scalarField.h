@@ -21,27 +21,31 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef MCXX_SCALAR_FIELD_H_
-#define MCXX_SCALAR_FIELD_H_
+#ifndef MC_SCALAR_FIELD_H_
+#define MC_SCALAR_FIELD_H_
 
-extern "C" {
-#include <mc/scalarField.h>
-}
+/**
+ * \addtogroup libmc
+ * @{
+ */
 
-namespace mc {
-  /**
-   * An abstract class that serves as a functor equivalent for mcScalarField.
-   */
-  class ScalarField {
-    private:
-      mcScalarField m_sf;
-    protected:
-      ScalarField();
-    public:
-      ScalarField(mcScalarField sf);
+/**
+ * The function signature for a scalar field in libmc.
+ *
+ * \sa mcScalarFieldWithArgs
+ */
+typedef float (*mcScalarField)(float x, float y, float z);
 
-      virtual float operator()(float x, float y, float z) const;
-  };
-}
+/**
+ * The function signature for a scalar field which also happens to accept
+ * auxiliary arguments. This allows for more flexible scalar field functions,
+ * and in particular it facilitates passing C++ functors to the C API of libmc.
+ *
+ * \sa mcScalarField
+ */
+typedef float (*mcScalarFieldWithArgs)(
+    float x, float y, float z, const void *args);
+
+/** @} */
 
 #endif

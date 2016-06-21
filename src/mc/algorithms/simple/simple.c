@@ -184,7 +184,7 @@ void mcSimple_isosurfaceFromField(
          * than iterating over all possible edges. */
         for (int edge = 0; edge < MC_CUBE_NUM_EDGES; ++edge) {
           vertexIndices[edge] = -1;
-          if (mcSimple_edgeTable[cube].edges[edgeTableIndex] == edge) {
+          if (mcSimple_edgeIntersectionTable[cube].edges[edgeTableIndex] == edge) {
             /* This edge intersection must exist. We will either find it in one
              * of our buffers or compute it ourselves. */
             /* Look for edge intersections that already have vertices and get
@@ -377,14 +377,14 @@ void mcSimple_isosurfaceFromField(
          * this cube configuration. */
         for (int j = 0; j < MC_SIMPLE_MAX_TRIANGLES; ++j) {
           mcFace face;
-          if (mcSimple_triangulationTable[cube].triangles[j].edges[0] == -1)
+          if (mcSimple_triangulationTable[cube].triangles[j].edgeIntersections[0] == -1)
             break;  /* No more triangles */
           mcFace_init(&face, 3);
           mcSimpleTriangle triangle =
             mcSimple_triangulationTable[cube].triangles[j];
-          face.indices[0] = vertexIndices[triangle.edges[0]];
-          face.indices[1] = vertexIndices[triangle.edges[1]];
-          face.indices[2] = vertexIndices[triangle.edges[2]];
+          face.indices[0] = vertexIndices[triangle.edgeIntersections[0]];
+          face.indices[1] = vertexIndices[triangle.edgeIntersections[1]];
+          face.indices[2] = vertexIndices[triangle.edgeIntersections[2]];
           mcMesh_addFace(mesh, &face);
           mcFace_destroy(&face);
         }

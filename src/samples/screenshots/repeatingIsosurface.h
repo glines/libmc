@@ -70,6 +70,14 @@ namespace mc { namespace samples { namespace screenshots {
        * Constructs a repeating isosurface that uses the given scalar field for
        * the implicit definition of the isosurface.
        *
+       * \param sf Scalar field functor that is to be repeated.
+       * \param xRepeat The number of times to repeat the function in the
+       * x-axis direction.
+       * \param yRepeat The number of times to repeat the function in the
+       * y-axis direction.
+       * \param position Position of the repeating isosurface object.
+       * \param orientation Orientation of the repeating isosurface object.
+       *
        * The scalar field function is only sampled between 0.0f and 1.0f on all
        * axes, and repeated the given number of times with respect to the
        * xy-plane. The resulting mesh starts at the origin and ends at

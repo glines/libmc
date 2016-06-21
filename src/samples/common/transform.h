@@ -86,7 +86,24 @@ namespace mc { namespace samples {
       std::string toString();
 
     protected:
+      /**
+       * Returns a pointer to the underlying transform stack, which may be
+       * wrapped several times over. The original stack is always of type
+       * TransformStack.
+       *
+       * \return Pointer to the original underlying transform stack.
+       *
+       * Implementing classes must return either themselves or whatever
+       * transform stack they are built on.
+       */
       virtual Transform *getBase() = 0;
+      /**
+       * Unwinds the transform stack back by to the stack element at index \p
+       * index. This can be used to quickly pop the current scope of the
+       * transform stack.
+       *
+       * \param index The index of the top of the stack we are unwinding to.
+       */
       virtual void unwind(size_t index) = 0;
   };
 } }

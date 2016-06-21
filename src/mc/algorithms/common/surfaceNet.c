@@ -48,13 +48,13 @@ mcSurfaceNodePos mcSurfaceNodePos_opposite(mcSurfaceNodePos pos) {
 }
 
 void mcSurfaceNode_init(mcSurfaceNode *self) {
-#ifndef NDEBUG
   /* Set all neighbor pointers to NULL */
   memset(self->neighbors, 0, sizeof(mcSurfaceNode*) * 6);
-#endif
 }
 
 void mcSurfaceNode_destroy(mcSurfaceNode *self) {
+  /* TODO: Inform neighbors that our node is destroyed? Might harm performance
+   * of surface net destruction. */
 }
 
 void mcSurfaceNode_addNeighbor(

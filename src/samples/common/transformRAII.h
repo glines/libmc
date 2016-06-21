@@ -36,14 +36,53 @@ namespace mc { namespace samples {
       Transform *m_base;
       size_t m_originalSize;
     public:
+      /**
+       * Construct a transform stack on top of the given stack which unwinds
+       * automatically upon destruction.
+       */
       TransformRAII(Transform &original);
+      /**
+       * Destroy the TransformRAII stack, which unwinds the transform stack
+       * back to its original size.
+       */
       ~TransformRAII();
 
+      /**
+       * Push the given matrix transform onto the top of the transform stack
+       * and return the result. Pushing is performed as a matrix multiplication
+       * on the top of the stack.
+       *
+       * \param matrix The matrix transform to push onto the transform stack.
+       * \return The resulting value at the top of the transformation stack.
+       *
+       * \sa push()
+       */
       const Transform &operator*=(const glm::mat4 &matrix);
 
+      /**
+       * Look at the current transform represented by the stack.
+       */
       const glm::mat4 &peek() const { return m_base->peek(); }
+
+      /**
+       * Push the given matrix onto the transform stack. This is essentially a
+       * matrix multiplication.
+       *
+       * \param matrix The matrix transform to push onto the transform stack.
+       *
+       * \sa operator*=()
+       */
       void push(glm::mat4 matrix) { m_base->push(matrix); }
+
+      /**
+       * Remove the last matrix transform from the top of the transform stack.
+       */
       void pop();
+      /**
+       * Returns the size of the transform stack.
+       *
+       * \return Current size of the transform stack.
+       */
       size_t size() { return m_base->size(); }
     protected:
       Transform *getBase() { return m_base; }

@@ -34,12 +34,12 @@
 
 namespace mc { namespace samples {
   ScanObject::ScanObject(
-      const std::string &file,
+      const std::string &path,
       unsigned int res_x, unsigned int res_y, unsigned int res_z,
       mcAlgorithmFlag algorithm,
       const glm::vec3 &position, const glm::quat &orientation)
     : MeshObject(position, orientation),
-      m_scan(file),  // Read the scan from image files
+      m_scan(path),  // Read the scan from image files
       m_resX(res_x), m_resY(res_y), m_resZ(res_z)
   {
     // Update the isosurface mesh

@@ -1,0 +1,4 @@
+/**
+ * \defgroup common Common Code
+ * A collection of classes and routines shared by the sample programs.
+ */

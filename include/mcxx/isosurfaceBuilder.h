@@ -34,6 +34,15 @@ namespace mc {
   class Mesh;
   class ScalarField;
   class Vec3;
+  /**
+   * C++ wrapper for the mcIsosurfaceBuilder C struct. This class facilitates
+   * the construction of Mesh objects from various given representations of
+   * isosurfaces. Constructing a mesh with this builder class implies
+   * allocation of memory for that mesh, and destroying this builder implies
+   * the de-allocation of that memory.
+   *
+   * \sa mcIsosurfaceBuilder
+   */
   class IsosurfaceBuilder {
     private:
       mcIsosurfaceBuilder m_internal;
@@ -45,12 +54,45 @@ namespace mc {
       IsosurfaceBuilder();
       ~IsosurfaceBuilder();
 
+      /**
+       * Builds a mesh representing the isosurface defined by \p sf using the
+       * algorithm given by \p algorithm.
+       *
+       * \param sf The scalar field function defining the underlying isosurface.
+       * \param algorithm A flag representing the isosurface extraction
+       * algorithm to be used.
+       * \param args Auxilliary arguments to be passed to the scalar field
+       * function, which facilitates things like functors.
+       * \return A mesh representing the isosurface.
+       *
+       * \todo I don't think that \p args is needed for this method.
+       */
       const Mesh *buildIsosurface(
           mcScalarField sf,
           mcAlgorithmFlag algorithm,
           void *args = nullptr
           );
 
+      /**
+       * Builds a mesh representing the isosurface defined by \p sf using the
+       * algorithm given by \p algorithm.
+       *
+       * \param sf The scalar field \em functor defining the underlying
+       * isosurface.
+       * \param algorithm A flag representing the isosurface extraction
+       * algorithm to be used.
+       * \param x_res The number of samples to take in the sample lattice
+       * parallel to the x-axis.
+       * \param y_res The number of samples to take in the sample lattice
+       * parallel to the y-axis.
+       * \param z_res The number of samples to take in the sample lattice
+       * parallel to the z-axis.
+       * \param min The absolute position where the sample lattice begins and
+       * the first sample is to be taken.
+       * \param max The absolute position where the sample lattice ends and the
+       * last sample is to be taken.
+       * \return A mesh representing the isosurface.
+       */
       const Mesh *buildIsosurface(
           const ScalarField &sf,
           mcAlgorithmFlag algorithm,

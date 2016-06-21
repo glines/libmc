@@ -24,13 +24,41 @@
 #ifndef MC_ALGORITHMS_NIELSON_DUAL_COMMON_H_
 #define MC_ALGORITHMS_NIELSON_DUAL_COMMON_H_
 
+/**
+ * \addtogroup libmc
+ * @{
+ */
+
+/**
+ * \addtogroup algorithms
+ * @{
+ */
+
+/**
+ * \addtogroup nielsonDual
+ * @{
+ */
+
 #include <mc/algorithms/common/cube.h>
 #include <mc/vector.h>
 
+/**
+ * The maximum number of vertices that can be generated for a single cube
+ * configuration. This number can be easily verified by looking at the diagrams
+ * in \cite Nielson:2004.
+ */
 #define MC_NIELSON_DUAL_MAX_VERTICES 4
 
-/* FIXME: We can use a much more compact representation for
- * mcNielsonDualVertex, which might provide some performance increase. */
+/**
+ * This structure represents a vertex that should be generated for a given cube
+ * configuration in the MC-Dual algorithm. The edge intersections and cube
+ * connectivity should completely describe the vertex. This information is used
+ * to generate additional tables.
+ *
+ * \todo We can use a much more compact representation for mcNielsonDualVertex,
+ * which might provide some performance increase. Although at the moment I
+ * think this structure is only being used to generate tables.
+ */
 typedef struct mcNielsonDualVertex {
   /* FIXME: The maximum number of edge intersections is less than this */
   int edgeIntersections[MC_CUBE_NUM_EDGES];
@@ -41,17 +69,46 @@ typedef struct mcNielsonDualVertex {
   int connectivity[MC_CUBE_NUM_FACES];
 } mcNielsonDualVertex;
 
+/**
+ * List of all MC-Dual vertices generated for a particular sample voxel cube
+ * configuration.
+ *
+ * \sa mcNielsonDualVertex
+ */
 typedef struct mcNielsonDualVertexList {
   mcNielsonDualVertex vertices[MC_NIELSON_DUAL_MAX_VERTICES];
 } mcNielsonDualVertexList;
 
+/**
+ * MC-Dual vertex with pre-computed vertex positions and normals.
+ *
+ * These positions and normals can be pre-computed because of the assumption
+ * made that all sample lattice edge intersections are made at the midpoint of
+ * the edge. This approximation is not always perfect, but the results are more
+ * than acceptable for many applications. These positions and normals are said
+ * to be "pre-cooked."
+ *
+ * \sa mcNielsonDualCookedVertexList
+ */
 typedef struct mcNielsonDualCookedVertex {
   mcVec3 pos, norm;
 } mcNielsonDualCookedVertex;
 
+/**
+ * List of MC-Dual vertices for a particular cube configuration with
+ * pre-computed vertex positions and normals.
+ *
+ * \sa mcNielsonDualCookedVertex
+ */
 typedef struct mcNielsonDualCookedVertexList {
   mcNielsonDualCookedVertex vertices[MC_NIELSON_DUAL_MAX_VERTICES];
   int numVertices;
 } mcNielsonDualCookedVertexList;
+
+/** @} */
+
+/** @} */
+
+/** @} */
 
 #endif

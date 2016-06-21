@@ -29,12 +29,31 @@ extern "C" {
 }
 
 namespace mc {
+  /**
+   * Floating point representation for a vector in \f$\mathbb{R}^3\f$. This is
+   * a wrapper around the mcVec3 structure and its associated routines.
+   *
+   * \sa mcVec3
+   */
   class Vec3 {
     private:
       mcVec3 m_internal;
     public:
+      /**
+       * Constructs a vector in \f$\mathbb{R}^3\f$ with the given coordinates.
+       *
+       * \param x The x-coordinate of the vector.
+       * \param y The y-coordinate of the vector.
+       * \param z The z-coordinate of the vector.
+       */
       Vec3(float x, float y, float z);
 
+      /**
+       * Returns the mcVec3 struct representation of this vector, as expected
+       * by the C API of libmc.
+       *
+       * \return The mcVec3 representation of this vector.
+       */
       const mcVec3 &to_mcVec3() const { return m_internal; }
   };
 }

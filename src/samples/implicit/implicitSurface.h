@@ -24,6 +24,16 @@
 #ifndef MC_SAMPLES_IMPLICIT_IMPLICIT_SURFACE_H_
 #define MC_SAMPLES_IMPLICIT_IMPLICIT_SURFACE_H_
 
+/**
+ * \addtogroup samples
+ * @{
+ */
+
+/**
+ * \addtogroup implicit
+ * @{
+ */
+
 extern "C" {
 #include "lua.h"
 }
@@ -36,11 +46,23 @@ extern "C" {
 namespace mc { namespace samples {
   class ShaderProgram;
   namespace implicit {
+    /**
+     * Represents an implicit surface defined by Lua code. The Lua code to use
+     * is passed to the setCode() method.
+     */
     class ImplicitSurface : public MeshObject {
       public:
+        /**
+         * Enumerated list of all scripting languages supported by
+         * ImplicitSurface.
+         *
+         * \todo JAVASCRIPT is not yet supported.
+         */
         enum class Language {
+          /** Value to use for scripts written in the Lua language. */
           LUA,
-          JAVASCRIPT
+          /** Value to use for scripts written in the JavaScript language. */
+          JAVASCRIPT,
         };
 
       private:
@@ -92,24 +114,59 @@ namespace mc { namespace samples {
         const ScalarField &m_scalarField();
 
       public:
+        /**
+         * Constructs an implicit isosurface object with the given position and
+         * orientation.
+         */
         ImplicitSurface(
             const glm::vec3 &position = glm::vec3(0.0f, 0.0f, 0.0f),
             const glm::quat &orientation = glm::quat());
 
+        /**
+         * \return The language used scripting with this implicit surface
+         * object.
+         */
         Language language() { return m_language; }
+        /**
+         * Set the language used for scripting with this implicit surface
+         * object.
+         *
+         * \param language Flag representing the scripting language to use for
+         * writing scripts with this object.
+         */
         void setLanguage(Language language);
 
         /**
          * Sets the code for the implicit isosurface function. Returns true
          * upon success, and false otherwise.
          *
+         * \param code Null-terminated string containing the entire code for
+         * the script to run.
+         * \return True upon success, false otherwise.
+         *
          * If the code is invalid or otherwise fails to run, then the implicit
          * isosurface function remains unchanged.
          */
         bool setCode(const char *code);
+
+        /**
+         * Sets the code for the implicit isosurface function. Returns true
+         * upon success, and false otherwise.
+         *
+         * \param fp Opened file stream of file containing all of the code for
+         * this script.
+         * \return True upon success, false otherwise.
+         *
+         * If the code is invalid or otherwise fails to run, then the implicit
+         * isosurface function remains unchanged.
+         */
         bool setCode(FILE *fp);
     };
   }
 } }
+
+/** @} */
+
+/** @} */
 
 #endif

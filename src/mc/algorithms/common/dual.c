@@ -28,12 +28,22 @@
 
 #include <mc/algorithms/common/dual.h>
 
+/**
+ * \internal
+ * A struct to store a vertex index and the angle the vertex makes relative to
+ * the first vertex in the patch/polygon.
+ * \endinternal
+ */
 typedef struct VertexAngle {
+  /** The vertex index of the vertex being considered. */
   int vertexIndex;
+  /** The angle that this vertex makes relative to the first vertex in the
+   * patch/polygon. */
   float angle;
 } VertexAngle;
 
 /**
+ * \internal
  * Comparison routine for sorting vertices by angle for correct winding order.
  */
 int compVertexAngle(const VertexAngle *u, const VertexAngle *v) {

@@ -81,13 +81,33 @@ namespace mc { namespace samples {
       } WireframeVertex;
 
     public:
+      /**
+       * Constructs a mesh object with the given position and orientation.
+       *
+       * \param position The scene position of the mesh object.
+       * \param orientation The scene orientation of the mesh object.
+       */
       MeshObject(
           const glm::vec3 &position,
           const glm::quat &orientation);
+      /**
+       * Destroys the mesh object.
+       */
       ~MeshObject();
 
       /**
        * Draw the mesh being represented by this mesh object.
+       *
+       * \param modelWorld The model-space to world-space transform for this
+       * scene object's position and orientation.
+       * \param worldView The world-space to view-space transform for the
+       * position and orientation of the camera currently being used.
+       * \param projection The view-space to projection-space transform for
+       * the camera that is currently being used.
+       * \param alpha The simulation keyframe weight for animating this object
+       * between keyframes.
+       * \param debug Flag indicating whether or not debug information is to be
+       * drawn.
        */
       virtual void draw(const glm::mat4 &modelWorld,
           const glm::mat4 &worldView, const glm::mat4 &projection,
@@ -96,6 +116,8 @@ namespace mc { namespace samples {
       /**
        * Returns true if the the surface normals are being drawn (as lines).
        * Returns false otherwise.
+       *
+       * \return Whether or not surface normal lines are being drawn.
        */
       bool isDrawNormals() const {
         return m_isDrawNormals;
@@ -103,21 +125,27 @@ namespace mc { namespace samples {
 
       /**
        * Sets whether or not surface normal lines are to be drawn.
+       *
+       * \param flag Whether or not surface normal lines are to be drawn.
        */
       void setDrawNormals(bool flag) {
         m_isDrawNormals = flag;
       }
 
       /**
-       * Returns true if the the wireframe of the triangle mesh is being
-       * drawn. Returns false otherwise.
+       * Returns true if the the wireframe of the mesh is being drawn. Returns
+       * false otherwise.
+       *
+       * \return Whether or not the mesh wireframe is being drawn.
        */
       bool isDrawWireframe() const {
         return m_isDrawWireframe;
       }
 
       /**
-       * Sets whether or not a wireframe of the triangle mesh is to be drawn.
+       * Sets whether or not a wireframe of the mesh is to be drawn.
+       *
+       * \param flag Whether or not to draw the mesh wireframe.
        */
       void setDrawWireframe(bool flag) {
         m_isDrawWireframe = flag;
@@ -126,6 +154,8 @@ namespace mc { namespace samples {
       /**
        * Returns true if the opaque surface (with lighting) is being drawn.
        * Returns false otherwise.
+       *
+       * \return Whether or not the opaque surface is being drawn.
        */
       bool isDrawOpaque() {
         return m_isDrawOpaque;
@@ -133,6 +163,8 @@ namespace mc { namespace samples {
 
       /**
        * Sets whether or not the opaque surface is to be drawn.
+       *
+       * \param flag Whether or not to draw the opaque surface.
        */
       void setDrawOpaque(bool flag) {
         m_isDrawOpaque = flag;

@@ -39,26 +39,42 @@ namespace mc { namespace samples {
    */
   class Camera : public SceneObject {
     public:
+      /**
+       * Constructs a camera object with the given position and orientation.
+       * Since Camera is a pure-virtual class, this constructor does not
+       * actually provide enough parameters to define a camera. See one of the
+       * derived classes for a complete camera definition.
+       *
+       * \param position The position of the camera object.
+       * \param orientation The orientation of the camera object.
+       */
       Camera(const glm::vec3 &position, const glm::quat &orientation);
+      /**
+       * Destroys the camera object. Since Camera is a polymorphic class, this
+       * destructor is virtual.
+       */
       virtual ~Camera();
 
       /**
        * Returns the transform from world space to view space based on the
        * camera's current position and orientation.
        *
-       * The alpha value gives the interpolation weight between the last tick and
-       * the current tick.
+       * \param alpha The interpolation weight between the last tick and the
+       * current tick.
+       * \return The world-space to view-space matrix transform for this
+       * camera.
        */
       virtual glm::mat4 worldView(float alpha = 1.0) const;
 
       /**
-       * Derived camera classes return a projection transform through this
-       * method.
+       * Derived camera classes must implement this method to return a
+       * projection transform for the camera.
        *
-       * The aspect value gives the aspect ratio of the viewport.
-       *
-       * The alpha value gives the interpolation weight between the last tick and
-       * the current tick.
+       * \param aspect The aspect ratio of the viewport, measured in width over
+       * height.
+       * \param alpha The interpolation weight between the last tick and the
+       * current tick.
+       * \return The projection matrix transform.
        */
       virtual glm::mat4 projection(float aspect, float alpha = 1.0f) const = 0;
   };

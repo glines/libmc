@@ -29,10 +29,6 @@
 extern const unsigned int mcCube_canonicalOrientations[];
 extern const unsigned int mcCube_canonicalOrientationInversions[];
 
-typedef struct mcCubeEdgeList {
-  int edges[12];
-} mcCubeEdgeList;
-
 /**
  * This routine takes the index of an edge and returns the two vertex indices
  * on that edge in vertices.

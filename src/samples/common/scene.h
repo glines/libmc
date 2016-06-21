@@ -65,15 +65,17 @@ namespace mc { namespace samples {
       void tick(float dt);
 
       /**
-       * Draws the scene.
+       * Draws the scene by recursively drawing all of its scene objects.
        *
-       * The camera parameter controls the projection of the scene.
-       *
-       * The alpha parameter is given to control interpolation between ticks.
-       * Scene object should strive to interpolate between the values of the
-       * last tick and the current tick wherever possible.
-       *
-       * The debug parameter is a hint given to scene objects so that they can
+       * \param camera The camera that dictates the world-view and projection
+       * transforms to use when drawing the scene.
+       * \param aspect The aspect ratio of the viewport being drawn. Passing
+       * this value ensures that the aspect ratio will be preserved by the
+       * projection transform.
+       * \param alpha A keyframe weight that controls interpolation between
+       * ticks.  Scene objects should strive to interpolate between the values
+       * of the last tick and the current tick wherever possible.
+       * \param debug A hint given to scene objects so that they can
        * toggle the drawing of debug information.
        *
        * Since the scene class makes no provisions for supporting any

@@ -82,6 +82,10 @@ void init_sdl() {
   }
 }
 
+void init_framebuffer() {
+  // TODO: Create a GL framebuffer object for drawing to
+}
+
 void init_gl() {
   // Create an OpenGL context for our window
   demo.glContext = SDL_GL_CreateContext(demo.window);

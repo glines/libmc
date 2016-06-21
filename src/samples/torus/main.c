@@ -29,6 +29,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/**
+ * The primary global structure for the torus demo. A global struct is used to
+ * avoid passing large lists of arguments around, which would detract from the
+ * simple nature of this demo.
+ */
 struct demo {
   SDL_Window *window;
   SDL_GLContext glContext;
@@ -191,6 +196,9 @@ void init_shaders() {
     glGetAttribLocation(demo.wireframeShader, "vertPosition");
 }
 
+/**
+ * An extremely minimal vertex structure to be sent to the GL.
+ */
 typedef struct Vertex {
   float pos[3];
 } Vertex;

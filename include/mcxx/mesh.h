@@ -48,18 +48,59 @@ namespace mc {
     private:
       const mcMesh *m_internal;
     public:
+
+      /**
+       * Constructs an empty mesh.
+       *
+       * \todo I'm not sure if this constructor is being used.
+       */
       Mesh();
+
+      /**
+       * Copy constructor for a mesh object.
+       */
       Mesh(const Mesh &mesh);
+
+      /**
+       * Constructor which wraps an mcMesh structure.
+       */
       Mesh(const mcMesh *mesh);
 
+      /**
+       * Returns the number of vertices in this mesh.
+       */
       unsigned int numVertices() const { return m_internal->numVertices; }
+      /**
+       * Accesses the mesh vertex at the given vertex index.
+       */
       const mcVertex &vertex(unsigned int i) const { return m_internal->vertices[i]; }
 
+      /**
+       * Returns the number of faces in this mesh.
+       */
       unsigned int numFaces() const { return m_internal->numFaces; }
+      /**
+       * Accesses the mesh face at the given face index.
+       */
       const mcFace &face(unsigned int i) const { return m_internal->faces[i]; }
 
+      /**
+       * Returns the total number of vertex indices used in the mesh faces.
+       * This value is useful for quickly determining the number of indices
+       * needed for indexed mesh rendering.
+       *
+       * \return The total number of vertex indices referred by faces in this
+       * mesh.
+       */
       unsigned int numIndices() const { return m_internal->numIndices; }
 
+      /**
+       * Returns true if all of the faces in this mesh refer to exactly three
+       * vertex indices each. This category of triangle mesh is ideal for
+       * drawing with many raster graphics API's.
+       *
+       * \return Whether or not this mesh is a triangle mesh.
+       */
       bool isTriangleMesh() const { return m_internal->isTriangleMesh; }
   };
 }

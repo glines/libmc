@@ -265,7 +265,7 @@ void mcPatch_computePatchTable(mcPatch_PatchList *table) {
         /* Look for this edge in the edge list */
         found = 0;
         for (int k = 0; k < MC_CUBE_NUM_EDGES; ++k) {
-          if (mcSimple_edgeTable[cube].edges[k] == edge) {
+          if (mcSimple_edgeIntersectionTable[cube].edges[k] == edge) {
             found = 1;
             break;
           }

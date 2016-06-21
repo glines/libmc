@@ -174,7 +174,7 @@ void mcPatch_isosurfaceFromField(
           vertexIndices[edge] = -1;
           /* FIXME: It might be better to access mcsimple_edgeTable through a
            * function call */
-          if (mcSimple_edgeTable[cube].edges[edgeTableIndex] == edge) {
+          if (mcSimple_edgeIntersectionTable[cube].edges[edgeTableIndex] == edge) {
             /* This edge intersection must exist. We will either find it in one
              * of our buffers or compute it ourselves. */
             /* Look for edge intersections that already have vertices and get

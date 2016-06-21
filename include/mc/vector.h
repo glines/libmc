@@ -24,8 +24,17 @@
 #ifndef MC_VECTOR_H_
 #define MC_VECTOR_H_
 
+/**
+ * Represents a vector in \f$\mathbb{R}^3\f$. This vector representation and
+ * its associated math functions are used throughout libmc.
+ */
 typedef struct mcVec3 {
-  float x, y, z;
+  /** The component of the vector along the x-axis. */
+  float x;
+  /** The component of the vector along the y-axis. */
+  float y;
+  /** The component of the vector along the z-axis. */
+  float z;
 } mcVec3;
 
 /**

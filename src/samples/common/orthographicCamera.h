@@ -24,20 +24,66 @@
 #ifndef MC_SAMPLES_COMMON_OTHOGRAPHIC_CAMERA_H_
 #define MC_SAMPLES_COMMON_OTHOGRAPHIC_CAMERA_H_
 
+/**
+ * \addtogroup samples
+ * @{
+ */
+
+/**
+ * \addtogroup common
+ * @{
+ */
+
 #include "camera.h"
 
 namespace mc { namespace samples {
+  /**
+   * A camera using orthographic projection.
+   */
   class OrthographicCamera : public Camera {
     private:
       float m_left, m_right, m_bottom, m_top, m_near, m_far;
     public:
+      /**
+       * Constructs a camera with an orthographic projection. The left, right,
+       * bottom, and top values determine the sides of the viewing volume. The
+       * near and far plane values affect precision of the depth buffer.
+       *
+       * \param left The left side of the viewing volume.
+       * \param right The right side of the viewing volume.
+       * \param bottom The bottom side of the viewing volume.
+       * \param top The top side of the viewing volume.
+       * \param near The distance to the near plane of the viewing volume.
+       * \param far The distance to the far plane of the viewing volume.
+       * \param position The position of the camera.
+       * \param orientation The orientation of the camera.
+       */
       OrthographicCamera(float left, float right, float bottom, float top,
           float near = 0.1f, float far = 1000.0f,
           const glm::vec3 &position = glm::vec3(0.0f, 0.0f, 0.0f),
           const glm::quat &orientation = glm::quat());
 
+      /**
+       * Returns the orthographic projection transform matrix for this camera.
+       * The aspect ratio given allows the camera to alter the projection to
+       * preserve the aspect ratio.
+       *
+       * \param aspect The aspect ratio of the viewing window, which will be
+       * preserved.
+       * \param alpha The weight between keyframes in the animation of this
+       * camera's projection.
+       * \return The orthographic projection transform matrix for this camera.
+       *
+       * \todo Implement aspect ratio preservation for the orthographic camrea.
+       * \todo The orthographic camera has no option for fitted versus cropped
+       * aspect ratio.
+       */
       glm::mat4 projection(float aspect, float alpha = 1.0f) const;
   };
 } }
+
+/** @} */
+
+/** @} */
 
 #endif

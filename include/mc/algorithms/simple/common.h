@@ -26,20 +26,42 @@
 
 #define MC_SIMPLE_MAX_TRIANGLES 4
 
-/* FIXME: This should be renamed mcSimple_EdgeIntersectionList */
-typedef struct mcSimpleEdgeList {
-  /* FIXME: edges should be renamed edgeIntersections */
+/**
+ * A list of all edge intersections for a given cube configuration in marching
+ * cubes.
+ */
+typedef struct mcSimpleEdgeIntersectionList {
+  /** The edge intersections in this list. The maximum number of edge
+   * intersections is 12, but if the actual number of edge intersections is
+   * less than this then the tail of this array is filled with -1.
+   *
+   * \todo Define a macro for the maximum number of edge intersections in the
+   * marching cubes algorithm, which happens to be 12.
+   */
   int edges[12];
-} mcSimpleEdgeList;
+} mcSimpleEdgeIntersectionList;
 
-/* FIXME: This should be renamed mcSimple_Triangle */
+/**
+ * A triangle in the marching cubes algorithm defined by three edge
+ * intersections.
+ */
 typedef struct mcSimpleTriangle {
-  /* FIXME: edges should be renamed edgeIntersections */
-  int edges[3];
+  /** The three edge intersections that make up this triangle. The edge
+   * intersections given in this array must also be listed in the corresponding
+   * list of edge intersections for the given cube voxel configuration. */
+  int edgeIntersections[3];
 } mcSimpleTriangle;
 
-/* FIXME: This should be renamed mcSimple_TriangleList */
+/**
+ * A list of triangles to be generated for a given voxel cube configuration in
+ * the marching cubes algorithm. 
+ */
 typedef struct mcSimpleTriangleList {
+  /** The list of triangles to generate for a given cube voxel configuration.
+   * The maximum number of triangles that may be generated is
+   * MC_SIMPLE_MAX_TRIANGLES, but if the actual number of triangles to generate
+   * is less than this number, than the remaining triangles in the list will
+   * have edge intersection indices of -1. */
   mcSimpleTriangle triangles[MC_SIMPLE_MAX_TRIANGLES];
 } mcSimpleTriangleList;
 

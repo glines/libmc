@@ -60,24 +60,102 @@ namespace mc { namespace samples {
       virtual void initLocations();
 
     public:
+      /**
+       * An OpenGL shader program compiled and linked from the given vertex and
+       * fragment shaders.
+       *
+       * \param vert Path to the vertex shader to compile.
+       * \param frag Path to the fragment shader to compile.
+       */
       ShaderProgram(const std::string &vert, const std::string &frag);
+      /**
+       * Destroy this shader program.
+       *
+       * \todo Free the GL resources associated with ShaderProgram upon
+       * destruction.
+       */
       virtual ~ShaderProgram();
 
+      /**
+       * \return Location of the model-view transform matrix uniform in the
+       * shader.
+       */
       GLuint modelViewLocation() const { return m_modelViewLocation; }
+      /**
+       * \return Location of the projection transform matrix uniform in the
+       * shader.
+       */
       GLuint projectionLocation() const { return m_projectionLocation; }
+      /**
+       * \return Location of the combination model-view-projection transform
+       * matrix uniform in the shader.
+       */
       GLuint modelViewProjectionLocation() const { return m_modelViewProjectionLocation; }
+      /**
+       * \return Location of the normal transform matrix for transforming
+       * surface normals into view space.
+       *
+       * \todo Does the normal transform go from model to view space? I don't
+       * remember.
+       */
       GLuint normalTransformLocation() const { return m_normalTransformLocation; }
+      /**
+       * \return Location of the point light position uniform in the shader.
+       *
+       * \todo Replace single point light location with an array of structs.
+       */
       GLuint lightPositionLocation() const { return m_lightPositionLocation; }
+      /**
+       * \return Location of the point light intensity uniform in the shader.
+       */
       GLuint lightIntensityLocation() const { return m_lightIntensityLocation; }
+      /**
+       * \return Location of the current time uniform in the shader.
+       */
       GLuint timeLocation() const { return m_timeLocation; }
+      /**
+       * \return Location of the vertex position vertex attribute in the
+       * shader.
+       */
       GLuint vertPositionLocation() const { return m_vertPositionLocation; }
+      /**
+       * \return Location of the vertex normal vertex attribute in the
+       * shader.
+       */
       GLuint vertNormalLocation() const { return m_vertNormalLocation; }
+      /**
+       * \return Location of the vertex color vertex attribute in the shader.
+       * This is used primarily for specifying the color for drawing debugging
+       * points and lines.
+       */
       GLuint vertColorLocation() const { return m_vertColorLocation; }
+      /**
+       * \return Location of the texture coordinate vertex attribute in the
+       * shader.
+       */
       GLuint vertTexCoordLocation() const { return m_vertTexCoordLocation; }
+      /**
+       * \return Location of the vertex velocity attribute in the shader.
+       *
+       * \todo This probably is not being used. Remove the vertVelocity
+       * attribute from ShaderProgram.
+       */
       GLuint vertVelocityLocation() const { return m_vertVelocityLocation; }
+      /**
+       * \return Location of the start time uniform in the shader.
+       *
+       * \todo This probably is not being used. Remove the vertStartTime
+       * attribute from ShaderProgram.
+       */
       GLuint vertStartTimeLocation() const { return m_vertStartTimeLocation; }
+      /**
+       * \return Location of the first texture sampler uniform in the shader.
+       */
       GLuint texture0() const { return m_texture0; }
 
+      /**
+       * Use this shader in the current GL state.
+       */
       void use() const;
   };
 } }

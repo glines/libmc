@@ -38,7 +38,7 @@ docs:
 	mkdir -p ./docs
 	(cat Doxyfile ; \
 	echo "PROJECT_NUMBER=\"$$(git describe --always --dirty)\"") \
-	| doxygen -
+	| doxygen - 1>/dev/null
 
 .PHONY: upload
 upload: build-html

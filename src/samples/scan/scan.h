@@ -29,7 +29,7 @@
 
 namespace mc { namespace samples {
   /**
-   * This class stores a 3-dimesniosal scan read from images representing
+   * This class stores a 3-dimensional scan read from images representing
    * slices in the scan.
    *
    * \todo Allow the slice delta to be specified.
@@ -53,13 +53,50 @@ namespace mc { namespace samples {
       void m_init(const std::string &path);
       void m_abortInit();
     public:
+      /**
+       * Constructs a scan from the slice images at the given path.
+       *
+       * \param path The path to a directory containing PNG images representing
+       * the scan slices in alphabetical order.
+       */
       Scan(const std::string &path);
 
+      /**
+       * The x-axis resolution of the scan as it was read from file.
+       *
+       * \return The x-axis resolution of the scan.
+       */
       int xRes() const { return m_xRes; }
+      /**
+       * The y-axis resolution of the scan as it was read from file.
+       *
+       * \return The y-axis resolution of the scan.
+       */
       int yRes() const { return m_yRes; }
+      /**
+       * The z-axis resolution of the scan as it was read from file.
+       *
+       * \return The z-axis resolution of the scan.
+       */
       int zRes() const { return m_zRes; }
+      /**
+       * Method to access the sample values of the scan at a given sample
+       * lattice point.
+       *
+       * \param x The x-axis sample lattice coordinate.
+       * \param y The y-axis sample lattice coordinate.
+       * \param z The z-axis sample lattice coordinate.
+       * \return The value of the sample at the x, y, z coordinate of the scan.
+       */
       float sample(int x, int y, int z) const;
 
+      /**
+       * Returns a scalar field representing the 3D scan. Samples from the
+       * sample lattice of the scan are trilinearly interpolated.
+       *
+       * \return A const reference to a scalar field representation of the
+       * scan.
+       */
       const ScalarField &scalarField();
   };
 } }

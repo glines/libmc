@@ -34,9 +34,22 @@
 #include <mc/isosurfaceBuilder.h>
 #include <mc/mesh.h>
 
+/**
+ * \internal
+ * The internal data structures for the isosurface builder. In particular, this
+ * includes the storage for all of the meshes generated and not yet destroyed.
+ * \endinternal
+ */
 struct mcIsosurfaceBuilderInternal {
+  /** Stored meshes that were built or are currently being built by this
+   * isosurface builder. */
   mcMesh *meshes;
-  unsigned int meshesSize, numMeshes;
+  /** The size of the meshes member, i.e. the maximum number of meshes that
+   * this isosurface builder structure can refer to without growing the meshes
+   * data member. */
+  unsigned int meshesSize;
+  /** The number of meshes that this isosurface builder currently holds. */
+  unsigned int numMeshes;
 };
 
 void mcIsosurfaceBuilder_init(

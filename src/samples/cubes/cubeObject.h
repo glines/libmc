@@ -35,6 +35,13 @@
 namespace mc { namespace samples {
   class ShaderProgram;
   namespace cubes {
+    /**
+     * Debugging class for visualizing voxel cube configurations and the
+     * surfaces they generate. This class is particularly useful because it can
+     * interpolate between lattice sample points to arbitrary resolution, which
+     * is an effective tool for visualizing ambiguities present in certain cube
+     * configurations.
+     */
     class CubeObject : public MeshObject {
       private:
         IsosurfaceBuilder m_builder;
@@ -86,6 +93,18 @@ namespace mc { namespace samples {
         /**
          * A scene object that represents a single voxel cube. This is used to
          * visualize individual voxels for debugging purposes.
+         *
+         * \param cube The bitwise representation of the voxel cube configuration.
+         * \param res_x The x-axis resolution at which to sample for the
+         * isosurface mesh.
+         * \param res_y The y-axis resolution at which to sample for the
+         * isosurface mesh.
+         * \param res_z The z-axis resolution at which to sample for the
+         * isosurface mesh.
+         * \param algorithm Flag representing the isosurface extraction
+         * algorithm to use to generate the isosurface mesh.
+         * \param position Position of the cube object in the scene.
+         * \param orientation Orientation of the cube object in the scene.
          */
         CubeObject(
             unsigned int cube,
@@ -112,12 +131,18 @@ namespace mc { namespace samples {
         /**
          * Changes the cube being represented by this cube object. Calling this
          * method will change the underlying isosurface.
+         *
+         * \param cube The bitwise voxel cube representation to use to define
+         * the trilineraly interpolated implicit isosurface function.
          */
         void setCube(unsigned int cube);
 
         /**
          * Returns true if the scalar field is being drawn as a lattice of
          * points. Returns false otherwise.
+         *
+         * \return Whether or not the scalar field is being drawn as a lattice
+         * of points.
          */
         bool isDrawScalarField() const {
           return m_isDrawScalarField;
@@ -134,6 +159,13 @@ namespace mc { namespace samples {
         /**
          * Sets the resolution used with the isosurface extraction algorithm.
          * Higher resolution gives more detail and generates more triangles.
+         *
+         * \param x The x-axis resolution of the sample lattice to use when
+         * generating the isosurface mesh.
+         * \param y The y-axis resolution of the sample lattice to use when
+         * generating the isosurface mesh.
+         * \param z The z-axis resolution of the sample lattice to use when
+         * generating the isosurface mesh.
          */
         void setResolution(
             unsigned int x, unsigned int y, unsigned int z);
@@ -141,6 +173,9 @@ namespace mc { namespace samples {
         /**
          * Sets the algorithm used for isosurface extraction. Calling this
          * method will cause the isosurface mesh to be re-evaluated.
+         *
+         * \param algorithm Flag representing the isosurface extraction
+         * algorithm to use to generate the isosurface mesh.
          */
         void setAlgorithm(mcAlgorithmFlag algorithm);
 
@@ -154,6 +189,9 @@ namespace mc { namespace samples {
          * Sets the intensity value for the isosurface generated, which
          * affects how the edge values are interpolated. The isosurface is
          * re-evaluated with each call to this method.
+         *
+         * \param intensity The intensity of the sample values under the
+         * surface relative to the sample values above the isosurface.
          */
         void setIntensity(float intensity);
     };

@@ -56,7 +56,7 @@
 
 void computeEdgeList(
     unsigned int cube,
-    mcSimpleEdgeList *edgeList)
+    mcSimpleEdgeIntersectionList *edgeList)
 {
   unsigned int vertices[2];
   unsigned int listIndex = 0;
@@ -96,9 +96,9 @@ void computeTriangleList(
 #define make_triangle(a, b, c) \
   do { \
     triangle = &triangleList->triangles[numTriangles++]; \
-    triangle->edges[0] = a; \
-    triangle->edges[1] = b; \
-    triangle->edges[2] = c; \
+    triangle->edgeIntersections[0] = a; \
+    triangle->edgeIntersections[1] = b; \
+    triangle->edgeIntersections[2] = c; \
   } while(0)
   switch (canonical) {
     case MC_CUBE_CANONICAL_ORIENTATION_INVERSION_0:
@@ -228,21 +228,24 @@ void computeTriangleList(
   /* Rotate the canonical triangles back into our cube's orientation */
   for (int i = 0; i < MC_SIMPLE_MAX_TRIANGLES; ++i) {
     triangle = &triangleList->triangles[i];
-    if (triangle->edges[0] == -1)
+    if (triangle->edgeIntersections[0] == -1)
       break;  /* No more triangles to consider */
     /* Iterate over each triangle edge intersection */
     for (int j = 0; j < 3; ++j) {
       /* Rotate the triangle edge intersection about the y-axis */
       for (int k = 0; k < get_byte(rotation, 2); ++k) {
-        triangle->edges[j] = mcCube_rotateEdgeReverseY(triangle->edges[j]);
+        triangle->edgeIntersections[j]
+        = mcCube_rotateEdgeReverseY(triangle->edgeIntersections[j]);
       }
       /* Rotate the triangle edge intersection about the x-axis */
       for (int k = 0; k < get_byte(rotation, 1); ++k) {
-        triangle->edges[j] = mcCube_rotateEdgeReverseX(triangle->edges[j]);
+        triangle->edgeIntersections[j]
+        = mcCube_rotateEdgeReverseX(triangle->edgeIntersections[j]);
       }
       /* Rotate the triangle edge intersection about the z-axis */
       for (int k = 0; k < get_byte(rotation, 0); ++k) {
-        triangle->edges[j] = mcCube_rotateEdgeReverseZ(triangle->edges[j]);
+        triangle->edgeIntersections[j]
+        = mcCube_rotateEdgeReverseZ(triangle->edgeIntersections[j]);
       }
     }
     /* Cube inversion affects triangle winding order */
@@ -250,16 +253,16 @@ void computeTriangleList(
      * Something is off somewhere. */
     if (!get_byte(rotation, 3)) {
       /* Reverse triangle winding order to get correct front/back faces */
-      int temp = triangle->edges[0];
-      triangle->edges[0] = triangle->edges[2];
-      triangle->edges[2] = temp;
+      int temp = triangle->edgeIntersections[0];
+      triangle->edgeIntersections[0] = triangle->edgeIntersections[2];
+      triangle->edgeIntersections[2] = temp;
     }
   }
 }
 
-void printEdgeTable(const mcSimpleEdgeList *edgeTable) {
+void printEdgeTable(const mcSimpleEdgeIntersectionList *edgeTable) {
   fprintf(stdout,
-      "const mcSimpleEdgeList mcSimple_edgeTable[] = {\n");
+      "const mcSimpleEdgeIntersectionList mcSimple_edgeIntersectionTable[] = {\n");
   for (unsigned int cube = 0; cube <= 0xFF; ++cube) {
     fprintf(stdout,
         "  { .edges = { %2d, %2d, %2d, %2d, %2d, %2d, %2d, %2d, %2d, %2d, %2d, %2d } },  /* 0x%02x */\n",
@@ -293,11 +296,11 @@ void printTriangulationTable(
         "    {\n");
     for (unsigned int i = 0; i < MC_SIMPLE_MAX_TRIANGLES; ++i) {
       fprintf(stdout,
-          "      { .edges = { ");
+          "      { .edgeIntersections = { ");
       for (unsigned int j = 0; j < 3; ++j) {
         fprintf(stdout,
             "%d, ",
-            triangulationTable[cube].triangles[i].edges[j]);
+            triangulationTable[cube].triangles[i].edgeIntersections[j]);
       }
       fprintf(stdout, "} },\n");
     }
@@ -313,9 +316,10 @@ int main(int argc, char **argv) {
   /* TODO: Parse the arguments */
 
   /* Allocate memory for the edge table */
-  mcSimpleEdgeList *edgeTable =
-    (mcSimpleEdgeList*)malloc(sizeof(mcSimpleEdgeList) * 256);
-  memset(edgeTable, -1, sizeof(mcSimpleEdgeList) * 256);
+  mcSimpleEdgeIntersectionList *edgeTable =
+    (mcSimpleEdgeIntersectionList*)malloc(
+        sizeof(mcSimpleEdgeIntersectionList) * 256);
+  memset(edgeTable, -1, sizeof(mcSimpleEdgeIntersectionList) * 256);
   /* Allocate memory for the triangulization table */
   mcSimpleTriangleList *triangulationTable =
     (mcSimpleTriangleList*)malloc(sizeof(mcSimpleTriangleList) * 256);
@@ -334,11 +338,11 @@ int main(int argc, char **argv) {
     /* Ensure that the edge and triangulation tables agree */
     for (int i = 0; i < MC_SIMPLE_MAX_TRIANGLES; ++i) {
       mcSimpleTriangle *triangle = &triangulationTable[cube].triangles[i];
-      if (triangle->edges[0] == -1)
+      if (triangle->edgeIntersections[0] == -1)
         break;  /* No more triangles to consider */
       for (int j = 0; j < 3; ++j) {
         int found;
-        unsigned int edge = triangle->edges[j];
+        unsigned int edge = triangle->edgeIntersections[j];
         /* Look for this edge in the edge list */
         found = 0;
         for (int k = 0; k < MC_CUBE_NUM_EDGES; ++k) {

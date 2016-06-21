@@ -24,6 +24,16 @@
 #ifndef MC_SAMPLES_COMMON_TRANSFORM_STACK_H_
 #define MC_SAMPLES_COMMON_TRANSFORM_STACK_H_
 
+/**
+ * \addtogroup samples
+ * @{
+ */
+
+/**
+ * \addtogroup common
+ * @{
+ */
+
 #include <stack>
 
 #include "transform.h"
@@ -56,8 +66,11 @@ namespace mc { namespace samples {
     protected:
       Transform *getBase() { return this; }
       void unwind(size_t size);
-      void getIndex();
   };
 } }
+
+/** @} */
+
+/** @} */
 
 #endif

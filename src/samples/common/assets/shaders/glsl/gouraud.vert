@@ -11,7 +11,7 @@ uniform mat4 normalTransform;
 uniform vec3 lightPosition;
 uniform vec3 lightIntensity;
 
-varying vec3 color;
+flat out vec3 color;
 
 void main() {
   // FIXME: transform the vertex normal by the inverse of the transpose of... something

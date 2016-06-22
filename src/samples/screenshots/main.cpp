@@ -37,13 +37,16 @@
 #include <SDL.h>
 #include <cstdlib>
 #include <glm/gtc/noise.hpp>
+#include <png.h>
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
 #endif
 
+#include "../common/glError.h"
 #include "../common/orthographicCamera.h"
 #include "../common/scene.h"
+#include "../common/template.h"
 #include "repeatingIsosurface.h"
 
 using namespace mc;
@@ -54,6 +57,8 @@ struct demo {
   SDL_Window *window;
   SDL_GLContext glContext;
   int window_width, window_height;
+  int fbWidth, fbHeight;
+  GLuint fbo, fbColorBuffer, fbDepthBuffer;
   Scene *scene;
   std::shared_ptr<OrthographicCamera> camera;
   std::shared_ptr<RepeatingIsosurface> repeatingIsosurface;
@@ -82,10 +87,6 @@ void init_sdl() {
   }
 }
 
-void init_framebuffer() {
-  // TODO: Create a GL framebuffer object for drawing to
-}
-
 void init_gl() {
   // Create an OpenGL context for our window
   demo.glContext = SDL_GL_CreateContext(demo.window);
@@ -104,7 +105,7 @@ void init_gl() {
   }
 
   // Configure the GL
-  glClearColor(0.0, 0.0, 0.0, 0.0);
+  glClearColor(1.0, 0.0, 1.0, 0.0);
   glClearDepth(1.0);
   glEnable(GL_DEPTH_TEST);
   glDepthFunc(GL_LESS);
@@ -113,13 +114,85 @@ void init_gl() {
   glViewport(0, 0, demo.window_width, demo.window_height);
 }
 
+void init_framebuffer() {
+  // TODO: Allow the user to specify the screenshot framebuffer size
+  // TODO: Don't forget to call glViewport() for the framebuffer's size
+  demo.fbWidth = 640;
+  demo.fbHeight = 480;
+  // TODO: Create a GL framebuffer object for drawing to
+  glGenFramebuffers(1, &demo.fbo);
+  FORCE_ASSERT_GL_ERROR();
+  glBindFramebuffer(GL_FRAMEBUFFER, demo.fbo);
+  FORCE_ASSERT_GL_ERROR();
+  glGenTextures(1, &demo.fbColorBuffer);
+  FORCE_ASSERT_GL_ERROR();
+  glBindTexture(GL_TEXTURE_2D, demo.fbColorBuffer);
+  FORCE_ASSERT_GL_ERROR();
+  glTexImage2D(
+      GL_TEXTURE_2D,  // target
+      0,  // level
+      GL_RGBA,  // internalFormat
+      demo.fbWidth,  // width
+      demo.fbHeight,  // height
+      0,  // border
+      GL_RGBA,  // format
+      GL_UNSIGNED_INT_8_8_8_8,  // type
+      nullptr  // data
+      );
+  FORCE_ASSERT_GL_ERROR();
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  FORCE_ASSERT_GL_ERROR();
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  FORCE_ASSERT_GL_ERROR();
+  glFramebufferTexture2D(
+      GL_FRAMEBUFFER,  // target
+      GL_COLOR_ATTACHMENT0,  // attachment
+      GL_TEXTURE_2D,  // textarget
+      demo.fbColorBuffer,  // texture
+      0  // level
+      );
+  FORCE_ASSERT_GL_ERROR();
+  glGenRenderbuffers(1, &demo.fbDepthBuffer);
+  FORCE_ASSERT_GL_ERROR();
+  glBindRenderbuffer(GL_RENDERBUFFER, demo.fbDepthBuffer);
+  FORCE_ASSERT_GL_ERROR();
+  // NOTE: We could use more precision for the depth buffer on native GL, but
+  // we are using 16 bits of precision for OpenGL ES support (e.g. WebGL).
+  glRenderbufferStorage(
+      GL_RENDERBUFFER,  // target
+      GL_DEPTH_COMPONENT16,  // internalformat
+      demo.fbWidth,  // width
+      demo.fbHeight  // height
+      );
+  FORCE_ASSERT_GL_ERROR();
+  glFramebufferRenderbuffer(
+      GL_FRAMEBUFFER,  // target
+      GL_DEPTH_ATTACHMENT,  // attachment
+      GL_RENDERBUFFER,  // renderbuffertarget
+      demo.fbDepthBuffer  // renderbuffer
+      );
+  FORCE_ASSERT_GL_ERROR();
+  GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+  if (status != GL_FRAMEBUFFER_COMPLETE) {
+    fprintf(stderr, "GL framebuffer is not complete: 0x%04x\n",
+        status);
+    exit(EXIT_FAILURE);
+  }
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  FORCE_ASSERT_GL_ERROR();
+}
+
+void destroy_framebuffer() {
+  glDeleteFramebuffers(1, &demo.fbo);
+  FORCE_ASSERT_GL_ERROR();
+}
+
 void main_loop() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  // TODO: Draw the scene
+  // TODO: Draw the scene to the default framebuffer
   float aspect = (float)demo.window_width / (float)demo.window_height;
   demo.scene->draw(*demo.camera, aspect);
-
   SDL_GL_SwapWindow(demo.window);
 
   // Check for SDL events (user input, etc.)
@@ -149,17 +222,23 @@ float sphere(float x, float y, float z) {
 }
 
 float wave(float x, float y, float z) {
-  return (cos(y) * sin(z)) / 5.0f;
+  float frequency = (float)M_PI * 4.0f;
+  return z - (cos(x * frequency) * cos(y * frequency));
 }
 
 float noise(float x, float y, float z) {
   return glm::simplex(glm::vec3(x, y, z) * 5.0f);
 }
 
+float terrain(float x, float y, float z) {
+  return z - glm::simplex(glm::vec2(x, y) * 6.0f);
+}
+
 int main(int argc, char **argv) {
   // Initialize the graphics
   init_sdl();
   init_gl();
+  init_framebuffer();
 
   // Create the graphics scene
   static const int repeat = 1; 
@@ -184,7 +263,7 @@ int main(int argc, char **argv) {
   // on the other side, because the scalar field values will be exactly the
   // same.
   std::shared_ptr<ScalarField> sf = std::shared_ptr<ScalarField>(
-      new ScalarField(noise));
+      new ScalarField(terrain));
   demo.repeatingIsosurface = std::shared_ptr<RepeatingIsosurface>(
       new RepeatingIsosurface(sf,
         repeat, repeat,  // xRepeat, yRepeat
@@ -196,6 +275,68 @@ int main(int argc, char **argv) {
   demo.repeatingIsosurface->setDrawOpaque(true);
   demo.repeatingIsosurface->setDrawWireframe(false);
   demo.scene->addObject(demo.repeatingIsosurface);
+
+  // Draw the scene to our texture framebuffer
+  glBindFramebuffer(GL_FRAMEBUFFER, demo.fbo);
+  ASSERT_GL_ERROR();
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  float aspect = (float)demo.fbWidth / (float)demo.fbHeight;
+  demo.scene->draw(*demo.camera, aspect);
+  // Read the framebuffer to memory
+  GLuint *pixels = new GLuint[demo.fbWidth * demo.fbHeight];
+  glReadPixels(
+      0,  // x
+      0,  // y
+      demo.fbWidth,  // width
+      demo.fbHeight,  // height
+      GL_RGBA,  // format
+      GL_UNSIGNED_BYTE,  // type
+      pixels  // data
+      );
+  ASSERT_GL_ERROR();
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  ASSERT_GL_ERROR();
+  // Write the framebuffer to a PNG image
+  const char *out = "out.png";
+  FILE *fp = fopen(out, "wb");
+  if (!fp) {
+    fprintf(stderr, "Could not write to file '%s'\n", out);
+    exit(EXIT_FAILURE);
+  }
+  png_structp png_ptr = png_create_write_struct(
+      PNG_LIBPNG_VER_STRING,
+      nullptr, nullptr, nullptr);
+  if (!png_ptr) {
+    fprintf(stderr, "Could not create PNG write struct\n", out);
+    exit(EXIT_FAILURE);
+  }
+  png_infop info_ptr = png_create_info_struct(png_ptr);
+  if (!info_ptr) {
+    png_destroy_write_struct(&png_ptr, nullptr);
+    exit(EXIT_FAILURE);
+  }
+  png_init_io(png_ptr, fp);
+  png_set_IHDR(
+      png_ptr, info_ptr,
+      demo.fbWidth,  // width
+      demo.fbHeight,  // height
+      8,  // bit_depth
+      PNG_COLOR_TYPE_RGB_ALPHA,  // color type
+      PNG_INTERLACE_NONE,  // interlace type
+      PNG_COMPRESSION_TYPE_DEFAULT,  // compression type
+      PNG_FILTER_TYPE_DEFAULT  // filter method
+      );
+  png_write_info(png_ptr, info_ptr);
+  for (int i = 0; i < demo.fbHeight; ++i) {
+    png_write_row(png_ptr, (png_const_bytep)&pixels[i * demo.fbWidth]);
+  }
+  png_write_end(png_ptr, nullptr);
+  png_destroy_write_struct(&png_ptr, &info_ptr);
+  fclose(fp);
+  delete[] pixels;
+
+  // XXX: Test the Lua template engine
+//  Template test("./test.txt");
 
 #ifdef __EMSCRIPTEN__
   emscripten_set_main_loop(main_loop, 0, 1);

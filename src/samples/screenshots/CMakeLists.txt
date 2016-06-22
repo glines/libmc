@@ -4,6 +4,7 @@ add_executable(screenshots
     )
 target_link_libraries(screenshots
     ${GLEW_LIBRARY}
+    ${PNG_LIBRARY}
     ${SDL2_LIBRARY}
     mcxx
     samples_common
@@ -11,6 +12,7 @@ target_link_libraries(screenshots
 
 if(DEFINED ENV{EMSCRIPTEN})
   set(EMSCRIPTEN_FLAGS
+      "-s USE_LIBPNG=1"
       "-s USE_SDL=2"
      )
   string (REPLACE ";" " " EMSCRIPTEN_FLAGS "${EMSCRIPTEN_FLAGS}")

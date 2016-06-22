@@ -8,9 +8,13 @@ add_library(samples_common STATIC
     scene.cpp
     sceneObject.cpp
     shaderProgram.cpp
+    template.cpp
     transform.cpp
     transformRAII.cpp
     transformStack.cpp
+    )
+target_link_libraries(samples_common
+    ${LUA_LIBRARIES}
     )
 
 if(DEFINED ENV{EMSCRIPTEN})

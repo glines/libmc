@@ -141,6 +141,8 @@ namespace mc { namespace samples { namespace implicit {
         );
     lua_pop(m_lua, 1);
     */
+    // FIXME: This opens a number of libraries (such as the i/o libraries) that
+    // we do not need or want.
     luaL_openlibs(m_lua);
   }
 

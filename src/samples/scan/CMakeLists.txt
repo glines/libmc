@@ -13,8 +13,8 @@ target_link_libraries(scan
 
 if(DEFINED ENV{EMSCRIPTEN})
   set(EMSCRIPTEN_FLAGS
-      "-s USE_SDL=2"
       "-s USE_LIBPNG=1"
+      "-s USE_SDL=2"
      )
   string (REPLACE ";" " " EMSCRIPTEN_FLAGS "${EMSCRIPTEN_FLAGS}")
   set(EMSCRIPTEN_LINK_FLAGS

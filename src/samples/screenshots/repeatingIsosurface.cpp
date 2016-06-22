@@ -44,9 +44,9 @@ namespace mc { namespace samples { namespace screenshots {
     auto mesh = ib.buildIsosurface(
         rsf,  // scalar field
         MC_ORIGINAL_MARCHING_CUBES,  // algorithm
-        10 * xRepeat, 10 * yRepeat, 10,  // resolution
-        Vec3(0.0f, 0.0f, 0.0f),  // min
-        Vec3((float)xRepeat, (float)yRepeat, 1.0f)  // max
+        4 * xRepeat, 4 * yRepeat, 8,  // resolution
+        Vec3(0.0f, 0.0f, -2.0f),  // min
+        Vec3((float)xRepeat, (float)yRepeat, 2.0f)  // max
         );
     // Send the mesh to the GL
     this->setMesh(*mesh);

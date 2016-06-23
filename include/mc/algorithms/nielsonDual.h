@@ -39,6 +39,8 @@
  *
  * An implementation of the the dual of the midpoint marching cubes algorithm,
  * as described by Nielson in \cite Nielson:1991.
+ *
+ * \image html MC_NIELSON_DUAL_background.png
  */
 
 /**

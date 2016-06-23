@@ -36,8 +36,13 @@
 #include <GL/glew.h>
 #include <SDL.h>
 #include <cstdlib>
+#include <getopt.h>
 #include <glm/gtc/noise.hpp>
 #include <png.h>
+
+extern "C" {
+#include <mc/algorithms.h>
+}
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
@@ -62,6 +67,8 @@ struct demo {
   Scene *scene;
   std::shared_ptr<OrthographicCamera> camera;
   std::shared_ptr<RepeatingIsosurface> repeatingIsosurface;
+  mcAlgorithmFlag algorithm;
+  bool batch;
 } demo;
 
 void init_sdl() {
@@ -73,12 +80,15 @@ void init_sdl() {
   }
   demo.window_width = 640;
   demo.window_height = 480;
+  int flags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
+  if (demo.batch)
+    flags |= SDL_WINDOW_HIDDEN;
   demo.window = SDL_CreateWindow(
       "libmc Screenshots",  // title
       SDL_WINDOWPOS_UNDEFINED,  // x
       SDL_WINDOWPOS_UNDEFINED,  // y
       demo.window_width, demo.window_height,  // w, h
-      SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE  // flags
+      flags  // flags
       );
   if (demo.window == NULL) {
     fprintf(stderr, "Failed to create SDL window: %s\n",
@@ -235,6 +245,52 @@ float terrain(float x, float y, float z) {
 }
 
 int main(int argc, char **argv) {
+  const char *out = "out.png";
+  demo.batch = false;
+  demo.algorithm = MC_DEFAULT_ALGORITHM;
+  // Parse the arguments
+  const char *optstring = "a:bo:";
+  const struct option longopts[] = {
+    { "algorithm", required_argument, nullptr, 'a' },
+    { "batch", no_argument, nullptr, 'b' },
+    { "out", required_argument, nullptr, 'o' },
+    { nullptr,     0,                 nullptr, 0 },
+  };
+  while (1) {
+    int result;
+    result = getopt_long(argc, argv, optstring, longopts, nullptr);
+    if (result == -1)
+      break;
+
+    switch (result) {
+      case 'a':
+        {
+          demo.algorithm = mcAlgorithm_stringToFlag(optarg);
+          if (demo.algorithm == MC_UNKNOWN_ALGORITHM) {
+            fprintf(stderr, "Error: Unknown algorithm '%s'\n", optarg);
+            exit(EXIT_FAILURE);
+          }
+          fprintf(stderr, "Using algorithm: '%s'\n", optarg);
+        }
+        break;
+      case 'b':
+        demo.batch = true;
+        break;
+      case 'o':
+        {
+          size_t length = strnlen(optarg, 256);
+          out = (const char *)malloc(sizeof(char) * length + 1);
+          memcpy((char *)out, optarg, sizeof(char) * length);
+          ((char *)out)[length] = '\0';
+          fprintf(stderr, "out: '%s'\n", out);
+        }
+        break;
+      case '?':
+        // Unknown option character
+        break;
+    }
+  }
+
   // Initialize the graphics
   init_sdl();
   init_gl();
@@ -266,6 +322,7 @@ int main(int argc, char **argv) {
       new ScalarField(terrain));
   demo.repeatingIsosurface = std::shared_ptr<RepeatingIsosurface>(
       new RepeatingIsosurface(sf,
+        demo.algorithm,  // algorithm
         repeat, repeat,  // xRepeat, yRepeat
         glm::vec3(0.0f, 0.0f, 0.0f),  // position
         glm::angleAxis(
@@ -297,17 +354,21 @@ int main(int argc, char **argv) {
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   ASSERT_GL_ERROR();
   // Write the framebuffer to a PNG image
-  const char *out = "out.png";
-  FILE *fp = fopen(out, "wb");
-  if (!fp) {
-    fprintf(stderr, "Could not write to file '%s'\n", out);
-    exit(EXIT_FAILURE);
+  FILE *fp;
+  if (strcmp(out, "-") == 0) {
+    fp = stdout;
+  } else {
+    FILE *fp = fopen(out, "wb");
+    if (!fp) {
+      fprintf(stderr, "Could not write to file '%s'\n", out);
+      exit(EXIT_FAILURE);
+    }
   }
   png_structp png_ptr = png_create_write_struct(
       PNG_LIBPNG_VER_STRING,
       nullptr, nullptr, nullptr);
   if (!png_ptr) {
-    fprintf(stderr, "Could not create PNG write struct\n", out);
+    fprintf(stderr, "Could not create PNG write struct\n");
     exit(EXIT_FAILURE);
   }
   png_infop info_ptr = png_create_info_struct(png_ptr);
@@ -332,8 +393,13 @@ int main(int argc, char **argv) {
   }
   png_write_end(png_ptr, nullptr);
   png_destroy_write_struct(&png_ptr, &info_ptr);
-  fclose(fp);
+  if (strcmp(out, "-") != 0) {
+    fclose(fp);
+  }
   delete[] pixels;
+
+  if (demo.batch)
+    return EXIT_SUCCESS;
 
   // XXX: Test the Lua template engine
 //  Template test("./test.txt");

@@ -57,7 +57,6 @@ namespace mc { namespace samples {
 
       DECLARE_SHADER(wireframe);
       DECLARE_SHADER(gouraud);
-      DECLARE_SHADER(phong);
 
       void m_drawWireframe(
           const glm::mat4 &modelView,

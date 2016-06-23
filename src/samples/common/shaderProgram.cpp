@@ -30,16 +30,47 @@ namespace mc { namespace samples {
   ShaderProgram::ShaderProgram(
       const std::string &vert, const std::string &frag)
   {
+    char *vertCode, *fragCode;
+    unsigned int vertCodeLen, fragCodeLen;
+
+    // Read the vertex and fragment shaders from file
+    m_readCode(vert, &vertCode, &vertCodeLen);
+    m_readCode(frag, &fragCode, &fragCodeLen);
+
+    // Compile and link our shader
+    m_init(
+        vertCode, vertCodeLen,
+        fragCode, fragCodeLen);
+
+    delete[] vertCode;
+    delete[] fragCode;
+  }
+
+  ShaderProgram::ShaderProgram(
+      const char *vert, unsigned int vert_len,
+      const char *frag, unsigned int frag_len)
+  {
+    // Compile and link our shader
+    m_init(vert, vert_len, frag, frag_len);
+  }
+
+  ShaderProgram::~ShaderProgram() {
+  }
+
+  void ShaderProgram::m_init(
+      const char *vert, unsigned int vert_len,
+      const char *frag, unsigned int frag_len)
+  {
     m_shaderProgram = glCreateProgram();
 
     GLuint vertexShader = -1;
-    if (!vert.empty()) {
-      vertexShader = m_compileShader(vert, GL_VERTEX_SHADER);
+    if (vert_len != 0) {
+      vertexShader = m_compileShader(vert, vert_len, GL_VERTEX_SHADER);
       glAttachShader(m_shaderProgram, vertexShader);
     }
     GLuint fragmentShader = -1;
-    if (!frag.empty()) {
-      fragmentShader = m_compileShader(frag, GL_FRAGMENT_SHADER);
+    if (frag_len != 0) {
+      fragmentShader = m_compileShader(frag, frag_len, GL_FRAGMENT_SHADER);
       glAttachShader(m_shaderProgram, fragmentShader);
     }
 
@@ -48,34 +79,41 @@ namespace mc { namespace samples {
     initLocations();
   }
 
-  ShaderProgram::~ShaderProgram() {
+  void ShaderProgram::m_readCode(
+      const std::string &path, char **code, unsigned int *code_len)
+  {
+    FILE *f;
+    unsigned int length;
+
+    f = fopen(path.c_str(), "r");
+    if (f == NULL) {
+      fprintf(stderr, "Could not open shader file: %s\n", path.c_str());
+      exit(EXIT_FAILURE);
+    }
+    fseek(f, 0, SEEK_END);
+    *code_len = ftell(f);
+    rewind(f);
+    *code = new char[*code_len];
+    length = fread(*code, 1, *code_len, f);
+    if (length != *code_len) {
+      fprintf(stderr, "Could not read shader file: %s\n", path.c_str());
+      exit(EXIT_FAILURE);
+    }
   }
 
   void ShaderProgram::use() const {
     glUseProgram(m_shaderProgram);
   }
 
-  GLuint ShaderProgram::m_compileShader(const std::string &file, GLenum type) {
-    FILE *f;
-    int length;
+  GLuint ShaderProgram::m_compileShader(
+      const char *code, int code_len, GLenum type)
+  {
     char *source;
     GLint status;
 
     GLuint shader = glCreateShader(type);
 
-    f = fopen(file.c_str(), "r");
-    if (f == NULL) {
-      fprintf(stderr, "Could not open shader file: %s\n", file.c_str());
-      exit(EXIT_FAILURE);
-    }
-    fseek(f, 0, SEEK_END);
-    length = ftell(f);
-    rewind(f);
-    source = (char*)malloc(length+1);
-    length = fread(source, 1, length, f);
-    source[length] = '\0';
-    glShaderSource(shader, 1, (const char **)&source, &length);
-    free(source);
+    glShaderSource(shader, 1, &code, &code_len);
 
     glCompileShader(shader);
     glGetShaderiv(
@@ -95,8 +133,9 @@ namespace mc { namespace samples {
           logLength,
           NULL,
           log);
-      fprintf(stderr, "Error compiling shader '%s': %s\n",
-          file.c_str(), log);
+      // FIXME: The shader path should be printed with this error
+      fprintf(stderr, "Error compiling shader: %s\n",
+          log);
       free(log);
       // FIXME: Maybe call something other than exit() here
       exit(EXIT_FAILURE);

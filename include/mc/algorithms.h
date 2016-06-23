@@ -67,6 +67,10 @@
  * may select a different algorithm.
  */
 typedef enum mcAlgorithmFlag {
+  /**
+   * Represents an algorithm that is not known to the current version of libmc.
+   */
+  MC_UNKNOWN_ALGORITHM = -1,
   /** The default algorihm used by libmc, which is currently the same algorithm
    * as chosen for MC_CPU_BALANCE_ALGORITHM. */
   MC_DEFAULT_ALGORITHM = 1,
@@ -110,6 +114,20 @@ typedef enum mcAlgorithmFlag {
   /** The original marching cubes as described by Lorensen. \cite Lorensen:1987 */
   MC_ORIGINAL_MARCHING_CUBES,
 } mcAlgorithmFlag;
+
+/**
+ * Reads the given null-terminated string and returns the corresponding
+ * isosurface extraction algorithm flag.
+ *
+ * \param string A null-terminated string representing an isosurface extraction
+ * algorithm.
+ * \return The algorithm flag corresponding to the given algorithm string.
+ *
+ * The identifier for the flag is used for the corresponding algorithm string.
+ * For example, the original marching cubes algorithm has the algorithm string
+ * "MC_ORIGINAL_MARCHING_CUBES".
+ */
+mcAlgorithmFlag mcAlgorithm_stringToFlag(const char *string);
 
 /**
  * Since the generic interface for isosurface extraction does not assume any

@@ -33,3 +33,6 @@ add_dependencies(mc_algorithms_simple simple_tables.c)
 target_include_directories(mc_algorithms_simple
     PRIVATE "${CMAKE_CURRENT_BINARY_DIR}"
     )
+
+# Take screenshots representitive of the simple marching cubes algorithm
+take_screenshots("MC_SIMPLE_MARCHING_CUBES")

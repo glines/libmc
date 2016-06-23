@@ -1,3 +1,4 @@
+# Generate the tables for the Nielson MC-Dual algorithm
 add_executable(generate_nielsonDual_tables
     generate_nielsonDual_tables.c
     )
@@ -25,6 +26,7 @@ add_dependencies(nielsonDual_tables.c
     generate_nielsonDual_tables
     )
 
+# Build the library for the Nielson MC-Dual algorithm
 add_library(mc_algorithms_nielsonDual STATIC
     nielsonDual.c
     )
@@ -34,3 +36,6 @@ add_dependencies(mc_algorithms_nielsonDual
 target_include_directories(mc_algorithms_nielsonDual
     PRIVATE "${CMAKE_CURRENT_BINARY_DIR}"
     )
+
+# Take screenshots representitive of the Nielson MC-Dual algorithm
+take_screenshots("MC_NIELSON_DUAL")

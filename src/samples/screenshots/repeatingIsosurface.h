@@ -38,6 +38,10 @@
 
 #include <mcxx/scalarField.h>
 
+extern "C" {
+#include <mc/algorithms.h>
+}
+
 #include "../common/meshObject.h"
 
 namespace mc { namespace samples { namespace screenshots {
@@ -71,6 +75,8 @@ namespace mc { namespace samples { namespace screenshots {
        * the implicit definition of the isosurface.
        *
        * \param sf Scalar field functor that is to be repeated.
+       * \param algorithm Flag representing the isosurface extraction algorithm
+       * to use.
        * \param xRepeat The number of times to repeat the function in the
        * x-axis direction.
        * \param yRepeat The number of times to repeat the function in the
@@ -89,6 +95,7 @@ namespace mc { namespace samples { namespace screenshots {
        */
       RepeatingIsosurface(
           std::shared_ptr<ScalarField> sf,
+          mcAlgorithmFlag algorithm = MC_DEFAULT_ALGORITHM,
           int xRepeat = 3, int yRepeat = 3,
           const glm::vec3 &position = glm::vec3(0.0f, 0.0f, 0.0f),
           const glm::quat &orientation = glm::quat());

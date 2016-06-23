@@ -1,4 +1,5 @@
 add_library(mc
+    algorithms.c
     isosurfaceBuilder.c
     )
 target_include_directories(mc SYSTEM

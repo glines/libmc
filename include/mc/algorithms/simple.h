@@ -39,6 +39,8 @@
  *
  * This is an implementation of the original marching cubes algorithm as
  * described by Lorensen and Cline. \cite Lorensen:1987.
+ *
+ * \image html MC_SIMPLE_MARCHING_CUBES_background.png
  */
 
 /**

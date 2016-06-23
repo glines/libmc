@@ -168,23 +168,42 @@ namespace mc {namespace samples { namespace cubes {
   }
 
 #ifdef __EMSCRIPTEN__
-#define SHADER_DIR "./assets/shaders/webgl"
+#define SHADER_DIR assets_shaders_webgl
 #else
-#define SHADER_DIR "./assets/shaders/glsl"
+#define SHADER_DIR assets_shaders_glsl
 #endif
 
-#define DEFINE_SHADER(shader) \
+#define CAT(a, b) a ## b
+
+#define DEFINE_SHADER_BASE(shader, dir) \
   std::shared_ptr<ShaderProgram> CubeObject::m_ ## shader ## Shader() { \
     static std::shared_ptr<ShaderProgram> instance = \
       std::shared_ptr<ShaderProgram>( \
           new ShaderProgram( \
-            SHADER_DIR "/" #shader ".vert", \
-            SHADER_DIR "/" #shader ".frag" \
+            (const char *)CAT(dir, _ ## shader ## _vert), \
+            CAT(dir, _ ## shader ## _vert_len), \
+            (const char *)CAT(dir, _ ## shader ## _frag), \
+            CAT(dir, _ ## shader ## _frag_len) \
             )); \
     return instance; \
   }
+#define DEFINE_SHADER(shader) DEFINE_SHADER_BASE(shader, SHADER_DIR)
 
+#ifdef __EMSCRIPTEN__
+#include "../common/assets_shaders_webgl_point.vert.c"
+#include "../common/assets_shaders_webgl_point.frag.c"
+#else
+#include "../common/assets_shaders_glsl_point.vert.c"
+#include "../common/assets_shaders_glsl_point.frag.c"
+#endif
   DEFINE_SHADER(point)
+#ifdef __EMSCRIPTEN__
+#include "../common/assets_shaders_webgl_wireframe.vert.c"
+#include "../common/assets_shaders_webgl_wireframe.frag.c"
+#else
+#include "../common/assets_shaders_glsl_wireframe.vert.c"
+#include "../common/assets_shaders_glsl_wireframe.frag.c"
+#endif
   DEFINE_SHADER(wireframe)
 
   void CubeObject::m_drawCubeWireframe(

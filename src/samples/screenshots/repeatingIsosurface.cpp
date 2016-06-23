@@ -32,6 +32,7 @@
 namespace mc { namespace samples { namespace screenshots {
   RepeatingIsosurface::RepeatingIsosurface(
       std::shared_ptr<ScalarField> sf,
+      mcAlgorithmFlag algorithm,
       int xRepeat, int yRepeat,
       const glm::vec3 &position, const glm::quat &orientation)
     : MeshObject(position, orientation),
@@ -43,7 +44,7 @@ namespace mc { namespace samples { namespace screenshots {
     IsosurfaceBuilder ib;
     auto mesh = ib.buildIsosurface(
         rsf,  // scalar field
-        MC_ORIGINAL_MARCHING_CUBES,  // algorithm
+        algorithm,  // algorithm
         4 * xRepeat, 4 * yRepeat, 8,  // resolution
         Vec3(0.0f, 0.0f, -2.0f),  // min
         Vec3((float)xRepeat, (float)yRepeat, 2.0f)  // max

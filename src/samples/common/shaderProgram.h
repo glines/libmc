@@ -46,8 +46,14 @@ namespace mc { namespace samples {
       GLuint m_vertStartTimeLocation;
       GLuint m_texture0;
 
-      static GLuint m_compileShader(const std::string &file, GLenum type);
+      static GLuint m_compileShader(
+          const char *code, int code_len, GLenum type);
       static void m_linkShaderProgram(GLuint shaderProgram);
+
+      void m_init(
+          const char *vert, unsigned int vert_len,
+          const char *frag, unsigned int frag_len);
+      void m_readCode(const std::string &path, char **code, unsigned int *code_len);
 
     protected:
       /**
@@ -61,13 +67,25 @@ namespace mc { namespace samples {
 
     public:
       /**
-       * An OpenGL shader program compiled and linked from the given vertex and
-       * fragment shaders.
+       * Constructs an OpenGL shader program compiled and linked from the given
+       * vertex and fragment shaders.
        *
        * \param vert Path to the vertex shader to compile.
        * \param frag Path to the fragment shader to compile.
        */
       ShaderProgram(const std::string &vert, const std::string &frag);
+      /**
+       * Constructs an OpenGL shader program compiled and linked directly from
+       * string given for the vertex and fragment shader source.
+       *
+       * \param vert Source code string of the vertex shader to compile.
+       * \param vert_len Length of the vertex shader source code string.
+       * \param frag Source code string of the vertex shader to compile.
+       * \param frag_len Length of the vertex shader source code string.
+       */
+      ShaderProgram(
+          const char *vert, unsigned int vert_len,
+          const char *frag, unsigned int frag_len);
       /**
        * Destroy this shader program.
        *

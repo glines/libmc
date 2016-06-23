@@ -23,9 +23,6 @@ add_dependencies(mc_algorithms_common
     canonical_cube_orientations.h
     cube_tables.c
     )
-target_include_directories(mc_algorithms_common SYSTEM
-    PRIVATE "${CMAKE_SOURCE_DIR}/include"
-    )
 target_include_directories(mc_algorithms_common
     PRIVATE "${CMAKE_CURRENT_BINARY_DIR}"
     )

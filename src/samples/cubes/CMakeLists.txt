@@ -2,6 +2,9 @@ add_executable(cubes
     cubeObject.cpp
     main.cpp
     )
+target_include_directories(cubes
+    PRIVATE "${CMAKE_CURRENT_BINARY_DIR}"
+    )
 target_link_libraries(cubes
     ${GLEW_LIBRARY}
     ${SDL2_LIBRARY}

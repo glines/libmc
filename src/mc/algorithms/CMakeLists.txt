@@ -1,3 +1,18 @@
+function(take_screenshots algorithm)
+  if(NOT DEFINED ENV{EMSCRIPTEN})
+    # Take screenshots representitive of the given algorithm
+    add_custom_target(${algorithm}_background.png ALL
+        COMMAND screenshots
+          --batch
+          --algorithm ${algorithm}
+          -o - > "${CMAKE_BINARY_DIR}/${algorithm}_background.png"
+        )
+    add_dependencies(${algorithm}_background.png
+        screenshots
+        )
+  endif()
+endfunction(take_screenshots)
+
 add_subdirectory("./common")
 
 add_subdirectory("./cuberille")

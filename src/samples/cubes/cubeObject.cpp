@@ -32,6 +32,7 @@ extern "C" {
 
 #include "../common/glError.h"
 #include "../common/shaderProgram.h"
+#include "../common/shaders.h"
 
 #include "cubeObject.h"
 
@@ -167,51 +168,12 @@ namespace mc {namespace samples { namespace cubes {
     this->setMesh(*mesh);
   }
 
-#ifdef __EMSCRIPTEN__
-#define SHADER_DIR assets_shaders_webgl
-#else
-#define SHADER_DIR assets_shaders_glsl
-#endif
-
-#define CAT(a, b) a ## b
-
-#define DEFINE_SHADER_BASE(shader, dir) \
-  std::shared_ptr<ShaderProgram> CubeObject::m_ ## shader ## Shader() { \
-    static std::shared_ptr<ShaderProgram> instance = \
-      std::shared_ptr<ShaderProgram>( \
-          new ShaderProgram( \
-            (const char *)CAT(dir, _ ## shader ## _vert), \
-            CAT(dir, _ ## shader ## _vert_len), \
-            (const char *)CAT(dir, _ ## shader ## _frag), \
-            CAT(dir, _ ## shader ## _frag_len) \
-            )); \
-    return instance; \
-  }
-#define DEFINE_SHADER(shader) DEFINE_SHADER_BASE(shader, SHADER_DIR)
-
-#ifdef __EMSCRIPTEN__
-#include "../common/assets_shaders_webgl_point.vert.c"
-#include "../common/assets_shaders_webgl_point.frag.c"
-#else
-#include "../common/assets_shaders_glsl_point.vert.c"
-#include "../common/assets_shaders_glsl_point.frag.c"
-#endif
-  DEFINE_SHADER(point)
-#ifdef __EMSCRIPTEN__
-#include "../common/assets_shaders_webgl_wireframe.vert.c"
-#include "../common/assets_shaders_webgl_wireframe.frag.c"
-#else
-#include "../common/assets_shaders_glsl_wireframe.vert.c"
-#include "../common/assets_shaders_glsl_wireframe.frag.c"
-#endif
-  DEFINE_SHADER(wireframe)
-
   void CubeObject::m_drawCubeWireframe(
       const glm::mat4 &modelView,
       const glm::mat4 &projection) const
   {
     // Use our shader for drawing wireframes
-    std::shared_ptr<ShaderProgram> shader = m_wireframeShader();
+    std::shared_ptr<ShaderProgram> shader = Shaders::wireframeShader();
     shader->use();
 
     // Prepare the uniform values
@@ -279,7 +241,7 @@ namespace mc {namespace samples { namespace cubes {
       const glm::mat4 &projection) const
   {
     // Use our shader for drawing points
-    std::shared_ptr<ShaderProgram> shader = m_pointShader();
+    std::shared_ptr<ShaderProgram> shader = Shaders::pointShader();
     shader->use();
 
     // Prepare the uniform values

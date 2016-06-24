@@ -1,6 +1,7 @@
 add_library(samples_common STATIC
     arcballCamera.cpp
     camera.cpp
+    demo.cpp
     glError.cpp
     meshObject.cpp
     orthographicCamera.cpp
@@ -8,6 +9,7 @@ add_library(samples_common STATIC
     scene.cpp
     sceneObject.cpp
     shaderProgram.cpp
+    shaders.cpp
     template.cpp
     transform.cpp
     transformRAII.cpp
@@ -18,10 +20,18 @@ target_include_directories(samples_common
     )
 target_link_libraries(samples_common
     ${LUA_LIBRARIES}
+    ${PNG_LIBRARY}
     )
 
 if(DEFINED ENV{EMSCRIPTEN})
-  target_compile_options(samples_common PRIVATE -std=c++11)
+  set(EMSCRIPTEN_FLAGS
+      "-s USE_LIBPNG=1"
+      "-s USE_SDL=2"
+     )
+  string (REPLACE ";" " " EMSCRIPTEN_FLAGS "${EMSCRIPTEN_FLAGS}")
+  set_target_properties(samples_common PROPERTIES
+      COMPILE_FLAGS "${EMSCRIPTEN_FLAGS}"
+      )
 else()
   set_property(TARGET samples_common PROPERTY CXX_STANDARD 11)
   set_property(TARGET samples_common PROPERTY CXX_STANDARD_REQUIRED ON)

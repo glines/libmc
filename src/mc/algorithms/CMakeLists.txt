@@ -3,9 +3,8 @@ function(take_screenshots algorithm)
     # Take screenshots representitive of the given algorithm
     add_custom_target(${algorithm}_background.png ALL
         COMMAND screenshots
-          --batch
           --algorithm ${algorithm}
-          -o - > "${CMAKE_BINARY_DIR}/${algorithm}_background.png"
+          --screenshot - > "${CMAKE_BINARY_DIR}/${algorithm}_background.png"
         )
     add_dependencies(${algorithm}_background.png
         screenshots

@@ -47,6 +47,26 @@
 
 #include <mc/isosurfaceBuilder.h>
 
+/**
+ * Builds an isosurface mesh using the dual of the halfway marching cubes mesh,
+ * as described by Nielson in \cite Nielson:2004.
+ *
+ * \param sf The scalar field function defining the implicit isosurface.
+ * \param args Auxiliary arguments to the scalar field function, which
+ * facilitate more flexible "functor" implementations of the scalar field
+ * function.
+ * \param x_res The number of samples to take in the sample lattice parallel to
+ * the x-axis.
+ * \param y_res The number of samples to take in the sample lattice parallel to
+ * the y-axis.
+ * \param z_res The number of samples to take in the sample lattice parallel to
+ * the z-axis.
+ * \param min The absolute position where the sample lattice begins and the
+ * first sample is to be taken.
+ * \param max The absolute position where the sample lattice ends and the last
+ * sample is to be taken.
+ * \param mesh The mesh structure in which the isosurface mesh is to be built.
+ */
 void mcNielsonDual_isosurfaceFromField(
     mcScalarFieldWithArgs sf, const void *args,
     unsigned int x_res, unsigned int y_res, unsigned int z_res,

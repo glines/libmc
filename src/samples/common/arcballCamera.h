@@ -81,6 +81,14 @@ namespace mc { namespace samples {
       /**
        * The arcball camera consumes mouse motion events to allow the user to
        * control the camera.
+       *
+       * \param event SDL structure describing this mouse motion event.
+       * \param windowWidth The width in pixels of the window receiving the
+       * event.
+       * \param windowHeight The height in pixels of the window receiving the
+       * event.
+       * \return True if the arcball camera handles this event, false
+       * otherwise.
        */
       bool mouseMotionEvent(const SDL_MouseMotionEvent &event,
           int windowWidth, int windowHeight);

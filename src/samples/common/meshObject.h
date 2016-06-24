@@ -52,12 +52,6 @@ namespace mc { namespace samples {
 
       void m_update();
 
-#define DECLARE_SHADER(shader) \
-        static std::shared_ptr<ShaderProgram> m_ ## shader ## Shader()
-
-      DECLARE_SHADER(wireframe);
-      DECLARE_SHADER(gouraud);
-
       void m_drawWireframe(
           const glm::mat4 &modelView,
           const glm::mat4 &projection) const;

@@ -218,6 +218,8 @@ const mcMesh *mcIsosurfaceBuilder_isosurfaceFromFieldWithArgs(
           min, max,
           mesh);
       break;
+    default:
+      assert(0);
   }
   return mesh;
 }

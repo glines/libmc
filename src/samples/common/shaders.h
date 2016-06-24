@@ -21,44 +21,46 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef MC_ALGORITHMS_NIELSON_DUAL_H_
-#define MC_ALGORITHMS_NIELSON_DUAL_H_
+#ifndef MC_SAMPLES_COMMON_SHADERS_H_
+#define MC_SAMPLES_COMMON_SHADERS_H_
 
 /**
- * \addtogroup libmc
+ * \addtogroup samples
  * @{
  */
 
 /**
- * \addtogroup algorithms
+ * \addtogroup common
  * @{
  */
 
-/**
- * \defgroup nielsonDual Marching Cubes Dual (Nielson)
- *
- * An implementation of the the dual of the midpoint marching cubes algorithm,
- * as described by Nielson in \cite Nielson:1991.
- *
- * \image html MC_NIELSON_DUAL_background.png
- * \image latex MC_NIELSON_DUAL_background.png
- */
+#include <memory>
 
-/**
- * \addtogroup nielsonDual
- * @{
- */
+namespace mc { namespace samples {
+  class ShaderProgram;
+  /**
+   * Contains static declarations for GL shaders that are used in various
+   * sample programs. The GLSL source code for these shaders can be found in
+   * the src/samples/common/assets/shaders directory.
+   *
+   * These shaders used to be read from files, but now the GLSL source code is
+   * compiled into a C string within the samples_common static library. While
+   * this is somewhat less flexible, it allows many of the sample programs to
+   * run without any runtime file dependencies.
+   */
+  class Shaders {
+    public:
+#define DECLARE_SHADER(shader) \
+      static std::shared_ptr<ShaderProgram> shader ## Shader()
 
-/** \file mc/algorithms/nielsonDual.h
- *
- * This is a convenience header which includes all of the headers needed to use
- * the dual of the midpoint isosurface extraction algorithm. See the
- * documentation for each of these included files for more information.
- */
-
-#include <mc/algorithms/nielsonDual/nielsonDual.h>
-
-/** @} */
+      /** Shader implementing Gouraud shading. */
+      DECLARE_SHADER(gouraud);
+      /** Shader for drawing debugging points. */
+      DECLARE_SHADER(point);
+      /** Shader for drawing debugging lines. */
+      DECLARE_SHADER(wireframe);
+  };
+} }
 
 /** @} */
 

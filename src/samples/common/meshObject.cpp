@@ -24,8 +24,9 @@
 #include <glm/gtc/matrix_inverse.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "../common/glError.h"
-#include "../common/shaderProgram.h"
+#include "glError.h"
+#include "shaderProgram.h"
+#include "shaders.h"
 
 #include "meshObject.h"
 
@@ -226,51 +227,12 @@ namespace mc { namespace samples {
     delete[] lines;
   }
 
-#ifdef __EMSCRIPTEN__
-#define SHADER_DIR assets_shaders_webgl
-#else
-#define SHADER_DIR assets_shaders_glsl
-#endif
-
-#define CAT(a, b) a ## b
-
-#define DEFINE_SHADER_BASE(shader, dir) \
-  std::shared_ptr<ShaderProgram> MeshObject::m_ ## shader ## Shader() { \
-    static std::shared_ptr<ShaderProgram> instance = \
-      std::shared_ptr<ShaderProgram>( \
-          new ShaderProgram( \
-            (const char *)CAT(dir, _ ## shader ## _vert), \
-            CAT(dir, _ ## shader ## _vert_len), \
-            (const char *)CAT(dir, _ ## shader ## _frag), \
-            CAT(dir, _ ## shader ## _frag_len) \
-            )); \
-    return instance; \
-  }
-#define DEFINE_SHADER(shader) DEFINE_SHADER_BASE(shader, SHADER_DIR)
-
-#ifdef __EMSCRIPTEN__
-#include "assets_shaders_webgl_wireframe.vert.c"
-#include "assets_shaders_webgl_wireframe.frag.c"
-#else
-#include "assets_shaders_glsl_wireframe.vert.c"
-#include "assets_shaders_glsl_wireframe.frag.c"
-#endif
-  DEFINE_SHADER(wireframe)
-#ifdef __EMSCRIPTEN__
-#include "assets_shaders_webgl_gouraud.vert.c"
-#include "assets_shaders_webgl_gouraud.frag.c"
-#else
-#include "assets_shaders_glsl_gouraud.vert.c"
-#include "assets_shaders_glsl_gouraud.frag.c"
-#endif
-  DEFINE_SHADER(gouraud)
-
   void MeshObject::m_drawWireframe(
       const glm::mat4 &modelView,
       const glm::mat4 &projection) const
   {
     // Use our shader for drawing wireframes
-    std::shared_ptr<ShaderProgram> shader = m_wireframeShader();
+    std::shared_ptr<ShaderProgram> shader = Shaders::wireframeShader();
     shader->use();
 
     // Prepare the uniform values
@@ -338,7 +300,7 @@ namespace mc { namespace samples {
       const glm::mat4 &projection) const
   {
     // Use our shader for drawing wireframes
-    std::shared_ptr<ShaderProgram> shader = m_wireframeShader();
+    std::shared_ptr<ShaderProgram> shader = Shaders::wireframeShader();
     shader->use();
 
     // Prepare the uniform values
@@ -407,7 +369,7 @@ namespace mc { namespace samples {
     // TODO: Support Gouraud, Phong, and flat shading
     // TODO: Support specular highlights
     // Use the Gouraud shader program
-    auto shader = m_gouraudShader();
+    auto shader = Shaders::gouraudShader();
     shader->use();
 
     // Prepare the uniform values

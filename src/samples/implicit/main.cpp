@@ -194,6 +194,10 @@ extern "C" {
 
 /**
  * The main() function for the implicit surface demo.
+ *
+ * \param argc Number of command line arguments, including the command image.
+ * \param argv Array of command line arguments.
+ * \return Program exit status.
  */
 int main(int argc, char **argv) {
   // Initialize the graphics

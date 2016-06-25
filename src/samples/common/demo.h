@@ -36,6 +36,7 @@
 
 #include <GL/glew.h>
 #include <SDL.h>
+#include <memory>
 
 extern "C" {
 #include <mc/algorithms.h>
@@ -58,8 +59,9 @@ namespace mc { namespace samples {
       GLuint m_fbo, m_fbColorBuffer, m_fbDepthBuffer;
       int m_width, m_height;
       Scene *m_scene;
+      std::shared_ptr<Camera> m_camera;
       bool m_argError;
-      char *m_screenshot;
+      char *m_sceneString, *m_screenshot;
       mcAlgorithmFlag m_algorithm;
 
       void m_printUsage();
@@ -103,9 +105,47 @@ namespace mc { namespace samples {
       mcAlgorithmFlag algorithm() const { return m_algorithm; }
 
       /**
+       * \return The current width of the demo window in pixels.
+       */
+      int width() const { return m_width; }
+
+      /**
+       * \return The current height of the demo window in pixels.
+       */
+      int height() const { return m_height; }
+
+      /**
        * \return Pointer to the graphics scene for this demo.
        */
       Scene *scene() { return m_scene; }
+
+      /**
+       * Configures the graphics scene according to some string whose format is
+       * defined by derived classes. This method can be implemented by derived
+       * classes to allow the user to pass strings through the --scene flag to
+       * affect the configuration of the scene being drawn. Derived classes can
+       * specify any format for the string representing the scene.
+       *
+       * \param scene String representing the graphics scene to set up.
+       * \return True if the given scene string was valid, false otherwise.
+       */
+      virtual bool setSceneString(const char *scene) { return false; }
+      /**
+       * Returns the string representing the inital configuration of the
+       * graphics scene. This string's encoding is defined by derived classes.
+       *
+       * \return String representing the initial configuration of the graphics
+       * scene.
+       */
+      const char *sceneString() const { return m_sceneString; }
+
+      /**
+       * Sets the camera to be used when drawing the graphics scene.
+       *
+       * \param camera Shared pointer to the camera to use when drawing the
+       * scene.
+       */
+      void setCamera(std::shared_ptr<Camera> camera) { m_camera = camera; }
 
       /**
        * \return True if a screenshot is being taken, false otherwise.
@@ -121,19 +161,28 @@ namespace mc { namespace samples {
        * file. The file to write is given by the command line arguments. This
        * method must only be called if isScreenshot() returns true.
        *
-       * \param camera The camera to use when drawing the scene.
-       *
        * \sa isScreenshot()
        */
-      void drawScreenshot(const Camera &camera);
+      void drawScreenshot();
+
+      /**
+       * Derived classes can implement this method to handle arbitrary SDL
+       * events. If the given event is handled, this method should return true.
+       * By returning true, derived classes can mask the default event handling
+       * behavior.
+       *
+       * \param event The SDL event structure for the event to handle.
+       * \return True if the event was handled, and false otherwise.
+       */
+      virtual bool handleEvent(const SDL_Event &event) {
+        return false;
+      }
 
       /**
        * Executes the body of the main loop of the demo. This should be called
        * every frame. Drawing an input is handled in the same loop.
-       *
-       * \param camera The camera with which to draw the scene.
        */
-      void mainLoop(const Camera &camera);
+      void mainLoop();
   };
 } }
 

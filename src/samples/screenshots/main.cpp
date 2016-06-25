@@ -78,7 +78,7 @@ Screenshots *demo;
 std::shared_ptr<OrthographicCamera> camera;
 
 void main_loop() {
-  demo->mainLoop(*camera);
+  demo->mainLoop();
 }
 
 float sphere(float x, float y, float z) {
@@ -119,6 +119,7 @@ int main(int argc, char **argv) {
           glm::vec3(1.0f, 0.0f, 0.0f))  // orientation
         ));
   demo->scene()->addObject(camera);
+  demo->setCamera(camera);
 
   // TODO: Set up our scene so that the image we render will tessellate nicely
   // in the background of the documentation. We do this by orienting the ortho
@@ -144,7 +145,7 @@ int main(int argc, char **argv) {
   demo->scene()->addObject(repeatingIsosurface);
 
   if (demo->isScreenshot()) {
-    demo->drawScreenshot(*camera);
+    demo->drawScreenshot();
   } else {
 #ifdef __EMSCRIPTEN__
     emscripten_set_main_loop(main_loop, 0, 1);

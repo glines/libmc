@@ -53,6 +53,8 @@ namespace mc { namespace samples {
   }
 
   Demo::~Demo() {
+    delete m_sceneString;
+
     // Free the graphics scene
     delete m_scene;
     if (this->isScreenshot()) {
@@ -80,14 +82,16 @@ namespace mc { namespace samples {
   bool Demo::m_parseArgs(int argc, char **argv) {
     m_argError = false;
     m_screenshot = nullptr;
+    m_sceneString = nullptr;
     m_width = 640;
     m_height = 480;
     m_algorithm = MC_DEFAULT_ALGORITHM;
-    const char *optstring = "a:s:";
+    const char *optstring = "a:h:r:s:w:";
     const struct option longopts[] = {
       { "algorithm", required_argument, nullptr, 'a' },
       { "height", required_argument, nullptr, 'h' },
-      { "screenshot", required_argument, nullptr, 's' },
+      { "scene", required_argument, nullptr, 's' },
+      { "screenshot", required_argument, nullptr, 'r' },
       { "width", required_argument, nullptr, 'w' },
       { nullptr,     0,                 nullptr, 0 },
     };
@@ -119,6 +123,21 @@ namespace mc { namespace samples {
           }
           break;
         case 's':
+          // String representing the scene
+          {
+            if (m_sceneString != nullptr) {
+              fprintf(stderr,
+                  "Error: multiple scenes specified\n");
+              m_printUsage();
+              return false;
+            }
+            size_t length = strnlen(optarg, 4096);
+            m_sceneString = new char[length + 1];
+            memcpy(m_sceneString, optarg, sizeof(char) * length);
+            m_sceneString[length] = '\0';
+          }
+          break;
+        case 'r':
           // Take a screenshot
           {
             if (m_screenshot != nullptr) {
@@ -196,7 +215,7 @@ namespace mc { namespace samples {
     }
 
     // Configure the GL
-    glClearColor(1.0, 0.0, 1.0, 0.0);
+    glClearColor(0.0, 0.0, 0.0, 0.0);
     glClearDepth(1.0);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
@@ -273,14 +292,14 @@ namespace mc { namespace samples {
     m_scene = new Scene();
   }
 
-  void Demo::drawScreenshot(const Camera &camera) {
+  void Demo::drawScreenshot() {
     assert(m_screenshot != nullptr);
     // Draw the scene to our texture framebuffer
     glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
     ASSERT_GL_ERROR();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     float aspect = (float)m_width / (float)m_height;
-    m_scene->draw(camera, aspect);
+    m_scene->draw(*m_camera, aspect);
     // Read the framebuffer to memory
     GLuint *pixels = new GLuint[m_width * m_height];
     glReadPixels(
@@ -331,7 +350,7 @@ namespace mc { namespace samples {
         PNG_FILTER_TYPE_DEFAULT  // filter method
         );
     png_write_info(png_ptr, info_ptr);
-    for (int i = 0; i < m_height; ++i) {
+    for (int i = m_height - 1; i >= 0; --i) {
       png_write_row(png_ptr, (png_const_bytep)&pixels[i * m_width]);
     }
     png_write_end(png_ptr, nullptr);
@@ -342,17 +361,24 @@ namespace mc { namespace samples {
     delete[] pixels;
   }
 
-  void Demo::mainLoop(const Camera &camera) {
+  void Demo::mainLoop() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // Draw the scene
-    float aspect = (float)m_width / (float)m_height;
-    m_scene->draw(camera, aspect);
+    if (!m_camera) {
+      fprintf(stderr, "The scene camera was not set\n");
+    } else {
+      // Draw the scene
+      float aspect = (float)m_width / (float)m_height;
+      m_scene->draw(*m_camera, aspect);
+    }
+
     SDL_GL_SwapWindow(m_window);
 
     // Check for SDL events (user input, etc.)
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
+      if (this->handleEvent(event))
+        break;  // Our derived class handled this event
       switch (event.type) {
         case SDL_WINDOWEVENT:
           switch (event.window.event) {

@@ -24,6 +24,7 @@
 #ifndef MC_SAMPLES_COMMON_SCENE_H_
 #define MC_SAMPLES_COMMON_SCENE_H_
 
+#include <SDL.h>
 #include <memory>
 #include <vector>
 
@@ -38,7 +39,7 @@ namespace mc { namespace samples {
    */
   class Scene {
     private:
-      std::vector<std::shared_ptr<SceneObject> > m_objects;
+      std::vector<std::shared_ptr<SceneObject>> m_objects;
 
     public:
       /**
@@ -52,11 +53,31 @@ namespace mc { namespace samples {
       ~Scene();
 
       /**
-       * Adds the given scene object to this graphics scene.
+       * Adds the given scene object to the top level of this graphics scene.
        */
       void addObject(std::shared_ptr<SceneObject> object) {
         this->m_objects.push_back(object);
       }
+
+      /**
+       * \return A reference to the array of top-level objects in this graphics
+       * scene.
+       */
+      std::vector<std::shared_ptr<SceneObject>> &sceneObjects() {
+        return this->m_objects;
+      }
+
+      /**
+       * Allow objects in the scene to handle the given event. All SDL
+       * events are passed to each of the top-level scene objects in the scene.
+       * If a scene object decides to handle the given event, this method
+       * returns true.
+       *
+       * \param event The SDL event to be considered by objects in the scene.
+       * \return True if the given event was handled by a scene object, false
+       * otherwise.
+       */
+      bool handleEvent(const SDL_Event &event);
 
       /**
        * Advances the simulation of the scene (and the simulations carried out

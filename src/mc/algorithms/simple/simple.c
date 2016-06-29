@@ -272,9 +272,13 @@ void mcSimple_isosurfaceFromField(
                 abs[0] = x + pos[0];
                 abs[1] = y + pos[1];
                 abs[2] = z + pos[2];
-                latticePos[i].x = min->x + (float)(abs[0]) * delta_x;
-                latticePos[i].y = min->y + (float)(abs[1]) * delta_y;
-                latticePos[i].z = min->z + (float)(abs[2]) * delta_z;
+                /* NOTE: These lattice positions are in mesh space coordinates,
+                 * not sample space coordinates. The vertices of the mesh we
+                 * generate must be in mesh space coordinates in which min is
+                 * at the origin. */
+                latticePos[i].x = (float)(abs[0]) * delta_x;
+                latticePos[i].y = (float)(abs[1]) * delta_y;
+                latticePos[i].z = (float)(abs[2]) * delta_z;
                 /* Find the sample in our samples buffer */
                 j = abs[0]
                     + abs[1] * x_res
@@ -282,9 +286,9 @@ void mcSimple_isosurfaceFromField(
 #ifndef __EMSCRIPTEN__
                 /* NOTE: This assertion does not work with Emscripten for
                  * some reason */
-                assert(samples[j] == sf(latticePos[i].x,
-                                        latticePos[i].y,
-                                        latticePos[i].z,
+                assert(samples[j] == sf(min->x + latticePos[i].x,
+                                        min->y + latticePos[i].y,
+                                        min->z + latticePos[i].z,
                                         args));
 #endif
                 values[i] = samples[j];

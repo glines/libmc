@@ -36,6 +36,7 @@ namespace mc { namespace samples {
   Demo::Demo(int argc, char **argv, const char *windowTitle)
     : m_windowTitle(windowTitle), m_scene(nullptr)
   {
+    m_lastTime = 0.0f;
     // Parse the command line arguments
     m_argError = !m_parseArgs(argc, argv);
     if (m_argError)
@@ -362,23 +363,18 @@ namespace mc { namespace samples {
   }
 
   void Demo::mainLoop() {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    if (!m_camera) {
-      fprintf(stderr, "The scene camera was not set\n");
-    } else {
-      // Draw the scene
-      float aspect = (float)m_width / (float)m_height;
-      m_scene->draw(*m_camera, aspect);
+    if (m_lastTime == 0.0f) {
+      // FIXME: The zero dt this causes might not be desirable.
+      m_lastTime = (float)SDL_GetTicks() * 1000.0f;
     }
-
-    SDL_GL_SwapWindow(m_window);
 
     // Check for SDL events (user input, etc.)
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
       if (this->handleEvent(event))
-        break;  // Our derived class handled this event
+        continue;  // Our derived class handled this event
+      if (this->scene()->handleEvent(event))
+        continue;  // One of the scene objects handled this event
       switch (event.type) {
         case SDL_WINDOWEVENT:
           switch (event.window.event) {
@@ -393,5 +389,25 @@ namespace mc { namespace samples {
           exit(EXIT_SUCCESS);
       }
     }
+
+    // Calculate the time since the last frame was drawn
+    float currentTime = (float)SDL_GetTicks() * 1000.0f;
+    float dt = currentTime - m_lastTime;
+    m_lastTime = currentTime;
+    // Advance the scene simulation.
+    m_scene->tick(dt);
+
+    // Draw the window
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    if (!m_camera) {
+      fprintf(stderr, "The scene camera was not set\n");
+    } else {
+      // Draw the scene
+      float aspect = (float)m_width / (float)m_height;
+      m_scene->draw(*m_camera, aspect);
+    }
+
+    SDL_GL_SwapWindow(m_window);
   }
 } }

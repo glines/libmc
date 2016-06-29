@@ -67,9 +67,9 @@ namespace mc {namespace samples { namespace cubes {
     unsigned int pos[3];
     for (int vertex = 0; vertex < 8; ++vertex) {
       mcCube_vertexRelativePosition(vertex, pos);
-      vertices[vertex].pos[0] = pos[0] ? 1.0f : -1.0f;
-      vertices[vertex].pos[1] = pos[1] ? 1.0f : -1.0f;
-      vertices[vertex].pos[2] = pos[2] ? 1.0f : -1.0f;
+      vertices[vertex].pos[0] = pos[0] ? 2.0f : 0.0f;
+      vertices[vertex].pos[1] = pos[1] ? 2.0f : 0.0f;
+      vertices[vertex].pos[2] = pos[2] ? 2.0f : 0.0f;
       vertices[vertex].color[0] = 0.0f;
       vertices[vertex].color[1] = 0.0f;
       vertices[vertex].color[2] = 1.0f;
@@ -117,13 +117,13 @@ namespace mc {namespace samples { namespace cubes {
       for (int y = 0; y < m_resY; ++y) {
         for (int x = 0; x < m_resZ; ++x) {
           int i = x + y * m_resX + z * m_resX * m_resY;
-          points[i].pos[0] = 2.0f * (float)x / (float)(m_resX - 1) - 1.0f;
-          points[i].pos[1] = 2.0f * (float)y / (float)(m_resY - 1) - 1.0f;
-          points[i].pos[2] = 2.0f * (float)z / (float)(m_resZ - 1) - 1.0f;
+          points[i].pos[0] = 2.0f * (float)x / (float)(m_resX - 1);
+          points[i].pos[1] = 2.0f * (float)y / (float)(m_resY - 1);
+          points[i].pos[2] = 2.0f * (float)z / (float)(m_resZ - 1);
           float value = sf(
-              points[i].pos[0],
-              points[i].pos[1],
-              points[i].pos[2]);
+              points[i].pos[0] - 1.0f,
+              points[i].pos[1] - 1.0f,
+              points[i].pos[2] - 1.0f);
           if (value >= 0.0f) {
             points[i].color[0] = 0.0f;
             points[i].color[1] = 1.0f;

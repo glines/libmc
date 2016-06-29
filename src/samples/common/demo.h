@@ -63,6 +63,7 @@ namespace mc { namespace samples {
       bool m_argError;
       char *m_sceneString, *m_screenshot;
       mcAlgorithmFlag m_algorithm;
+      float m_lastTime;
 
       void m_printUsage();
       bool m_parseArgs(int argc, char **argv);

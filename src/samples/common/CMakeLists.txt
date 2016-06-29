@@ -14,6 +14,7 @@ add_library(samples_common STATIC
     transform.cpp
     transformRAII.cpp
     transformStack.cpp
+    wasdCamera.cpp
     )
 target_include_directories(samples_common
     PRIVATE "${CMAKE_CURRENT_BINARY_DIR}"

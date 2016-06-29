@@ -5,6 +5,8 @@ project(libmc)
 set(CMAKE_BUILD_TYPE debug)
 
 option(BUILD_SAMPLES "Build the sample programs" ON)
+option(BUILD_DOCUMENTATION "Build the documentation" OFF)
+option(BUILD_SCREENSHOTS "Generate screenshots for the documentation" OFF)
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 

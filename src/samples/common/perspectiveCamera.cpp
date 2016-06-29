@@ -21,6 +21,7 @@
  * IN THE SOFTWARE.
  */
 
+#include <cmath>
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "perspectiveCamera.h"

@@ -36,6 +36,14 @@ namespace mc { namespace samples {
     // TODO
   }
 
+  bool Scene::handleEvent(const SDL_Event &event) {
+    for (auto object : m_objects) {
+      if (object->handleEvent(event))
+        return true;
+    }
+    return false;
+  }
+
   void Scene::tick(float dt) {
     // Advance the simulation on all top-level scene objects
     for (auto object : this->m_objects) {

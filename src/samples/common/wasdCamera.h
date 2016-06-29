@@ -21,30 +21,30 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef MC_SAMPLES_COMMON_PERSPECTIVE_CAMERA_H_
-#define MC_SAMPLES_COMMON_PERSPECTIVE_CAMERA_H_
+#ifndef MC_SAMPLES_COMMON_WASD_CAMERA_H_
+#define MC_SAMPLES_COMMON_WASD_CAMERA_H_
 
-/**
- * \addtogroup samples
- */
+#include <SDL.h>
+#include <map>
 
-/**
- * \addtogroup common
- */
-
-#include "camera.h"
+#include "perspectiveCamera.h"
 
 namespace mc { namespace samples {
   /**
-   * A camera object with perspective projection.
+   * Class representing perspective camera that is controlled by the WASD or
+   * arrow keys and the mouse. This is essentially the same as the traditional
+   * first-person-shooter with noclip mode turned on.
    */
-  class PerspectiveCamera : public Camera {
+  class WasdCamera : public PerspectiveCamera {
     private:
-      float m_fovy, m_prevFovy,
-            m_near, m_far;
+      std::map<SDL_Scancode, bool> m_depressed;
+      glm::vec3 m_accel, m_vel;
+
     public:
       /**
-       * Constructs a perspective camera object with the given parameters.
+       * Constructs a WasdCamera object. The WASD camera does not expose any
+       * settings other than those provided by the PerspectiveCamera class from
+       * which it inherits.
        *
        * \param fovy The y-axis viewing angle of the camera, in radians (not
        * degrees).
@@ -58,27 +58,29 @@ namespace mc { namespace samples {
        * orientation should be pointed directly at the follow point with the
        * z-axis pointing up.
        */
-      PerspectiveCamera(float fovy, float near = 0.1f, float far = 1000.0f,
+      WasdCamera(
+          float fovy, float near = 0.1f, float far = 1000.0f,
           const glm::vec3 &position = glm::vec3(0.0f, 0.0f, 0.0f),
           const glm::quat &orientation = glm::quat());
-      virtual ~PerspectiveCamera();
 
       /**
-       * Implements a perspective projection for this camera object.
+       * Handles keyboard and mouse events that control this WASD camera.
        *
-       * \param aspect The viewport width to height ratio. This aspect ratio is
-       * preserved in the projection returned.
-       * \param alpha Weight between the previous and the current tick, for
-       * animating the camera projection between ticks.
-       * \return A perspective transform matrix for this camera's perspective
-       * projection settings.
+       * \param event The SDL event structure for the current event.
+       * \return True if the given event was handled by the WASD camera, false
+       * otherwise.
        */
-      glm::mat4 projection(float aspect, float alpha = 1.0f) const;
+      bool handleEvent(const SDL_Event &event);
+
+      /**
+       * Implements the tick() method to move the camera according to user
+       * input.
+       *
+       * \param dt The time in seconds between the last tick and the current
+       * tick.
+       */
+      void tick(float dt);
   };
 } }
-
-/** @} */
-
-/** @} */
 
 #endif

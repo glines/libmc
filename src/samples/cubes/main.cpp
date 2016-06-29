@@ -73,7 +73,7 @@ class Cubes : public Demo {
       // Populate the graphics scene
       m_camera = std::shared_ptr<ArcballCamera>(
           new ArcballCamera(
-            90.0f,  // fovy
+            78.0f * ((float)M_PI / 180.0f),  // fovy
             0.1f,  // near
             1000.0f,  // far
             glm::vec3(0.0f, -2.0f, 0.0f),  // position
@@ -85,7 +85,12 @@ class Cubes : public Demo {
       this->scene()->addObject(m_camera);
       this->setCamera(m_camera);
       m_cubeObject = std::shared_ptr<CubeObject>(
-          new CubeObject(0x01, m_res, m_res, m_res));
+          new CubeObject(
+            0x01,  // cube configuration
+            m_res, m_res, m_res,  // resolution
+            MC_ORIGINAL_MARCHING_CUBES,  // algorithm
+            glm::vec3(-1.0f, -1.0f, -1.0f)  // position
+            ));
       this->scene()->addObject(m_cubeObject);
 
       if (this->sceneString() != nullptr) {
@@ -117,6 +122,7 @@ class Cubes : public Demo {
      *
      * \param scene String representing the camera angle, cube configuration,
      * etc.
+     * \return True if the scene string passed was valid, false otherwise.
      *
      * camera=topLeft,cube=0x4e,res=8
      */

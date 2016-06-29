@@ -34,6 +34,7 @@
  * @{
  */
 
+#include <SDL.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <memory>
@@ -133,6 +134,18 @@ namespace mc { namespace samples {
       void addChild(std::shared_ptr<SceneObject> child) {
         m_children.push_back(child);
       }
+
+      /**
+       * Derived classes can implement this to receive an SDL event. All SDL
+       * events are passed to each of the top-level scene objects in the scene.
+       * Scene objects may choose to pass events to their children by calling
+       * this method on their children. By returning true, implementing classes
+       * can absorb the given event and mask it from handled elsewhere.
+       *
+       * \param event The current SDL event to be considered.
+       * \return True if the given event was handled, and false otherwise.
+       */
+      virtual bool handleEvent(const SDL_Event &event) { return false; }
 
       /**
        * Advances the simulation of this scene object. Derived classes can

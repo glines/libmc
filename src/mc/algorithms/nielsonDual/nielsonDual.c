@@ -156,10 +156,14 @@ void mcNielsonDual_isosurfaceFromField(
              * of this vertex. We can add it to the mesh as is. The surface
              * normal can be estimated at this point by interpolation of lattice
              * gradiants, or even something simpler. */
+            /* NOTE: The positions we compute are in mesh space coordinates,
+             * not sample spac ecoordinates. The vertices of the mesh we
+             * generate must be in mesh space coordinates in which min is at
+             * the origin. */
             /* Compute the absolute position of this vertex */
-            vertex.pos.x = min->x + ((float)x + list->vertices[i].pos.x) * delta_x;
-            vertex.pos.y = min->y + ((float)y + list->vertices[i].pos.y) * delta_y;
-            vertex.pos.z = min->z + ((float)z + list->vertices[i].pos.z) * delta_z;
+            vertex.pos.x = ((float)x + list->vertices[i].pos.x) * delta_x;
+            vertex.pos.y = ((float)y + list->vertices[i].pos.y) * delta_y;
+            vertex.pos.z = ((float)z + list->vertices[i].pos.z) * delta_z;
             /* The normal is also retrieved from the table */
             /* TODO: Support computing more accurate normals from sample values */
             vertex.norm = list->vertices[i].norm;

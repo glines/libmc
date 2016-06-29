@@ -1,5 +1,5 @@
 function(take_screenshots algorithm)
-  if(NOT DEFINED ENV{EMSCRIPTEN})
+  if(BUILD_SCREENSHOTS AND NOT DEFINED ENV{EMSCRIPTEN})
     # Take screenshots representitive of the given algorithm
     foreach(i RANGE 0 255)
       execute_process(

@@ -48,7 +48,8 @@ namespace mc { namespace samples { namespace terrain {
 
   Terrain::Terrain(std::shared_ptr<Camera> camera)
     : SceneObject(glm::vec3(0.0f, 0.0f, 0.0f), glm::quat()),
-    m_camera(camera)
+    m_camera(camera),
+    m_terrainGenerator(terrain)
   {
     // TODO: Prepare a cache of terrain mesh objects
     // TODO: Use an octree structure to organize our terrain meshes
@@ -72,12 +73,14 @@ namespace mc { namespace samples { namespace terrain {
                   ));
             if (!mesh->isEmpty()) {
               this->addChild(mesh);
+              /*
               // XXX: Experimenting with the LOD tree
               LodTree::Coordinates block;
               block.x = x * (1 << lod);
               block.y = y * (1 << lod);
               block.z = z * (1 << lod);
               m_lodTree.getNode(block, lod);
+              */
             }
           }
         } 
@@ -142,6 +145,8 @@ namespace mc { namespace samples { namespace terrain {
       vertices[vertex].color[2] = 1.0f;
     }
     // Send the vertices to the GL
+    glGenBuffers(1, &m_cubeWireframeVertices);
+    FORCE_ASSERT_GL_ERROR();
     glBindBuffer(GL_ARRAY_BUFFER, m_cubeWireframeVertices);
     FORCE_ASSERT_GL_ERROR();
     glBufferData(
@@ -160,6 +165,8 @@ namespace mc { namespace samples { namespace terrain {
       indices[edge * 2 + 1] = vertices[1];
     }
     // Send the indices to the GL
+    glGenBuffers(1, &m_cubeWireframeIndices);
+    FORCE_ASSERT_GL_ERROR();
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_cubeWireframeIndices);
     FORCE_ASSERT_GL_ERROR();
     glBufferData(
@@ -219,21 +226,11 @@ namespace mc { namespace samples { namespace terrain {
     ASSERT_GL_ERROR();
     // Traverse the LOD octree and draw a cube for each node
     for (auto node : m_lodTree) {
-      fprintf(stderr, "node.block: (%d, %d, %d), node.lod: %d\n",
-          node.block().x,
-          node.block().y,
-          node.block().z,
-          node.lod());
       glm::mat4 mw = modelWorld;
       // Translate the cube wireframe to this node's voxel block position
       mw = glm::translate(mw, node.pos());
       // Scale the cube wireframe according to this node's level of detail
       mw = glm::scale(mw, glm::vec3(node.size()));
-      fprintf(stderr, "pos: (%f, %f, %f), size: %f\n",
-          node.pos().x,
-          node.pos().y,
-          node.pos().z,
-          node.size());
       // Update the model-view transform uniform
       glm::mat4 mv = worldView * mw;
       glUniformMatrix4fv(
@@ -258,10 +255,12 @@ namespace mc { namespace samples { namespace terrain {
     }
   }
 
-  void Terrain::m_enqueueTerrain(const glm::vec3 &pos) {
+  void Terrain::m_enqueueTerrain(const glm::vec3 &cameraPos) {
+    // FIXME: This routine might actually be more at home within the
+    // TerrainGenerator class.
     // Determine the voxel block that we are currently in
     int currentBlock[3];
-    m_posToBlock(pos, currentBlock);
+    m_posToBlock(cameraPos, currentBlock);
     // Check if the voxel block changed
     if (memcmp(m_lastBlock, currentBlock, sizeof(currentBlock)) == 0)
       return;
@@ -297,9 +296,37 @@ namespace mc { namespace samples { namespace terrain {
     // level of detail to highest level of detail.
 
     // Ensure that terrain around this position is enqueued for generation
+
+    // TODO: Iterate over the voxel blocks around the camera
+    for (int z = -1; z <= 1; ++z) {
+      for (int y = -1; y <= 1; ++y) {
+        for (int x = -1; x <= 1; ++x) {
+          LodTree::Coordinates block;
+          block.x = currentBlock[0] + x;
+          block.y = currentBlock[1] + y;
+          block.z = currentBlock[2] + z;
+          // XXX: Experiment with the LOD tree
+          m_lodTree.getNode(block, 0);
+          // TODO: Mark this node for high LOD generation by the terrain
+          // generator thread
+          m_terrainGenerator.requestDetail(block, 0);
+        }
+      }
+    }
+
+    // TODO: Add any recently generated terrain to the scene
+    std::shared_ptr<TerrainMesh> mesh;
+    /*
+    while (mesh = m_terrainGenerator.getRecent()) {
+      if (!mesh->isEmpty()) {
+        this->addChild(mesh);
+      }
+    }
+    */
   }
 
   void Terrain::m_posToBlock(const glm::vec3 &pos, int *block) {
+    // FIXME: This method might be better off in a different class.
     int blockSize = (float)TerrainMesh::BLOCK_SIZE * TerrainMesh::VOXEL_DELTA;
     block[0] = (int)floor(pos.x / blockSize);
     block[1] = (int)floor(pos.y / blockSize);

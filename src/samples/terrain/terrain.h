@@ -24,10 +24,9 @@
 #ifndef MC_SAMPLES_TERRAIN_TERRAIN_H_
 #define MC_SAMPLES_TERRAIN_TERRAIN_H_
 
-#include <thread>
-
 #include "../common/sceneObject.h"
 #include "lodTree.h"
+#include "terrainGenerator.h"
 
 namespace mc { namespace samples {
   class Camera;
@@ -46,7 +45,7 @@ namespace mc { namespace samples {
 
         int m_lastBlock[3];
 
-        std::thread m_terrainGenerator;
+        TerrainGenerator m_terrainGenerator;
         GLuint m_cubeWireframeVertices, m_cubeWireframeIndices;
 
         typedef struct WireframeVertex {
@@ -60,7 +59,7 @@ namespace mc { namespace samples {
             const glm::mat4 &worldView,
             const glm::mat4 &projection) const;
 
-        void m_enqueueTerrain(const glm::vec3 &pos);
+        void m_enqueueTerrain(const glm::vec3 &cameraPos);
         void m_posToBlock(const glm::vec3 &pos, int *block);
       public:
         /**

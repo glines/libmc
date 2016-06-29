@@ -10,11 +10,14 @@ add_library(samples_common STATIC
     sceneObject.cpp
     shaderProgram.cpp
     shaders.cpp
+    task.cpp
     template.cpp
     transform.cpp
     transformRAII.cpp
     transformStack.cpp
     wasdCamera.cpp
+    worker.cpp
+    workerPool.cpp
     )
 target_include_directories(samples_common
     PRIVATE "${CMAKE_CURRENT_BINARY_DIR}"

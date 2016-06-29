@@ -25,6 +25,7 @@
 #define MC_SAMPLES_TERRAIN_LOD_TREE_H_
 
 #include <memory>
+#include <glm/glm.hpp>
 
 namespace mc { namespace samples { namespace terrain {
   class TerrainMesh;
@@ -163,6 +164,26 @@ namespace mc { namespace samples { namespace terrain {
           Node(const Coordinates &block, int lod, Node *parent);
 
           /**
+           * Returns the current status of this node and the terrain mesh
+           * object represented by this node.
+           *
+           * \return The status of the node as an enum.
+           */
+          Status status() const { return m_status; }
+          /**
+           * Sets the current status of the node as it pertains to the terrain
+           * mesh object represented by this node.
+           *
+           * Node status changes as a node is created, a mesh is requested, and
+           * the mesh is generated. The TerrainGenerator class uses the status
+           * enum to avoid generating terrain meshes multiple times, or to
+           * avoid generating terrains where there is no isosurface.
+           *
+           * \param status The status of the node to set.
+           */
+          void setStatus(Status status) { m_status = status; }
+
+          /**
            * Returns the voxel block at which this node resides, in integer
            * coordinates. The node's position is measured at corner of the node
            * with the lowest coordinate value.
@@ -232,14 +253,8 @@ namespace mc { namespace samples { namespace terrain {
            * of this node, but since this node might be the root of the octree
            * it is important not to iterate past the iterator returned by this
            * method.  Iterating past this iterator is undefined behavior.
-           *
-           * If this node is a null pointer, which signifies an empty octree,
-           * then this method returns an iterator referencing a null pointer as
-           * well.
            */
           Iterator end() const {
-            if (this == nullptr)
-              return Iterator(nullptr);
             return Iterator(this->parent());
           }
 
@@ -346,8 +361,7 @@ namespace mc { namespace samples { namespace terrain {
        * \sa Node::begin()
        */
       Node::Iterator begin() const {
-        /* Note that we may call begin() on m_root even if m_root is a null
-         * pointer, since the null case is checked in the method. */
+        assert(m_root);  // We always have a root node
         return m_root->begin();
       }
       /**
@@ -361,8 +375,7 @@ namespace mc { namespace samples { namespace terrain {
        * \sa Node::end()
        */
       Node::Iterator end() const {
-        /* Note that we may call end() on m_root even if m_root is a null
-         * pointer, since the null case is checked in the method. */
+        assert(m_root);  // We always have a root node
         return m_root->end();
       }
   };

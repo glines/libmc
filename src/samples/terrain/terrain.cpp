@@ -34,6 +34,7 @@ extern "C" {
 #include "../common/glError.h"
 #include "../common/shaderProgram.h"
 #include "../common/shaders.h"
+#include "lodTree.h"
 #include "terrainMesh.h"
 
 #include "terrain.h"
@@ -51,41 +52,13 @@ namespace mc { namespace samples { namespace terrain {
     m_camera(camera),
     m_terrainGenerator(terrain)
   {
+    m_lastBlock.x = INT_MAX;
+    m_lastBlock.y = INT_MAX;
+    m_lastBlock.z = INT_MAX;
     // TODO: Prepare a cache of terrain mesh objects
     // TODO: Use an octree structure to organize our terrain meshes
 
     // TODO: We need a background thread for generating these meshes on the fly.
-
-    // XXX: We are simply generate a lot of terrain meshes for testing
-    ScalarField sf(terrain);
-    for (int lod = 0; lod < 1; ++lod) {
-      fprintf(stderr, "lod: %d\n", lod);
-      for (int z = -3; z < 4; ++z) {
-        for (int y = -3; y < 4; ++y) {
-          for (int x = -3; x < 4; ++x) {
-            auto mesh = std::shared_ptr<TerrainMesh>(
-                new TerrainMesh(
-                  sf,  // scalar field
-                  lod,  // level of detail
-                  x * (1 << lod),  // x
-                  y * (1 << lod),  // y
-                  z * (1 << lod)  // z
-                  ));
-            if (!mesh->isEmpty()) {
-              this->addChild(mesh);
-              /*
-              // XXX: Experimenting with the LOD tree
-              LodTree::Coordinates block;
-              block.x = x * (1 << lod);
-              block.y = y * (1 << lod);
-              block.z = z * (1 << lod);
-              m_lodTree.getNode(block, lod);
-              */
-            }
-          }
-        } 
-      }
-    }
 
     // XXX: Experimenting with the LOD tree
     LodTree::Coordinates block;
@@ -118,7 +91,13 @@ namespace mc { namespace samples { namespace terrain {
 
     m_enqueueTerrain(cameraPos);
 
-    // TODO: Add any meshes that were recently generated to the scene
+    // TODO: Add any recently generated terrain to the scene
+    std::shared_ptr<TerrainMesh> mesh;
+    while (mesh = m_terrainGenerator.getRecentMesh()) {
+      if (!mesh->isEmpty()) {
+        this->addChild(mesh);
+      }
+    }
   }
 
   void Terrain::draw(const glm::mat4 &modelWorld,
@@ -259,16 +238,16 @@ namespace mc { namespace samples { namespace terrain {
     // FIXME: This routine might actually be more at home within the
     // TerrainGenerator class.
     // Determine the voxel block that we are currently in
-    int currentBlock[3];
-    m_posToBlock(cameraPos, currentBlock);
+    LodTree::Coordinates cameraBlock;
+    LodTree::posToBlock(cameraPos, &cameraBlock);
     // Check if the voxel block changed
-    if (memcmp(m_lastBlock, currentBlock, sizeof(currentBlock)) == 0)
+    if (memcmp(&m_lastBlock, &cameraBlock, sizeof(cameraBlock)) == 0)
       return;
-    fprintf(stderr, "current block: (%d, %d, %d)\n",
-        currentBlock[0],
-        currentBlock[1],
-        currentBlock[2]);
-    memcpy(m_lastBlock, currentBlock, sizeof(currentBlock));
+    fprintf(stderr, "cameraBlock: (%d, %d, %d)\n",
+        cameraBlock.x,
+        cameraBlock.y,
+        cameraBlock.z);
+    memcpy(&m_lastBlock, &cameraBlock, sizeof(cameraBlock));
     // TODO: Determine the delta terrain?
     // TODO: How far out to draw each level of detail? Each level of detail
     // needs to have at least eight meshes generated for it so that it can
@@ -297,39 +276,25 @@ namespace mc { namespace samples { namespace terrain {
 
     // Ensure that terrain around this position is enqueued for generation
 
-    // TODO: Iterate over the voxel blocks around the camera
-    for (int z = -1; z <= 1; ++z) {
-      for (int y = -1; y <= 1; ++y) {
-        for (int x = -1; x <= 1; ++x) {
-          LodTree::Coordinates block;
-          block.x = currentBlock[0] + x;
-          block.y = currentBlock[1] + y;
-          block.z = currentBlock[2] + z;
-          // XXX: Experiment with the LOD tree
-          m_lodTree.getNode(block, 0);
-          // TODO: Mark this node for high LOD generation by the terrain
-          // generator thread
-          m_terrainGenerator.requestDetail(block, 0);
+    // Iterate over all of the levels of detail we want to generate
+    for (int lod = MINIMUM_LOD; lod >= 0; --lod) {
+      auto cameraNode = m_lodTree.getNode(cameraBlock, lod);
+      // TODO: Iterate over the voxel blocks around the camera
+      for (int z = -1; z <= 1; ++z) {
+        for (int y = -1; y <= 1; ++y) {
+          for (int x = -1; x <= 1; ++x) {
+            LodTree::Coordinates offset;
+            offset.x = x;
+            offset.y = y;
+            offset.z = z;
+            // XXX: Experiment with the LOD tree
+            auto node = m_lodTree.getRelativeNode(*cameraNode, offset);
+            // Mark this node for high LOD generation by the terrain
+            // generator thread
+            m_terrainGenerator.requestDetail(node->block(), lod);
+          }
         }
       }
     }
-
-    // TODO: Add any recently generated terrain to the scene
-    std::shared_ptr<TerrainMesh> mesh;
-    /*
-    while (mesh = m_terrainGenerator.getRecent()) {
-      if (!mesh->isEmpty()) {
-        this->addChild(mesh);
-      }
-    }
-    */
-  }
-
-  void Terrain::m_posToBlock(const glm::vec3 &pos, int *block) {
-    // FIXME: This method might be better off in a different class.
-    int blockSize = (float)TerrainMesh::BLOCK_SIZE * TerrainMesh::VOXEL_DELTA;
-    block[0] = (int)floor(pos.x / blockSize);
-    block[1] = (int)floor(pos.y / blockSize);
-    block[2] = (int)floor(pos.z / blockSize);
   }
 } } }

@@ -27,13 +27,15 @@
 #include "terrainMesh.h"
 
 namespace mc { namespace samples { namespace terrain {
-  TerrainMesh::TerrainMesh(const ScalarField &sf,
-      int lod, int x, int y, int z)
+  TerrainMesh::TerrainMesh(
+      const ScalarField &sf,
+      const LodTree::Coordinates &block,
+      int lod)
     : MeshObject(
         glm::vec3(
-          (float)x * VOXEL_DELTA * (float)BLOCK_SIZE,
-          (float)y * VOXEL_DELTA * (float)BLOCK_SIZE,
-          (float)z * VOXEL_DELTA * (float)BLOCK_SIZE),  // position
+          (float)block.x * VOXEL_DELTA * (float)BLOCK_SIZE,
+          (float)block.y * VOXEL_DELTA * (float)BLOCK_SIZE,
+          (float)block.z * VOXEL_DELTA * (float)BLOCK_SIZE),  // position
         glm::quat()  // orientation
         )
   {
@@ -56,8 +58,9 @@ namespace mc { namespace samples { namespace terrain {
           this->position().z + (float)BLOCK_SIZE * VOXEL_DELTA * (1 << lod)) // max
         );
     m_empty = mesh->numVertices() == 0;
-    if (!m_empty) {
-      this->setMesh(*mesh);
-    }
+    this->setMesh(*mesh);
+  }
+
+  TerrainMesh::~TerrainMesh() {
   }
 } } }

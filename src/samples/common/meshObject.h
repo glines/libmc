@@ -39,16 +39,44 @@ namespace mc { namespace samples {
    */
   class MeshObject : public SceneObject {
     private:
+      typedef struct MeshStruct {
+        typedef struct Vertex {
+          float pos[3];
+          float norm[3];
+        } Vertex;
+        typedef struct WireframeVertex {
+          float pos[3];
+          float color[3];
+        } WireframeVertex;
+
+        Vertex *triangleVertices;
+        unsigned int *triangleIndices;
+        WireframeVertex *wireframeVertices;
+        unsigned int *wireframeIndices;
+        WireframeVertex *surfaceNormalVertices;
+        unsigned int numVertices, numTriangles, numWireframeLines;
+
+        void initialize(const mc::Mesh &mesh);
+        void m_initializeTriangles(const mc::Mesh &mesh);
+        void m_initializeWireframe(const mc::Mesh &mesh);
+        void m_initializeSurfaceNormals(const mc::Mesh &mesh);
+        void destroy();
+      } MeshStruct;
+
+      MeshStruct *m_meshStruct;
+
       GLuint m_wireframeVertices, m_wireframeIndices,
              m_surfaceNormalVertices,
              m_vertexBuffer, m_indexBuffer;
       unsigned int m_numTriangles, m_numVertices,
                    m_numWireframeLines;
-      bool m_isDrawWireframe, m_isDrawNormals, m_isDrawOpaque;
+      bool m_isDrawWireframe, m_isDrawNormals, m_isDrawOpaque, m_isInitialized;
 
-      void m_generateTriangles(const Mesh &mesh);
-      void m_generateWireframe(const Mesh &mesh);
-      void m_generateSurfaceNormals(const Mesh &mesh);
+      void m_uploadMesh(const MeshStruct &mesh);
+      void m_initGl();
+      void m_uploadTriangles(const MeshStruct &mesh);
+      void m_uploadWireframe(const MeshStruct &mesh);
+      void m_uploadSurfaceNormals(const MeshStruct &mesh);
 
       void m_update();
 
@@ -63,15 +91,6 @@ namespace mc { namespace samples {
           const glm::mat4 &projection,
           const glm::mat4 &modelViewProjection,
           const glm::mat4 &normalTransform) const;
-
-      typedef struct Vertex {
-        float pos[3];
-        float norm[3];
-      } Vertex;
-      typedef struct WireframeVertex {
-        float pos[3];
-        float color[3];
-      } WireframeVertex;
 
     public:
       /**
@@ -104,7 +123,7 @@ namespace mc { namespace samples {
        */
       virtual void draw(const glm::mat4 &modelWorld,
           const glm::mat4 &worldView, const glm::mat4 &projection,
-          float alpha, bool debug) const;
+          float alpha, bool debug);
 
       /**
        * Returns true if the the surface normals are being drawn (as lines).
@@ -165,8 +184,9 @@ namespace mc { namespace samples {
 
     protected:
       /**
-       * Updates the mesh being represented by the mesh object by copying new
-       * data to the GL.
+       * Sets the mesh to be drawn by this mesh object. The mesh is copied, but
+       * it is not uploaded to the GL until the next draw call. This is because
+       * we cannot risk making GL calls outside of the draw thread.
        */
       void setMesh(const mc::Mesh &mesh);
   };

@@ -26,6 +26,8 @@
 
 #include <condition_variable>
 #include <memory>
+#include <queue>
+#include <thread>
 #include <vector>
 
 namespace mc { namespace samples {
@@ -38,6 +40,22 @@ namespace mc { namespace samples {
       std::vector<Worker *> m_readyWorkers;
       std::condition_variable m_ready;
       std::mutex m_readyMutex;
+
+      static bool m_compareTasks(
+          std::shared_ptr<Task> left, 
+          std::shared_ptr<Task> right);
+
+      std::priority_queue<
+        std::shared_ptr<Task>,
+        std::vector<std::shared_ptr<Task>>,
+        decltype(&m_compareTasks)
+        > m_tasks;
+      std::condition_variable m_taskAvailable;
+      std::mutex m_taskMutex;
+
+      std::thread m_dispatchThread;
+
+      void m_dispatchLoop();
     public:
       WorkerPool(int numWorkers);
       ~WorkerPool();
@@ -45,6 +63,7 @@ namespace mc { namespace samples {
       void dispatch(std::shared_ptr<Task> task);
     private:
       void addReadyWorker(Worker *worker);
+      void addAvailableTask(std::shared_ptr<Task> task);
   };
 } }
 

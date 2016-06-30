@@ -21,23 +21,38 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef MC_SAMPLES_COMMON_TASK_H_
-#define MC_SAMPLES_COMMON_TASK_H_
+#ifndef MC_SAMPLES_TERRAIN_GENERATE_TERRAIN_TASK_H_
+#define MC_SAMPLES_TERRAIN_GENERATE_TERRAIN_TASK_H_
 
-namespace mc { namespace samples {
+#include "../common/task.h"
+#include "lodTree.h"
+
+namespace mc { namespace samples { namespace terrain {
+  class TerrainGenerator;
   /**
-   * Pure virtual class that defines a task to be run by a Worker object in a
-   * thread.
+   * Class that represents the task of generating a single terrain mesh object
+   * for a given terrain mesh generator. Terrain generation tasks can be
+   * submitted to a WorkerPool for execution in a thread by a Worker object.
+   * Since terrain generation is an expensive task, running it in a thread
+   * greatly improves responsiveness of the user interface.
+   *
+   * This class communicates the status of the generated terrain mesh with the
+   * TerrainGenerator class using thread-safe methods.
    */
-  class Task {
+  class GenerateTerrainTask : public Task {
+    private:
+      TerrainGenerator *m_generator;
+      LodTree::Coordinates m_block;
+      int m_lod;
     public:
-      Task();
-      virtual ~Task();
+      GenerateTerrainTask(
+          const LodTree::Coordinates block, int lod,
+          TerrainGenerator *generator);
 
-      virtual void run() = 0;
+      void run();
 
-      virtual int priority() const { return 0; }
+      int priority() const { return m_lod; }
   };
-} }
+} } }
 
 #endif

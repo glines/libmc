@@ -68,7 +68,7 @@ namespace mc { namespace samples {
        * This method recursively draws this object and all of its children.
        */
       void m_draw(Transform &modelWorld, const glm::mat4 &worldView,
-          const glm::mat4 &projection, float alpha, bool debug) const;
+          const glm::mat4 &projection, float alpha, bool debug);
 
     public:
       /**
@@ -176,7 +176,7 @@ namespace mc { namespace samples {
        */
       virtual void draw(const glm::mat4 &modelWorld,
           const glm::mat4 &worldView, const glm::mat4 &projection,
-          float alpha, bool debug) const {}
+          float alpha, bool debug) {}
   };
 } }
 

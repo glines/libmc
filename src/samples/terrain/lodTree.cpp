@@ -30,6 +30,15 @@
 #include "lodTree.h"
 
 namespace mc { namespace samples { namespace terrain {
+  void LodTree::posToBlock(
+      const glm::vec3 &pos, Coordinates *block)
+  {
+    int blockSize = (float)TerrainMesh::BLOCK_SIZE * TerrainMesh::VOXEL_DELTA;
+    block->x = (int)floor(pos.x / blockSize);
+    block->y = (int)floor(pos.y / blockSize);
+    block->z = (int)floor(pos.z / blockSize);
+  }
+
   LodTree::LodTree()
   {
     // The root of the tree always straddles the origin. Since the center of
@@ -76,31 +85,58 @@ namespace mc { namespace samples { namespace terrain {
     } while (!m_root->contains(block, lod));
   }
 
+  void LodTree::m_alignBlockToLod(
+      const Coordinates &block, int lod, Coordinates *alignedBlock)
+  {
+    assert(lod >= 0);
+    assert(lod < sizeof(int) * 8 - 1);
+    alignedBlock->x = (block.x >> lod) << lod;
+    alignedBlock->y = (block.y >> lod) << lod;
+    alignedBlock->z = (block.z >> lod) << lod;
+  }
+
   std::shared_ptr<LodTree::Node> LodTree::getNode(
       const LodTree::Coordinates &block, int lod)
   {
+    // Make sure the block is aligned to the coordinate lattice for the given
+    // level of detail
+    LodTree::Coordinates alignedBlock;
+    m_alignBlockToLod(block, lod, &alignedBlock);
     if (!m_root) {
       // Since the octree is empty, we can add this node as the root node. When
       // more nodes are added, the octree growing algorithms will naturally
       // adjust the root node of the tree.
       m_root = std::shared_ptr<Node>(
-          new Node(block, lod, nullptr));
+          new Node(alignedBlock, lod, nullptr));
     }
-    if (!m_root->contains(block, lod)) {
+    if (!m_root->contains(alignedBlock, lod)) {
       // The given block and lod are not contained in the octree root, so we
       // must grow the octree and give it a new root node.
-      this->m_grow(block, lod);
+      this->m_grow(alignedBlock, lod);
     }
     if (lod == m_root->lod()) {
       // The node we are adding happens to be the root node
-      assert(memcmp(&block, &m_root->block(), sizeof(block)) == 0);
+      assert(memcmp(&alignedBlock, &m_root->block(), sizeof(alignedBlock)) == 0);
       return m_root;
     }
     // The getChild() method for LodTree::Node objects will automatically
     // create the node if it does not exist yet.
-    auto node = m_root->getChild(block, lod);
+    auto node = m_root->getChild(alignedBlock, lod);
     assert(node);
     return node;
+  }
+
+  std::shared_ptr<LodTree::Node> LodTree::getRelativeNode(
+      const Node &node, const Coordinates &offset)
+  {
+    assert(node.isAligned());
+    Coordinates relativeBlock;
+    relativeBlock.x = node.block().x + offset.x * (1 << node.lod());
+    relativeBlock.y = node.block().y + offset.y * (1 << node.lod());
+    relativeBlock.z = node.block().z + offset.z * (1 << node.lod());
+    auto result = this->getNode(relativeBlock, node.lod());
+    assert(result->isAligned());
+    return result;
   }
 
   LodTree::Node::Node(const Coordinates &block, int lod, Node *parent)
@@ -221,10 +257,10 @@ namespace mc { namespace samples { namespace terrain {
   bool LodTree::Node::contains(
       const Coordinates &block, int lod) const
   {
-    // Make sure this block/lod combination is valid
-    assert((((1 << lod) - 1) & labs(block.x)) == 0);
-    assert((((1 << lod) - 1) & labs(block.y)) == 0);
-    assert((((1 << lod) - 1) & labs(block.z)) == 0);
+    // Make sure this block/lod combination is aligned with the LOD lattice
+    assert((block.x & ((1 << lod) - 1)) == 0);
+    assert((block.y & ((1 << lod) - 1)) == 0);
+    assert((block.z & ((1 << lod) - 1)) == 0);
     if (lod > m_lod) {
       // The target is larger than this node
       return false;
@@ -273,11 +309,14 @@ namespace mc { namespace samples { namespace terrain {
     return child->getChild(block, lod);
   }
 
-  std::shared_ptr<LodTree::Node> LodTree::Node::getRelativeNode(
-      const Coordinates &offset)
-  {
-    // TODO
-    return nullptr;
+  bool LodTree::Node::isAligned() const {
+    if (m_block.x & ((1 << m_lod) - 1))
+      return false;
+    if (m_block.y & ((1 << m_lod) - 1))
+      return false;
+    if (m_block.z & ((1 << m_lod) - 1))
+      return false;
+    return true;
   }
 
   LodTree::Node::Iterator &LodTree::Node::Iterator::operator++() {

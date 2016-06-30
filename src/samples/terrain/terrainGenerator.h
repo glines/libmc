@@ -29,7 +29,9 @@
 #include <queue>
 #include <thread>
 
+#include "../common/workerPool.h"
 #include "lodTree.h"
+#include "terrainMesh.h"
 
 namespace mc { namespace samples { namespace terrain {
   /**
@@ -50,7 +52,7 @@ namespace mc { namespace samples { namespace terrain {
 
       LodTree m_lodTree;
 
-//      WorkerPool m_workerPool;
+      WorkerPool m_workers;
 
       typedef struct MarkedNode {
         LodTree::Coordinates block;
@@ -72,12 +74,10 @@ namespace mc { namespace samples { namespace terrain {
       // that it requires for uploading to the GL. If mcMesh can be provided in
       // a flat format suitable for the GL, that might be even better, but it
       // would expose details of the mcMesh structure.
-      std::queue<std::string> m_recentMeshes;  // XXX
+      std::queue<std::shared_ptr<TerrainMesh>> m_recentMeshes;  // XXX
       std::mutex m_recentMeshesMutex;
 
       std::thread m_generatorThread;
-
-      void m_generateTerrain();
 
       void m_enqueueNode(const LodTree::Node &node);
 
@@ -108,6 +108,17 @@ namespace mc { namespace samples { namespace terrain {
       void requestDetail(const LodTree::Coordinates &block, int lod);
 
       /**
+       * Method adds the given mesh to the queue of recently generated meshes.
+       * This is called from the GenerateTerrainTask to pass meshes 
+       *
+       * Since this method is intended to be called from a separate thread, the
+       * method is made thread safe.
+       *
+       * \param mesh Shared pointer to the terrain mesh being added.
+       */
+      void addRecentMesh(std::shared_ptr<TerrainMesh> mesh);
+
+      /**
        * This method removes a pointer to a recently generated terrain mesh
        * from the recently generated queue and returns it. When there are no
        * more recently generated meshes to return, this method returns a null
@@ -116,7 +127,13 @@ namespace mc { namespace samples { namespace terrain {
        * \return Pointer to a recently generated terrain mesh, or a null
        * pointer if there are no more recently generated meshes.
        */
-      std::shared_ptr<TerrainMesh> getRecent();
+      std::shared_ptr<TerrainMesh> getRecentMesh();
+
+      /**
+       * \return A reference to the scalar field whose isosurface defines the
+       * surface of the terrain.
+       */
+      const ScalarField &sf() const { return m_sf; }
   };
 } } }
 

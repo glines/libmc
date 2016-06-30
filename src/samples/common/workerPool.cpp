@@ -21,13 +21,23 @@
  * IN THE SOFTWARE.
  */
 
+#include "task.h"
 #include "worker.h"
 
 #include "workerPool.h"
 
 namespace mc { namespace samples {
+  bool WorkerPool::m_compareTasks(
+      std::shared_ptr<Task> left, 
+      std::shared_ptr<Task> right)
+  {
+    return left->priority() < right->priority();
+  }
+
   WorkerPool::WorkerPool(int numWorkers)
-    : m_readyWorkers(), m_ready(), m_readyMutex()
+    : m_readyWorkers(), m_ready(), m_readyMutex(),
+    m_tasks(&m_compareTasks),
+    m_dispatchThread([this] { this->m_dispatchLoop(); })
   {
     for (int i = 0; i < numWorkers; ++i)
       m_workers.push_back(std::shared_ptr<Worker>(new Worker(this)));
@@ -38,15 +48,33 @@ namespace mc { namespace samples {
     // TODO: Join all of the worker threads
   }
 
+  // FIXME: Why do I use unique_lock and not lock_guard or shared_lock?
   void WorkerPool::dispatch(std::shared_ptr<Task> task) {
-    // Wait for a worker thread to become available
-    std::unique_lock<std::mutex> lock(m_readyMutex);
-    while (m_readyWorkers.size() <= 0) {  // Loop to avoid spurious wakeup
-      m_ready.wait(lock);
+    // Add an available task and signal the task dispatch thread
+    this->addAvailableTask(task);
+  }
+
+  void WorkerPool::m_dispatchLoop() {
+    // Loop for the lifetime of the class to dispatch tasks 
+    while (1) {
+      // Wait for a ready worker
+      std::unique_lock<std::mutex> readyLock(m_readyMutex);
+      while (m_readyWorkers.size() <= 0) {  // Loop to avoid spurious wakeup
+        m_ready.wait(readyLock);
+      }
+      // NOTE: We hold the readyLock for a long time here, but it doesn't
+      // matter as long as we have at least one ready worker
+      // Wait for an available task
+      std::unique_lock<std::mutex> taskLock(m_taskMutex);
+      while (m_tasks.size() <= 0) {  // Loop to avoid spurious wakeup
+        m_taskAvailable.wait(taskLock);
+      }
+      m_readyWorkers.back()->run(m_tasks.top());
+      fprintf(stderr, "m_tasks.top()->priority(): %d\n",
+          m_tasks.top()->priority());
+      m_readyWorkers.pop_back();
+      m_tasks.pop();
     }
-    // Run the task on an available worker
-    m_readyWorkers.back()->run(task);
-    m_readyWorkers.pop_back();
   }
 
   void WorkerPool::addReadyWorker(Worker *worker) {
@@ -55,7 +83,17 @@ namespace mc { namespace samples {
       std::unique_lock<std::mutex> lock(m_readyMutex);
       m_readyWorkers.push_back(worker);
     }
-    // Wake up the main thread
+    // Wake up the dispatch thread
     m_ready.notify_one();
+  }
+
+  void WorkerPool::addAvailableTask(std::shared_ptr<Task> task) {
+    {
+      // Add this task to the queue of available tasks
+      std::unique_lock<std::mutex> lock(m_taskMutex);
+      m_tasks.push(task);
+    }
+    // Wake up the dispatch thread
+    m_taskAvailable.notify_one();
   }
 } }

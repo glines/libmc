@@ -35,66 +35,56 @@ namespace mc { namespace samples {
       const glm::vec3 &position,
       const glm::quat &orientation)
     : SceneObject(position, orientation),
-      m_isDrawWireframe(true), m_isDrawNormals(false), m_isDrawOpaque(true)
+    m_meshStruct(nullptr),
+    m_isDrawWireframe(true), m_isDrawNormals(false), m_isDrawOpaque(true),
+    m_isInitialized(false)
   {
-    // Initialize our GL buffers
-    glGenBuffers(1, &m_wireframeVertices);
-    FORCE_ASSERT_GL_ERROR();
-    glGenBuffers(1, &m_wireframeIndices);
-    FORCE_ASSERT_GL_ERROR();
-    glGenBuffers(1, &m_surfaceNormalVertices);
-    FORCE_ASSERT_GL_ERROR();
-    glGenBuffers(1, &m_vertexBuffer);
-    FORCE_ASSERT_GL_ERROR();
-    glGenBuffers(1, &m_indexBuffer);
-    FORCE_ASSERT_GL_ERROR();
-
-    // FIXME: The mc::Mesh class does not support empty mesh construction
-    /*
-    // Initialize our mesh data with an empty mesh
-    mc::Mesh mesh;
-    this->setMesh(mesh);
-    */
   }
 
   MeshObject::~MeshObject() {}
 
   void MeshObject::setMesh(const mc::Mesh &mesh) {
-    m_numVertices = mesh.numVertices();
-
-    // Generate wireframe data and send it to the GL
-    m_generateWireframe(mesh);
-
-    // Generate surface normal lines and send them to the GL
-    m_generateSurfaceNormals(mesh);
-
-    // Send trangles representing the mesh surface to the GL
-    m_generateTriangles(mesh);
+    // Copy the mesh to the buffers that we will later copy to the GL
+    m_meshStruct = new MeshStruct;
+    m_meshStruct->initialize(mesh);
   }
 
-  void MeshObject::m_generateTriangles(const Mesh &mesh) {
-    // Copy the vertices from the mesh to a buffer
-    Vertex *vertices = new Vertex[mesh.numVertices()];
+  void MeshObject::m_uploadMesh(const MeshStruct &mesh) {
+    m_initGl();
+
+    m_numVertices = mesh.numVertices;
+    m_numTriangles = mesh.numTriangles;
+    m_numWireframeLines = mesh.numWireframeLines;
+
+    // Generate wireframe data and send it to the GL
+    m_uploadWireframe(mesh);
+
+    // Generate surface normal lines and send them to the GL
+    m_uploadSurfaceNormals(mesh);
+
+    // Send trangles representing the mesh surface to the GL
+    m_uploadTriangles(mesh);
+  }
+
+  void MeshObject::MeshStruct::initialize(const mc::Mesh &mesh) {
+    this->numVertices = mesh.numVertices();
+    m_initializeTriangles(mesh);
+    m_initializeWireframe(mesh);
+    m_initializeSurfaceNormals(mesh);
+  }
+
+  void MeshObject::MeshStruct::m_initializeTriangles(const mc::Mesh &mesh) {
+    // Copy the vertices from the mesh to our buffer
+    this->triangleVertices = new Vertex[mesh.numVertices()];
     for (int i = 0; i < mesh.numVertices(); ++i) {
       auto vertex = mesh.vertex(i);
-      vertices[i].pos[0] = vertex.pos.x;
-      vertices[i].pos[1] = vertex.pos.y;
-      vertices[i].pos[2] = vertex.pos.z;
-      vertices[i].norm[0] = vertex.norm.x;
-      vertices[i].norm[1] = vertex.norm.y;
-      vertices[i].norm[2] = vertex.norm.z;
+      this->triangleVertices[i].pos[0] = vertex.pos.x;
+      this->triangleVertices[i].pos[1] = vertex.pos.y;
+      this->triangleVertices[i].pos[2] = vertex.pos.z;
+      this->triangleVertices[i].norm[0] = vertex.norm.x;
+      this->triangleVertices[i].norm[1] = vertex.norm.y;
+      this->triangleVertices[i].norm[2] = vertex.norm.z;
     }
-    // Send the vertices to the GL
-    glBindBuffer(GL_ARRAY_BUFFER, m_vertexBuffer);
-    FORCE_ASSERT_GL_ERROR();
-    glBufferData(
-        GL_ARRAY_BUFFER,  // target
-        sizeof(Vertex) * mesh.numVertices(),  // size
-        vertices,  // data
-        GL_STATIC_DRAW  // usage
-        );
-    FORCE_ASSERT_GL_ERROR();
-    delete[] vertices;
     // Copy the triangle indices from the mesh to a buffer
     unsigned int numIndices;
     if (mesh.isTriangleMesh()) {
@@ -109,122 +99,163 @@ namespace mc { namespace samples {
         numIndices += 3 + (face.numIndices - 3) * 3;
       }
     }
-    unsigned int *indices = new unsigned int [numIndices];
+    this->triangleIndices = new unsigned int [numIndices];
     unsigned int currentIndex = 0;
-    m_numTriangles = 0;
+    this->numTriangles = 0;
     for (int i = 0; i < mesh.numFaces(); ++i) {
       auto face = mesh.face(i);
       assert(face.numIndices >= 3);
       for (int j = 0; j < 3; ++j) {
         assert(currentIndex < numIndices);
-        indices[currentIndex++] = face.indices[j];
+        this->triangleIndices[currentIndex++] = face.indices[j];
       }
-      m_numTriangles += 1;
+      this->numTriangles += 1;
       for (int j = 3; j < face.numIndices; ++j) {
         /* Draw the remaining parts of the face with a triangle fan. This might
          * not make optimal geometry, but this is acceptable for a debugging
          * program. */
         assert(currentIndex < numIndices);
-        indices[currentIndex++] = face.indices[0];
+        this->triangleIndices[currentIndex++] = face.indices[0];
         assert(currentIndex < numIndices);
-        indices[currentIndex++] = face.indices[j - 1];
+        this->triangleIndices[currentIndex++] = face.indices[j - 1];
         assert(currentIndex < numIndices);
-        indices[currentIndex++] = face.indices[j];
-        m_numTriangles += 1;
+        this->triangleIndices[currentIndex++] = face.indices[j];
+        this->numTriangles += 1;
       }
     }
+  }
+
+  void MeshObject::MeshStruct::m_initializeWireframe(const mc::Mesh &mesh) {
+    // Copy the vertices from the mesh
+    this->wireframeVertices = new WireframeVertex[mesh.numVertices()];
+    for (unsigned int i = 0; i < mesh.numVertices(); ++i) {
+      auto vertex = mesh.vertex(i);
+      this->wireframeVertices[i].pos[0] = vertex.pos.x;
+      this->wireframeVertices[i].pos[1] = vertex.pos.y;
+      this->wireframeVertices[i].pos[2] = vertex.pos.z;
+      this->wireframeVertices[i].color[0] = 1.0f;
+      this->wireframeVertices[i].color[1] = 1.0f;
+      this->wireframeVertices[i].color[2] = 1.0f;
+    }
+    // Create lines from the face indices of the mesh
+    this->wireframeIndices = new unsigned int[mesh.numIndices() * 2];
+    unsigned int currentIndex = 0;
+    for (unsigned int i = 0; i < mesh.numFaces(); ++i) {
+      auto face = mesh.face(i);
+      for (unsigned int j = 0; j < face.numIndices; ++j) {
+        assert(currentIndex < mesh.numIndices() * 2);
+        this->wireframeIndices[currentIndex++] = face.indices[j];
+        assert(currentIndex < mesh.numIndices() * 2);
+        this->wireframeIndices[currentIndex++] = face.indices[(j + 1) % face.numIndices];
+      }
+    }
+    this->numWireframeLines = mesh.numIndices();
+  }
+
+  void MeshObject::MeshStruct::m_initializeSurfaceNormals(
+      const mc::Mesh &mesh)
+  {
+    // Allocate memory for the surface normal lines
+    this->surfaceNormalVertices = new WireframeVertex[mesh.numVertices() * 2];
+    // Iterate through the mesh vertices
+    for (unsigned int i = 0; i < mesh.numVertices(); ++i) {
+      // Make a line to represent the surface normal
+      auto v = mesh.vertex(i);
+      this->surfaceNormalVertices[i * 2].pos[0] = v.pos.x;
+      this->surfaceNormalVertices[i * 2].pos[1] = v.pos.y;
+      this->surfaceNormalVertices[i * 2].pos[2] = v.pos.z;
+      this->surfaceNormalVertices[i * 2 + 1].pos[0] = v.pos.x + v.norm.x;
+      this->surfaceNormalVertices[i * 2 + 1].pos[1] = v.pos.y + v.norm.y;
+      this->surfaceNormalVertices[i * 2 + 1].pos[2] = v.pos.z + v.norm.z;
+      this->surfaceNormalVertices[i * 2].color[0] = 0.0f;
+      this->surfaceNormalVertices[i * 2].color[1] = 0.0f;
+      this->surfaceNormalVertices[i * 2].color[2] = 1.0f;
+      this->surfaceNormalVertices[i * 2 + 1].color[0] = 0.0f;
+      this->surfaceNormalVertices[i * 2 + 1].color[1] = 0.0f;
+      this->surfaceNormalVertices[i * 2 + 1].color[2] = 1.0f;
+    }
+  }
+
+  void MeshObject::MeshStruct::destroy() {
+    delete[] this->triangleVertices;
+    delete[] this->triangleIndices;
+    delete[] this->wireframeVertices;
+    delete[] this->wireframeIndices;
+    delete[] this->surfaceNormalVertices;
+  }
+
+  void MeshObject::m_initGl() {
+    if (m_isInitialized)
+      return;
+    // Initialize our GL buffers
+    glGenBuffers(1, &m_wireframeVertices);
+    FORCE_ASSERT_GL_ERROR();
+    glGenBuffers(1, &m_wireframeIndices);
+    FORCE_ASSERT_GL_ERROR();
+    glGenBuffers(1, &m_surfaceNormalVertices);
+    FORCE_ASSERT_GL_ERROR();
+    glGenBuffers(1, &m_vertexBuffer);
+    FORCE_ASSERT_GL_ERROR();
+    glGenBuffers(1, &m_indexBuffer);
+    FORCE_ASSERT_GL_ERROR();
+    m_isInitialized = true;
+  }
+
+  void MeshObject::m_uploadTriangles(const MeshStruct &mesh) {
+    // Send the vertices to the GL
+    glBindBuffer(GL_ARRAY_BUFFER, m_vertexBuffer);
+    FORCE_ASSERT_GL_ERROR();
+    glBufferData(
+        GL_ARRAY_BUFFER,  // target
+        sizeof(MeshStruct::Vertex) * mesh.numVertices,  // size
+        mesh.triangleVertices,  // data
+        GL_STATIC_DRAW  // usage
+        );
+    FORCE_ASSERT_GL_ERROR();
     // Send the indices to the GL
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indexBuffer);
     FORCE_ASSERT_GL_ERROR();
     glBufferData(
         GL_ELEMENT_ARRAY_BUFFER,  // target
-        sizeof(unsigned int) * numIndices,  // size
-        indices,  // data
+        sizeof(unsigned int) * mesh.numTriangles * 3,  // size
+        mesh.triangleIndices,  // data
         GL_STATIC_DRAW  // usage
         );
     FORCE_ASSERT_GL_ERROR();
-    delete[] indices;
   }
 
-  void MeshObject::m_generateWireframe(const Mesh &mesh) {
-    // Copy the vertices from the mesh
-    WireframeVertex *vertices = new WireframeVertex[mesh.numVertices()];
-    for (unsigned int i = 0; i < mesh.numVertices(); ++i) {
-      auto vertex = mesh.vertex(i);
-      vertices[i].pos[0] = vertex.pos.x;
-      vertices[i].pos[1] = vertex.pos.y;
-      vertices[i].pos[2] = vertex.pos.z;
-      vertices[i].color[0] = 1.0f;
-      vertices[i].color[1] = 1.0f;
-      vertices[i].color[2] = 1.0f;
-    }
+  void MeshObject::m_uploadWireframe(const MeshStruct &mesh) {
     // Send the vertices to the GL
     glBindBuffer(GL_ARRAY_BUFFER, m_wireframeVertices);
     FORCE_ASSERT_GL_ERROR();
     glBufferData(
         GL_ARRAY_BUFFER,  // target
-        sizeof(WireframeVertex) * mesh.numVertices(),  // size
-        vertices,  // data
+        sizeof(MeshStruct::WireframeVertex) * mesh.numVertices,  // size
+        mesh.wireframeVertices,  // data
         GL_STATIC_DRAW  // usage
         );
     FORCE_ASSERT_GL_ERROR();
-    delete[] vertices;
-    unsigned int *indices = new unsigned int[mesh.numIndices() * 2];
-    unsigned int currentIndex = 0;
-    // Create lines from the face indices of the mesh
-    for (unsigned int i = 0; i < mesh.numFaces(); ++i) {
-      auto face = mesh.face(i);
-      for (unsigned int j = 0; j < face.numIndices; ++j) {
-        assert(currentIndex < mesh.numIndices() * 2);
-        indices[currentIndex++] = face.indices[j];
-        assert(currentIndex < mesh.numIndices() * 2);
-        indices[currentIndex++] = face.indices[(j + 1) % face.numIndices];
-      }
-    }
     // Send the line indices to the GL
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_wireframeIndices);
     FORCE_ASSERT_GL_ERROR();
     glBufferData(
         GL_ELEMENT_ARRAY_BUFFER,  // target
-        sizeof(unsigned int) * mesh.numIndices() * 2,  // size
-        indices,  // data
+        sizeof(unsigned int) * mesh.numWireframeLines * 2,  // size
+        mesh.wireframeIndices,  // data
         GL_STATIC_DRAW  // usage
         );
     FORCE_ASSERT_GL_ERROR();
-    delete[] indices;
-    m_numWireframeLines = mesh.numIndices();
   }
 
-  void MeshObject::m_generateSurfaceNormals(const Mesh &mesh) {
-    // Allocate memory for the surface normal lines
-    WireframeVertex *lines = new WireframeVertex[mesh.numVertices() * 2];
-    // Iterate through the mesh vertices
-    for (unsigned int i = 0; i < mesh.numVertices(); ++i) {
-      // Make a line to represent the surface normal
-      auto v = mesh.vertex(i);
-      lines[i * 2].pos[0] = v.pos.x;
-      lines[i * 2].pos[1] = v.pos.y;
-      lines[i * 2].pos[2] = v.pos.z;
-      lines[i * 2 + 1].pos[0] = v.pos.x + v.norm.x;
-      lines[i * 2 + 1].pos[1] = v.pos.y + v.norm.y;
-      lines[i * 2 + 1].pos[2] = v.pos.z + v.norm.z;
-      lines[i * 2].color[0] = 0.0f;
-      lines[i * 2].color[1] = 0.0f;
-      lines[i * 2].color[2] = 1.0f;
-      lines[i * 2 + 1].color[0] = 0.0f;
-      lines[i * 2 + 1].color[1] = 0.0f;
-      lines[i * 2 + 1].color[2] = 1.0f;
-    }
+  void MeshObject::m_uploadSurfaceNormals(const MeshStruct &mesh) {
     // Copy the surface normal lines to the GL
     glBindBuffer(GL_ARRAY_BUFFER, m_surfaceNormalVertices);
     glBufferData(
         GL_ARRAY_BUFFER,  // target
-        sizeof(WireframeVertex) * mesh.numVertices() * 2,  // size
-        lines,  // data
+        sizeof(MeshStruct::WireframeVertex) * mesh.numVertices * 2,  // size
+        mesh.surfaceNormalVertices,  // data
         GL_STATIC_DRAW  // usage
         );
-
-    delete[] lines;
   }
 
   void MeshObject::m_drawWireframe(
@@ -264,8 +295,8 @@ namespace mc { namespace samples {
         3,  // size
         GL_FLOAT,  // type
         0,  // normalized
-        sizeof(WireframeVertex),  // stride
-        &(((WireframeVertex *)0)->pos[0])  // pointer
+        sizeof(MeshStruct::WireframeVertex),  // stride
+        &(((MeshStruct::WireframeVertex *)0)->pos[0])  // pointer
         );
     ASSERT_GL_ERROR();
     assert(shader->vertColorLocation() != -1);
@@ -276,8 +307,8 @@ namespace mc { namespace samples {
         3,  // size
         GL_FLOAT,  // type
         0,  // normalized
-        sizeof(WireframeVertex),  // stride
-        &(((WireframeVertex *)0)->color[0])  // pointer
+        sizeof(MeshStruct::WireframeVertex),  // stride
+        &(((MeshStruct::WireframeVertex *)0)->color[0])  // pointer
         );
     ASSERT_GL_ERROR();
 
@@ -332,8 +363,8 @@ namespace mc { namespace samples {
         3,  // size
         GL_FLOAT,  // type
         0,  // normalized
-        sizeof(WireframeVertex),  // stride
-        &(((WireframeVertex *)0)->pos[0])  // pointer
+        sizeof(MeshStruct::WireframeVertex),  // stride
+        &(((MeshStruct::WireframeVertex *)0)->pos[0])  // pointer
         );
     ASSERT_GL_ERROR();
     assert(shader->vertColorLocation() != -1);
@@ -344,8 +375,8 @@ namespace mc { namespace samples {
         3,  // size
         GL_FLOAT,  // type
         0,  // normalized
-        sizeof(WireframeVertex),  // stride
-        &(((WireframeVertex *)0)->color[0])  // pointer
+        sizeof(MeshStruct::WireframeVertex),  // stride
+        &(((MeshStruct::WireframeVertex *)0)->color[0])  // pointer
         );
     ASSERT_GL_ERROR();
 
@@ -430,8 +461,8 @@ namespace mc { namespace samples {
         3,  // size
         GL_FLOAT,  // type
         0,  // normalized
-        sizeof(Vertex),  // stride
-        &(((Vertex *)0)->pos[0])  // pointer
+        sizeof(MeshStruct::Vertex),  // stride
+        &(((MeshStruct::Vertex *)0)->pos[0])  // pointer
         );
     ASSERT_GL_ERROR();
     assert(shader->vertNormalLocation() != -1);
@@ -442,8 +473,8 @@ namespace mc { namespace samples {
         3,  // size
         GL_FLOAT,  // type
         0,  // normalized
-        sizeof(Vertex),  // stride
-        &(((Vertex *)0)->norm[0])  // pointer
+        sizeof(MeshStruct::Vertex),  // stride
+        &(((MeshStruct::Vertex *)0)->norm[0])  // pointer
         );
     ASSERT_GL_ERROR();
 
@@ -467,8 +498,15 @@ namespace mc { namespace samples {
 
   void MeshObject::draw(const glm::mat4 &modelWorld,
           const glm::mat4 &worldView, const glm::mat4 &projection,
-          float alpha, bool debug) const
+          float alpha, bool debug)
   {
+    if (m_meshStruct != nullptr) {
+      // The mesh recently changed, so we must upload it to the GL
+      m_uploadMesh(*m_meshStruct);
+      delete m_meshStruct;
+      m_meshStruct = nullptr;
+    }
+
     // Compute the matrices we need for the shaders
     glm::mat4 modelView = worldView * modelWorld;
     glm::mat4 modelViewProjection = projection * modelView;

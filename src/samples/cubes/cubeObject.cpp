@@ -305,7 +305,7 @@ namespace mc {namespace samples { namespace cubes {
 
   void CubeObject::draw(const glm::mat4 &modelWorld,
       const glm::mat4 &worldView, const glm::mat4 &projection,
-      float alpha, bool debug) const
+      float alpha, bool debug)
   {
     // Compute the matrices we need for the shaders
     glm::mat4 modelView = worldView * modelWorld;

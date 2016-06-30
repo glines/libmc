@@ -21,41 +21,65 @@
  * IN THE SOFTWARE.
  */
 
+#include "generateTerrainTask.h"
+
 #include "terrainGenerator.h"
 
 namespace mc { namespace samples { namespace terrain {
   TerrainGenerator::TerrainGenerator(const ScalarField &sf)
-    : m_sf(sf)
+    : m_sf(sf), m_workers(std::thread::hardware_concurrency())
   {
-  }
-
-  void TerrainGenerator::m_generateTerrain() {
-    // TODO: Wait for requests to come in
-    // TODO: Generate a mesh
-    // TODO: Add a mesh to the recent mesh queue
   }
 
   void TerrainGenerator::m_enqueueNode(const LodTree::Node &node) {
     // TODO: We need to know the node block and the level of detail
+    // TODO: Create a task for generating the terrain at this node
+    auto terrainTask = std::shared_ptr<GenerateTerrainTask>(
+        new GenerateTerrainTask(
+          node.block(),  // block
+          node.lod(),  // lod
+          this  // generator
+          ));
+    m_workers.dispatch(terrainTask);
   }
 
   void TerrainGenerator::requestDetail(
       const LodTree::Coordinates &block, int lod)
   {
-    // TODO: Traverse the LOD tree and mark all of the levels of detail up to
-    // this one for generation
+    // Traverse the LOD tree and mark all of the levels of detail up to this
+    // one for generation
     auto node = m_lodTree.getNode(block, lod).get();
-    while (node) {
+    bool done = false;
+    while (node && !done) {
       switch (node->status()) {
         case LodTree::Node::Status::NOT_GENERATED:
           node->setStatus(LodTree::Node::Status::MARKED);
           m_enqueueNode(*node);
+          break;
+        default:
+          // The mesh for this node has already been considerd, so all of its
+          // parent nodes at lower levels of detail must have already been
+          // considered.
+          done = true;
           break;
       }
       node = node->parent();
     }
   }
 
-  std::shared_ptr<TerrainMesh> TerrainGenerator::getRecent() {
+  void TerrainGenerator::addRecentMesh(std::shared_ptr<TerrainMesh> mesh) {
+    // Add this mesh to the list of recent meshes
+    std::unique_lock<std::mutex> lock(m_recentMeshesMutex);
+    m_recentMeshes.push(mesh);
+  }
+
+  std::shared_ptr<TerrainMesh> TerrainGenerator::getRecentMesh() {
+    std::unique_lock<std::mutex> lock(m_recentMeshesMutex);
+    if (m_recentMeshes.empty())
+      return nullptr;
+    // Remove and return a recent mesh from the queue of recent meshes
+    auto result = m_recentMeshes.front();
+    m_recentMeshes.pop();
+    return result;
   }
 } } }

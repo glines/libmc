@@ -48,7 +48,7 @@ namespace mc { namespace samples {
   }
 
   void SceneObject::m_draw(Transform &modelWorld, const glm::mat4 &worldView,
-      const glm::mat4 &projection, float alpha, bool debug) const
+      const glm::mat4 &projection, float alpha, bool debug)
   {
     TransformRAII mw(modelWorld);
     // Translate the object into position

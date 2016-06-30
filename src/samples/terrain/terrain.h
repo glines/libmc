@@ -40,10 +40,12 @@ namespace mc { namespace samples {
     class Terrain : public SceneObject {
       private:
         std::shared_ptr<Camera> m_camera;
+        // FIXME: There are two LOD tree objects, one in Terrain and one in
+        // TerrainGenerator.
         LodTree m_lodTree;
         /* std::priority_queue<std::shared_ptr<LodNode>> m_meshQueue; */
 
-        int m_lastBlock[3];
+        LodTree::Coordinates m_lastBlock;
 
         TerrainGenerator m_terrainGenerator;
         GLuint m_cubeWireframeVertices, m_cubeWireframeIndices;
@@ -60,8 +62,9 @@ namespace mc { namespace samples {
             const glm::mat4 &projection) const;
 
         void m_enqueueTerrain(const glm::vec3 &cameraPos);
-        void m_posToBlock(const glm::vec3 &pos, int *block);
       public:
+        static constexpr int MINIMUM_LOD = 8;
+
         /**
          * Construct a voxel terrain object.
          *

@@ -21,23 +21,32 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef MC_SAMPLES_COMMON_TASK_H_
-#define MC_SAMPLES_COMMON_TASK_H_
+#include "terrainGenerator.h"
+#include "terrainMesh.h"
 
-namespace mc { namespace samples {
-  /**
-   * Pure virtual class that defines a task to be run by a Worker object in a
-   * thread.
-   */
-  class Task {
-    public:
-      Task();
-      virtual ~Task();
+#include "generateTerrainTask.h"
 
-      virtual void run() = 0;
+namespace mc { namespace samples { namespace terrain {
+  GenerateTerrainTask::GenerateTerrainTask(
+      const LodTree::Coordinates block, int lod,
+      TerrainGenerator *generator)
+    : m_generator(generator), m_block(block), m_lod(lod)
+  {
+  }
 
-      virtual int priority() const { return 0; }
-  };
-} }
-
-#endif
+  void GenerateTerrainTask::run() {
+    // TODO: Obtain a pointer to the sample field from the terrain generator
+    auto sf = m_generator->sf();
+    // TODO: Build a terrain mesh
+    // FIXME: The MeshObject class most certainly makes some GL calls here
+    auto mesh = std::shared_ptr<TerrainMesh>(
+        new TerrainMesh(sf, m_block, m_lod));
+    fprintf(stderr, "Generating mesh at block: (%d, %d, %d), lod: %d\n",
+        m_block.x,
+        m_block.y,
+        m_block.z,
+        m_lod);
+    // TODO: Notify the terrain generator that we have a mesh
+    m_generator->addRecentMesh(mesh);
+  }
+} } }

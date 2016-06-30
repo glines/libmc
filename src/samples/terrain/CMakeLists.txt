@@ -1,4 +1,5 @@
 add_executable(terrain
+    generateTerrainTask.cpp
     lodTree.cpp
     main.cpp
     terrain.cpp

@@ -313,25 +313,34 @@ namespace mc { namespace samples { namespace terrain {
               const Coordinates &block, int lod);
 
           /**
-           * Returns the node at the same level of detail as this node at the
-           * given offset. This offset is given in terms of nodes at this level
-           * of detail, i.e. an offset of 2 would refer to a node 2 nodes over,
-           * not two voxel blocks over. If the node at the offset does not
-           * exist, then it and its parent nodes are created.
+           * This method is used to check whether or not this node's voxel
+           * block position is aligned to the lattice grid for this node's
+           * level of detail. All nodes (other than the root node, which
+           * straddles the origin) should be aligned in order for the LOD tree
+           * to work correctly.
            *
-           * \param offset The offset given in terms of nodes at this level of
-           * detail adjacent to this node. 
-           * \return Shared pointer to the node at the offset relative to this
-           * node.
+           * \return True if this node is aligned to the lattice grid for this
+           * node's level of detail, false otherwise.
            */
-          std::shared_ptr<Node> getRelativeNode(
-              const Coordinates &offset);
+          bool isAligned() const;
       };
     private:
       std::shared_ptr<Node> m_root;
 
       void m_grow(const Coordinates &block, int lod);
+      void m_alignBlockToLod(const Coordinates &block, int lod,
+          Coordinates *alignedBlock);
     public:
+      /**
+       * Finds the coordinates of the voxel block that the point at the
+       * given world space coordinates would reside in.
+       *
+       * \param pos The world position of the point in world space coordinates.
+       * \param block Set to the coordinates of the voxel block that
+       * contain the given point.
+       */
+      static void posToBlock(const glm::vec3 &pos, Coordinates *block);
+
       /**
        * Constructs a LOD tree which contains no terrain.
        */
@@ -341,8 +350,9 @@ namespace mc { namespace samples { namespace terrain {
        * Returns the LOD node located at the given block for the given level of
        * detail. If that node does not exist, it and its parent nodes are
        * created when this method is called. If the given block coordinates do
-       * not align to the given level of detail, then a null pointer is
-       * returned.
+       * not align to the given level of detail, then they are made to align to
+       * the given level of detail; the returned node might not have the given
+       * block coordinates.
        *
        * \param block The integer coordinates of the node to retrieve.
        * \param lod The level of detail at which the node resides, with the
@@ -350,6 +360,22 @@ namespace mc { namespace samples { namespace terrain {
        */
       std::shared_ptr<Node> getNode(
           const Coordinates &block, int lod = 0);
+
+      /**
+       * Returns the node at the same level of detail as the given node at the
+       * given offset. This offset is given in terms of nodes at this level of
+       * detail, i.e. an offset of 2 would refer to a node 2 nodes over, not
+       * two voxel blocks over. If the node at the offset does not exist, then
+       * it and its parent nodes are created.
+       *
+       * \param node The originating node of which to find a relative node.
+       * \param offset The offset given in terms of nodes at the same level of
+       * detail adjacent to the given node node. 
+       * \return Shared pointer to the node at the offset relative to this
+       * node.
+       */
+      std::shared_ptr<Node> getRelativeNode(
+          const Node &node, const Coordinates &offset);
 
       /**
        * Returns an iterator starting at the octree root for iterating over the

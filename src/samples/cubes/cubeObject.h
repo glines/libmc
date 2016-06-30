@@ -115,7 +115,7 @@ namespace mc { namespace samples {
          */
         void draw(const glm::mat4 &modelWorld,
             const glm::mat4 &worldView, const glm::mat4 &projection,
-            float alpha, bool debug) const;
+            float alpha, bool debug);
 
         /**
          * Returns the index of the cube being represented by this cube object.

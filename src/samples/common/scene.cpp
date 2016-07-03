@@ -36,9 +36,17 @@ namespace mc { namespace samples {
     // TODO
   }
 
+  void Scene::removeObject(const SceneObject *address) {
+    auto iterator = m_objects.find(address);
+    assert(iterator != m_objects.end());
+    // FIXME: Remove this node from its parent
+//    iterator->parent()->removeChild(address);
+    m_objects.erase(address);
+  }
+
   bool Scene::handleEvent(const SDL_Event &event) {
     for (auto object : m_objects) {
-      if (object->handleEvent(event))
+      if (object.second->handleEvent(event))
         return true;
     }
     return false;
@@ -47,7 +55,7 @@ namespace mc { namespace samples {
   void Scene::tick(float dt) {
     // Advance the simulation on all top-level scene objects
     for (auto object : this->m_objects) {
-      object->m_tick(dt);
+      object.second->m_tick(dt);
     }
   }
 
@@ -65,7 +73,7 @@ namespace mc { namespace samples {
 
     // Iterate through all top-level scene objects and draw them
     for (auto object : this->m_objects) {
-      object->m_draw(
+      object.second->m_draw(
           modelWorld,
           worldView,
           projection,

@@ -25,6 +25,7 @@
 #include <cstdlib>
 #include <cstring>
 
+#include "terrain.h"
 #include "terrainMesh.h"
 
 #include "lodTree.h"
@@ -54,7 +55,7 @@ namespace mc { namespace samples { namespace terrain {
     block.y = -1;
     block.z = -1;
     m_root = std::shared_ptr<Node>(
-        new Node(block, 1, nullptr));
+        new Node(block, 1, nullptr, -1));
   }
 
   void LodTree::m_grow(const Coordinates &block, int lod) {
@@ -76,11 +77,12 @@ namespace mc { namespace samples { namespace terrain {
         Coordinates newBlock;
         m_root->m_childIndexBlock(i, &newBlock);
         auto newChild = std::shared_ptr<Node>(
-            new Node(newBlock, m_root->lod() - 1, m_root.get()));
+            new Node(newBlock, m_root->lod() - 1, m_root.get(), i));
         m_root->m_children[i] = newChild;
         int index = newChild->m_childIndexContainingBlock(oldChild->block());
         newChild->m_children[index] = oldChild;
         oldChild->m_parent = newChild.get();
+        oldChild->m_index = index;
       }
     } while (!m_root->contains(block, lod));
   }
@@ -102,13 +104,6 @@ namespace mc { namespace samples { namespace terrain {
     // level of detail
     LodTree::Coordinates alignedBlock;
     m_alignBlockToLod(block, lod, &alignedBlock);
-    if (!m_root) {
-      // Since the octree is empty, we can add this node as the root node. When
-      // more nodes are added, the octree growing algorithms will naturally
-      // adjust the root node of the tree.
-      m_root = std::shared_ptr<Node>(
-          new Node(alignedBlock, lod, nullptr));
-    }
     if (!m_root->contains(alignedBlock, lod)) {
       // The given block and lod are not contained in the octree root, so we
       // must grow the octree and give it a new root node.
@@ -119,9 +114,9 @@ namespace mc { namespace samples { namespace terrain {
       assert(memcmp(&alignedBlock, &m_root->block(), sizeof(alignedBlock)) == 0);
       return m_root;
     }
-    // The getChild() method for LodTree::Node objects will automatically
+    // The getDescendant() method for LodTree::Node objects will automatically
     // create the node if it does not exist yet.
-    auto node = m_root->getChild(alignedBlock, lod);
+    auto node = m_root->getDescendant(alignedBlock, lod);
     assert(node);
     return node;
   }
@@ -139,8 +134,10 @@ namespace mc { namespace samples { namespace terrain {
     return result;
   }
 
-  LodTree::Node::Node(const Coordinates &block, int lod, Node *parent)
-    : m_block(block), m_lod(lod), m_parent(parent)
+  LodTree::Node::Node(
+      const Coordinates &block, int lod, Node *parent, int childIndex)
+    : m_block(block), m_lod(lod), m_parent(parent), m_drawableChildrenCount(0),
+    m_index(childIndex), m_state(State::INITIAL)
   {
   }
 
@@ -226,7 +223,8 @@ namespace mc { namespace samples { namespace terrain {
         new Node(
           block,  // block position
           m_lod - 1,  // level of detail
-          this  // parent
+          this,  // parent
+          index  // childIndex
           ));
     return m_children[index];
   }
@@ -289,24 +287,31 @@ namespace mc { namespace samples { namespace terrain {
   }
 
   std::shared_ptr<LodTree::Node> LodTree::Node::getChild(
+      int index)
+  {
+    std::shared_ptr<Node> child = m_children[index];
+    if (!child) {
+      // Create children as necessary
+      child = m_createChild(index);
+    }
+    return child;
+  }
+
+  std::shared_ptr<LodTree::Node> LodTree::Node::getDescendant(
       const Coordinates &block, int lod)
   {
     assert(this->contains(block, lod));
     assert(lod < m_lod);
     // Determine which of our children this block belongs to
     int index = this->m_childIndexContainingBlock(block);
-    std::shared_ptr<Node> child = m_children[index];
-    if (!child) {
-      // Create children as necessary
-      child = m_createChild(index);
-    }
+    auto child = this->getChild(index);
     if (child->m_lod == lod) {
       assert(memcmp(&child->m_block, &block, sizeof(block)) == 0);
       // The base case, where our child is the node we are looking for
       return child;
     }
     // Recursive call to find the node
-    return child->getChild(block, lod);
+    return child->getDescendant(block, lod);
   }
 
   bool LodTree::Node::isAligned() const {
@@ -316,6 +321,371 @@ namespace mc { namespace samples { namespace terrain {
       return false;
     if (m_block.z & ((1 << m_lod) - 1))
       return false;
+    return true;
+  }
+
+  void LodTree::Node::setMesh(
+      std::shared_ptr<TerrainMesh> mesh,
+      Terrain *terrain)
+  {
+    assert(terrain != nullptr);
+    assert(m_lod <= terrain->minimumLod());
+    assert(this->m_isValidState(terrain));
+    // This method is the entry point to the state machine that manages
+    // incoming meshes
+    State oldState = m_state;
+    // Handle the incoming mesh
+    switch (m_state) {
+      case State::INITIAL:
+        assert(false);  // We must have requested this mesh...
+      case State::REQUESTED:
+        // Set the mesh
+        if (mesh->isEmpty()) {
+          m_mesh = nullptr;
+          m_state = State::EMPTY;
+        } else {
+          m_mesh = mesh;
+          m_state = State::DRAWABLE;
+        }
+        break;
+      case State::DRAWABLE:
+        // Replace the old terrain mesh
+        if (mesh->isEmpty()) {
+          m_mesh = nullptr;
+          m_state = State::EMPTY;
+        } else {
+          m_mesh = mesh;
+          assert(m_state == State::DRAWABLE);
+        }
+        break;
+      case State::EMPTY:
+        // Replace the empty space
+        if (mesh->isEmpty()) {
+          assert(!m_mesh);
+          assert(m_state == State::EMPTY);
+        } else {
+          m_mesh = mesh;
+          m_state = State::DRAWABLE;
+        }
+        break;
+      case State::SPLIT:
+        // Store the terrain mesh, even if it does not affect the state and
+        // probably won't be used
+        if (mesh->isEmpty()) {
+          m_mesh = nullptr;
+        } else {
+          m_mesh = mesh;
+        }
+        break;
+      case State::SPLIT_POPPED:
+        // Store the terrain mesh, even if it does not affect the state and
+        // probably won't be used
+        if (mesh->isEmpty()) {
+          m_mesh = nullptr;
+        } else {
+          m_mesh = mesh;
+        }
+        break;
+      case State::POPPED:
+        // Remove the currently popped terrain mesh from the scene
+        assert(terrain->hasChild(m_mesh.get()));
+        terrain->removeChild(m_mesh.get());
+        // Set the terrain mesh
+        if (mesh->isEmpty()) {
+          // Replace the terrain mesh we removed with empty space
+          m_mesh = nullptr;
+          m_state = State::EMPTY_POPPED;
+        } else {
+          // Replace the terrain mesh we removed from the scene
+          m_mesh = mesh;
+          terrain->addChild(m_mesh);
+          assert(m_state == State::POPPED);
+        }
+        break;
+      case State::EMPTY_POPPED:
+        // Set the terrain mesh
+        if (mesh->isEmpty()) {
+          // The terrain is still empty; nothing to do
+          assert(!m_mesh);
+          assert(m_state == State::EMPTY_POPPED);
+        } else {
+          // Replace the empty space with a terrain mesh
+          m_mesh = mesh;
+          terrain->addChild(m_mesh);
+          m_state = State::POPPED;
+        }
+        break;
+    }
+    // Determine if we should pop the current node onto the scene
+    if (m_lod == terrain->minimumLod()) {
+      switch (m_state) {
+        case State::DRAWABLE:
+        case State::EMPTY:
+        case State::SPLIT:
+          this->m_popTerrain(terrain);
+          break;
+        default:
+          break;
+      }
+    } else if (m_parent && m_state != oldState) {
+      assert(this == m_parent->m_children[m_index].get());
+      // Inform our parent of the new state
+      m_parent->m_childStateChanged(oldState, m_index, terrain);
+    }
+    assert(this->m_isValidState(terrain));
+  }
+
+  void LodTree::Node::m_childStateChanged(
+      State oldChildState, int childIndex, Terrain *terrain)
+  {
+    assert(m_lod <= terrain->minimumLod());
+    State oldState = m_state;
+    auto child = m_children[childIndex];
+    // Update the drawable child count for this node
+    switch (oldChildState) {
+      case State::INITIAL:
+      case State::REQUESTED:
+        switch (child->state()) {
+          case State::DRAWABLE:
+          case State::EMPTY:
+          case State::SPLIT:
+            assert(m_drawableChildrenCount < 8);
+            m_drawableChildrenCount += 1;
+            break;
+          case State::REQUESTED:
+            break;
+          default:
+            assert(false);
+            break;
+        }
+        break;
+    }
+    // Check if the node recently split
+    switch (m_state) {
+      case State::INITIAL:
+      case State::REQUESTED:
+      case State::DRAWABLE:
+      case State::EMPTY:
+        if (m_drawableChildrenCount == 8) {
+          // We have enough drawable children to split
+          m_state = State::SPLIT;
+        }
+        break;
+      case State::EMPTY_POPPED:
+        if (m_drawableChildrenCount == 8) {
+          // We have enough drawable children to split. Additionally, we can
+          // immediately pop this node's children into the scene since this
+          // node is aready popped.
+          m_state = State::SPLIT_POPPED;
+          // Pop all of our children into the scene
+          for (int i = 0; i < 8; ++i) {
+            m_children[i]->m_popTerrain(terrain);
+          }
+        }
+        break;
+      case State::POPPED:
+        if (m_drawableChildrenCount == 8) {
+          // We have enough drawable children to split. Additionally, we can
+          // immediately pop this node's children into the scene since this
+          // node is aready popped.
+          m_state = State::SPLIT_POPPED;
+          // Remove the old mesh from the scene
+          assert(terrain->hasChild(m_mesh.get()));
+          terrain->removeChild(m_mesh.get());
+          // Pop all of our children into the scene
+          for (int i = 0; i < 8; ++i) {
+            m_children[i]->m_popTerrain(terrain);
+          }
+        }
+        break;
+      case State::SPLIT_POPPED:
+        break;
+    }
+    // Determine if we should pop the current node onto the scene
+    if (m_lod == terrain->minimumLod()) {
+      switch (m_state) {
+        case State::DRAWABLE:
+        case State::EMPTY:
+        case State::SPLIT:
+          this->m_popTerrain(terrain);
+          break;
+        default:
+          break;
+      }
+    } else if (m_parent && m_state != oldState) {
+      assert(this == m_parent->m_children[m_index].get());
+      // Inform our parent of the new state
+      m_parent->m_childStateChanged(oldState, m_index, terrain);
+    }
+    assert(this->m_isValidState(terrain));
+  }
+
+  void LodTree::Node::m_popTerrain(Terrain *terrain) {
+    switch (m_state) {
+      case State::INITIAL:
+      case State::REQUESTED:
+        assert(false);  // We can't pop a node without a generated mesh
+        break;
+      case State::DRAWABLE:
+        // Add the terrain mesh to the scene
+        assert(!terrain->hasChild(m_mesh.get()));
+        terrain->addChild(m_mesh);
+        m_state = State::POPPED;
+        break;
+      case State::EMPTY:
+        // We don't need to add a mesh to the scene for empty space, but at the
+        // same time we need to mark this node as popped so that if the node
+        // splits in the future it can be immediately popped.
+        m_state = State::EMPTY_POPPED;
+        break;
+      case State::EMPTY_POPPED:
+        // Nothing to do; just check that our state is valid
+        assert(!m_mesh);
+        break;
+      case State::POPPED:
+        // Nothing to do; just check that our state is valid
+        assert(m_mesh);
+        assert(terrain->hasChild(m_mesh.get()));
+        break;
+      case State::SPLIT:
+        // Call this method recursively on our children to pop them into the
+        // scene
+        for (int i = 0; i < 8; ++i) {
+          auto child = m_children[i];
+          child->m_popTerrain(terrain);
+        }
+        break;
+      case State::SPLIT_POPPED:
+        // Nothing to do; just check that our state is valid
+        assert(!terrain->hasChild(m_mesh.get()));
+        break;
+    }
+  }
+
+  bool LodTree::Node::m_isValidState(Terrain *terrain) {
+#define ASSERT_AND_RETURN \
+  do { \
+    assert(false); return false; \
+  } while (false)
+    if (m_state == State::VOID) ASSERT_AND_RETURN;
+    // Check the value of the mesh shared pointer
+    switch (m_state) {
+      case State::INITIAL:
+      case State::REQUESTED:
+      case State::EMPTY:
+      case State::EMPTY_POPPED:
+        if (m_mesh) ASSERT_AND_RETURN;
+        break;
+      case State::DRAWABLE:
+      case State::POPPED:
+        if (!m_mesh) ASSERT_AND_RETURN;
+        break;
+      default:
+        break;
+    }
+    // Check for prematurely popped children
+    switch (m_state) {
+      case State::INITIAL:
+      case State::REQUESTED:
+      case State::DRAWABLE:
+      case State::EMPTY:
+      case State::EMPTY_POPPED:
+      case State::POPPED:
+      case State::SPLIT:
+        for (int i = 0; i < 8; ++i) {
+          auto child = m_children[i];
+          if (!child)
+            continue;
+          switch (child->state()) {
+            case State::POPPED:
+            case State::SPLIT_POPPED:
+              // The child of a parent that has not yet been both split and
+              // popped cannot possibly be popped onto the scene yet
+              ASSERT_AND_RETURN;
+          }
+        }
+        break;
+      default:
+        break;
+    }
+    // Check the drawable children count
+    int drawableChildrenCount = 0;
+    for (int i = 0; i < 8; ++i) {
+      auto child = m_children[i];
+      if (!child)
+        continue;
+      switch (child->state()) {
+        case State::DRAWABLE:
+        case State::EMPTY:
+        case State::EMPTY_POPPED:
+        case State::POPPED:
+        case State::SPLIT:
+        case State::SPLIT_POPPED:
+          drawableChildrenCount += 1;
+          break;
+        default:
+          break;
+      }
+    }
+    assert(drawableChildrenCount >= 0);
+    assert(drawableChildrenCount <= 8);
+    if (drawableChildrenCount != m_drawableChildrenCount)
+      ASSERT_AND_RETURN;
+    // Check that the state of this node reflects the drawable children count
+    switch (m_state) {
+      case State::INITIAL:
+      case State::REQUESTED:
+      case State::DRAWABLE:
+      case State::EMPTY:
+      case State::EMPTY_POPPED:
+      case State::POPPED:
+        // This node should not have enough drawable children to split
+        if (drawableChildrenCount == 8)
+          ASSERT_AND_RETURN;
+        break;
+      case State::SPLIT:
+      case State::SPLIT_POPPED:
+        // This node must have enough drawable children to split
+        if (drawableChildrenCount != 8)
+          ASSERT_AND_RETURN;
+        break;
+      default:
+        assert(false);
+    }
+    // Check the pointer to our terrain mesh
+    switch (m_state) {
+      case State::INITIAL:
+      case State::REQUESTED:
+      case State::EMPTY:
+      case State::EMPTY_POPPED:
+        if (m_mesh)
+          ASSERT_AND_RETURN;
+        break;
+      case State::DRAWABLE:
+      case State::POPPED:
+        if (!m_mesh)
+          ASSERT_AND_RETURN;
+        break;
+    }
+    // Check that the popped state of our terrain mesh is valid
+    switch (m_state) {
+      case State::INITIAL:
+      case State::REQUESTED:
+      case State::DRAWABLE:
+      case State::EMPTY:
+      case State::EMPTY_POPPED:
+      case State::SPLIT:
+      case State::SPLIT_POPPED:
+        if (terrain->hasChild(m_mesh.get()))
+          ASSERT_AND_RETURN;
+        break;
+      case State::POPPED:
+        if (!terrain->hasChild(m_mesh.get()))
+          ASSERT_AND_RETURN;
+        break;
+      default:
+        assert(false);
+    }
     return true;
   }
 

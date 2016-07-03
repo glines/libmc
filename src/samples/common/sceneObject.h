@@ -38,7 +38,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <memory>
-#include <vector>
+#include <unordered_map>
 
 namespace mc { namespace samples {
   class Transform;
@@ -56,7 +56,10 @@ namespace mc { namespace samples {
       glm::vec3 m_position, m_prevPosition;
       glm::quat m_orientation, m_prevOrientation;
 
-      std::vector<std::shared_ptr<SceneObject>> m_children;
+      std::unordered_map<
+        const SceneObject *,
+        std::shared_ptr<SceneObject>
+        > m_children;
 
       /**
        * This method recursively advances the simulation of this object and all
@@ -130,10 +133,30 @@ namespace mc { namespace samples {
        * Adds a scene object as a child of this scene object.
        *
        * \param child Child scene object to add.
+       *
+       * \sa removeChild()
        */
       void addChild(std::shared_ptr<SceneObject> child) {
-        m_children.push_back(child);
+        m_children.insert({child.get(), child});
       }
+
+      /**
+       * \param The address of the child scene object to look for.
+       * \return True if a scene object with the given address is a child of
+       * this node, false otherwise.
+       */
+      bool hasChild(const SceneObject *address) {
+        return m_children.find(address) != m_children.end();
+      }
+
+      /**
+       * Removes the child of this scene object with the given address.
+       *
+       * \param address The memory address of the child to remove.
+       *
+       * \sa addChild()
+       */
+      void removeChild(const SceneObject *address);
 
       /**
        * Derived classes can implement this to receive an SDL event. All SDL

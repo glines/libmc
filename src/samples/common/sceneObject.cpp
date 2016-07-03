@@ -41,9 +41,12 @@ namespace mc { namespace samples {
     // Delegate the actual simulation to derived classes
     this->tick(dt);
 
+    // FIXME: We should not be ticking all of the children, since we might have
+    // large compound objects that are static. Terrain is a good example of
+    // this.
     // Tick all of our children
-    for (auto child : this->m_children) {
-      child->m_tick(dt);
+    for (auto child : m_children) {
+      child.second->m_tick(dt);
     }
   }
 
@@ -61,7 +64,15 @@ namespace mc { namespace samples {
 
     // Draw our children
     for (auto child : m_children) {
-      child->m_draw(mw, worldView, projection, alpha, debug);
+      child.second->m_draw(mw, worldView, projection, alpha, debug);
     }
+  }
+
+  void SceneObject::removeChild(const SceneObject *address) {
+    auto iterator = m_children.find(address);
+    assert(iterator != m_children.end());
+    // TODO: Set the m_parent member of this child to nullptr (SceneObjects
+    // do not have m_parent members at the time of this writing).
+    m_children.erase(iterator);
   }
 } }

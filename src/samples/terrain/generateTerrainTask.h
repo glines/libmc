@@ -28,7 +28,7 @@
 #include "lodTree.h"
 
 namespace mc { namespace samples { namespace terrain {
-  class TerrainGenerator;
+  class Terrain;
   /**
    * Class that represents the task of generating a single terrain mesh object
    * for a given terrain mesh generator. Terrain generation tasks can be
@@ -41,17 +41,16 @@ namespace mc { namespace samples { namespace terrain {
    */
   class GenerateTerrainTask : public Task {
     private:
-      TerrainGenerator *m_generator;
-      LodTree::Coordinates m_block;
-      int m_lod;
+      Terrain *m_terrain;
+      std::shared_ptr<LodTree::Node> m_node;
     public:
       GenerateTerrainTask(
-          const LodTree::Coordinates block, int lod,
-          TerrainGenerator *generator);
+          std::shared_ptr<LodTree::Node> m_node,
+          Terrain *terrain);
 
       void run();
 
-      int priority() const { return m_lod; }
+      int priority() const { return m_node->lod(); }
   };
 } } }
 

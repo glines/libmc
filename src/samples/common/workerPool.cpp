@@ -21,6 +21,8 @@
  * IN THE SOFTWARE.
  */
 
+#include <cstdio>
+
 #include "task.h"
 #include "worker.h"
 

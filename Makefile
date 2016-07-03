@@ -18,9 +18,12 @@ build-html: lua-js
 .PHONY: build-gcov
 build-gcov:
 	mkdir -p ./build-gcov
-	export CXXFLAGS="-fprofile-arcs -ftest-coverage" ; \
-	export CFLAGS="-fprofile-arcs -ftest-coverage" ; \
-	cd ./build-gcov && cmake .. && make VERBOSE=1 -j $(num_threads)
+	cd ./build-gcov && cmake -D BUILD_COVERAGE=ON .. && make VERBOSE=1 -j $(num_threads)
+
+.PHONY: build-gprof
+build-gprof:
+	mkdir -p ./build-gprof
+	cd ./build-gprof && cmake -D BUILD_PROFILE=ON .. && make VERBOSE=1 -j $(num_threads)
 
 .PHONY: lua-js
 lua-js:
@@ -58,4 +61,5 @@ clean:
 	-rm -rf ./build
 	-rm -rf ./build-html
 	-rm -rf ./build-gcov
+	-rm -rf ./build-gprof
 	-rm -rf ./extern/lua-js-{build,install}

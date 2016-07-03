@@ -21,32 +21,32 @@
  * IN THE SOFTWARE.
  */
 
-#include "terrainGenerator.h"
+#include <cstdio>
+
+#include "terrain.h"
 #include "terrainMesh.h"
 
 #include "generateTerrainTask.h"
 
 namespace mc { namespace samples { namespace terrain {
   GenerateTerrainTask::GenerateTerrainTask(
-      const LodTree::Coordinates block, int lod,
-      TerrainGenerator *generator)
-    : m_generator(generator), m_block(block), m_lod(lod)
+      std::shared_ptr<LodTree::Node> node,
+      Terrain *terrain)
+    : m_terrain(terrain), m_node(node)
   {
   }
 
   void GenerateTerrainTask::run() {
-    // TODO: Obtain a pointer to the sample field from the terrain generator
-    auto sf = m_generator->sf();
-    // TODO: Build a terrain mesh
-    // FIXME: The MeshObject class most certainly makes some GL calls here
+    // Generate terrain using the scalar field for this terrain object
+    auto sf = m_terrain->sf();
     auto mesh = std::shared_ptr<TerrainMesh>(
-        new TerrainMesh(sf, m_block, m_lod));
+        new TerrainMesh(sf, m_node->block(), m_node->lod()));
     fprintf(stderr, "Generating mesh at block: (%d, %d, %d), lod: %d\n",
-        m_block.x,
-        m_block.y,
-        m_block.z,
-        m_lod);
-    // TODO: Notify the terrain generator that we have a mesh
-    m_generator->addRecentMesh(mesh);
+        m_node->block().x,
+        m_node->block().y,
+        m_node->block().z,
+        m_node->lod());
+    // Notify the terrain object that we have a mesh
+    m_terrain->addRecentMesh(mesh, m_node);
   }
 } } }

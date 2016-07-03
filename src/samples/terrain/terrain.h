@@ -24,9 +24,14 @@
 #ifndef MC_SAMPLES_TERRAIN_TERRAIN_H_
 #define MC_SAMPLES_TERRAIN_TERRAIN_H_
 
+#include <GL/glew.h>
+#include <mcxx/scalarField.h>
+#include <mutex>
+#include <queue>
+
 #include "../common/sceneObject.h"
+#include "../common/workerPool.h"
 #include "lodTree.h"
-#include "terrainGenerator.h"
 
 namespace mc { namespace samples {
   class Camera;
@@ -39,21 +44,31 @@ namespace mc { namespace samples {
      */
     class Terrain : public SceneObject {
       private:
-        std::shared_ptr<Camera> m_camera;
-        // FIXME: There are two LOD tree objects, one in Terrain and one in
-        // TerrainGenerator.
-        LodTree m_lodTree;
-        /* std::priority_queue<std::shared_ptr<LodNode>> m_meshQueue; */
-
-        LodTree::Coordinates m_lastBlock;
-
-        TerrainGenerator m_terrainGenerator;
-        GLuint m_cubeWireframeVertices, m_cubeWireframeIndices;
-
         typedef struct WireframeVertex {
           float pos[3];
           float color[3];
         } WireframeVertex;
+
+        ScalarField m_sf;
+
+        LodTree m_lodTree;
+        int m_minimumLod;
+
+        typedef struct RecentMesh {
+          std::shared_ptr<TerrainMesh> mesh;
+          std::shared_ptr<LodTree::Node> node;
+        } RecentMesh;
+        std::queue<RecentMesh> m_recentMeshes;
+        std::mutex m_recentMeshesMutex;
+
+        WorkerPool m_workers;
+
+        std::shared_ptr<Camera> m_camera;
+        LodTree::Coordinates m_lastCameraBlock;
+
+        LodTree::Coordinates m_lastBlock;
+
+        GLuint m_cubeWireframeVertices, m_cubeWireframeIndices;
 
         void m_generateCubeWireframe();
         void m_drawLodOctree(
@@ -61,20 +76,99 @@ namespace mc { namespace samples {
             const glm::mat4 &worldView,
             const glm::mat4 &projection) const;
 
-        void m_enqueueTerrain(const glm::vec3 &cameraPos);
+        /**
+         * Updates the terrain generation priorities based on the state of the
+         * given camera. This method is called frequently so that the terrain
+         * generator can update the terrain as the position, orientation, and
+         * projection of the camera changes.
+         */
+        void m_updateCamera();
+
+        void m_requestDetail(LodTree::Node &node);
+        void m_generateTerrain(std::shared_ptr<LodTree::Node> node);
+
+        void m_handleNewMesh(
+            std::shared_ptr<TerrainMesh> mesh,
+            std::shared_ptr<LodTree::Node> node);
+
+        void m_popNode(std::shared_ptr<LodTree::Node> node);
+
+        /**
+         * This method removes a recently generated terrain mesh from the
+         * recently generated queue and returns it. When there are no more
+         * recently generated meshes to return, this method returns a struct
+         * filled with null pointers.
+         *
+         * Since the terrain meshes are added from a thread separate from the
+         * main thread, this method is made thread safe.
+         *
+         * \return Struct containing shared pointers to a recently generated
+         * mesh and its corresponding node, or struct filled with null pointers
+         * if there are no more recently generated meshes.
+         */
+        RecentMesh m_getRecentMesh();
       public:
         static constexpr int MINIMUM_LOD = 8;
 
         /**
          * Construct a voxel terrain object.
          *
+         * This class encapsulates the complicated heuristics used to determine
+         * which terrain meshes should be generated when and at what level of
+         * detail. The class generates terrain meshs meshes at different levels
+         * of detail based on the position and orientation of the camera. These
+         * meshes are generated in separate threads, and once the meshes have
+         * finished generating they are added to a queue to be added to the
+         * scene on the next frame.
+         *
+         * Additionally, old meshes at levels of detail that are no longer
+         * needed are periodically culled from the scene to reduce the number
+         * of polygons and draw calls.
+         *
          * \param camera The camera viewing the terrain, the position and
          * orientation of which determine the level of detail of the terrain
          * generated.
+         * \param minimumLod The lowest level of detail that this terrain
+         * generator will render. This value determines how large the lowest
+         * resolution meshes will be.
          *
          * \todo Allow the user to pass a scalar field functor.
          */
-        Terrain(std::shared_ptr<Camera> camera);
+        Terrain(
+            std::shared_ptr<Camera> camera,
+            int minimumLod = 8);
+
+        /**
+         * \return A reference to the scalar field whose isosurface defines the
+         * surface of the terrain.
+         */
+        const ScalarField &sf() const { return m_sf; }
+
+        /**
+         * This method returns the lowest level of detail that this terrain
+         * object will generate. This value ultimately decides how far up the
+         * octree meshes will be generated, and how far to the horizon the
+         * terrain will reach.
+         * \return The lowest level of detail that this terrain object will
+         * generate.
+         */
+        int minimumLod() const { return m_minimumLod; }
+
+        /**
+         * Method adds the given mesh to the queue of recently generated meshes.
+         * This is called from the GenerateTerrainTask to pass meshes 
+         *
+         * Since this method is intended to be called from a separate thread,
+         * the method is made thread safe.
+         *
+         * \param mesh Shared pointer to the terrain mesh being added.
+         * \param block The coordinates of the voxel block that this mesh
+         * occupies.
+         * \param lod The level of detail of this mesh.
+         */
+        void addRecentMesh(
+            std::shared_ptr<TerrainMesh> mesh,
+            std::shared_ptr<LodTree::Node> node);
 
         /**
          * Implements the tick() method to update the terrain mesh LOD as the
@@ -90,7 +184,7 @@ namespace mc { namespace samples {
          */
         void draw(const glm::mat4 &modelWorld,
             const glm::mat4 &worldView, const glm::mat4 &projection,
-            float alpha, bool debug) const;
+            float alpha, bool debug);
     };
   }
 } }

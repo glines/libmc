@@ -34,6 +34,7 @@ extern "C" {
 #include "../common/glError.h"
 #include "../common/shaderProgram.h"
 #include "../common/shaders.h"
+#include "generateTerrainTask.h"
 #include "lodTree.h"
 #include "terrainMesh.h"
 
@@ -47,65 +48,43 @@ namespace mc { namespace samples { namespace terrain {
     return z - (mountains + hills + bumps);
   }
 
-  Terrain::Terrain(std::shared_ptr<Camera> camera)
+  float wave(float x, float y, float z) {
+    float interval = 800.0f;
+    float amplitude = 1000.0f;
+    return z - (cos(x / interval) * sin(y / interval)) * amplitude;
+  }
+
+  Terrain::Terrain(std::shared_ptr<Camera> camera, int minimumLod)
     : SceneObject(glm::vec3(0.0f, 0.0f, 0.0f), glm::quat()),
     m_camera(camera),
-    m_terrainGenerator(terrain)
+    m_sf(wave),
+    m_workers(std::thread::hardware_concurrency()),
+    m_minimumLod(minimumLod)
   {
-    m_lastBlock.x = INT_MAX;
-    m_lastBlock.y = INT_MAX;
-    m_lastBlock.z = INT_MAX;
-    // TODO: Prepare a cache of terrain mesh objects
-    // TODO: Use an octree structure to organize our terrain meshes
-
-    // TODO: We need a background thread for generating these meshes on the fly.
-
-    // XXX: Experimenting with the LOD tree
-    LodTree::Coordinates block;
-    /*
-    block.x = 0;
-    block.y = 0;
-    block.z = 0;
-    m_lodTree.getNode(block, 0);
-    block.x = 1;
-    block.y = 1;
-    block.z = 1;
-    m_lodTree.getNode(block, 0);
-    block.x = 42;
-    block.y = 13;
-    block.z = 90;
-    m_lodTree.getNode(block, 0);
-    block.x = 42;
-    block.y = 13;
-    block.z = -90;
-    m_lodTree.getNode(block, 0);
-    */
+    m_lastCameraBlock.x = INT_MAX;
+    m_lastCameraBlock.y = INT_MAX;
+    m_lastCameraBlock.z = INT_MAX;
 
     // Send debugging vertices to the GL
     m_generateCubeWireframe();
   }
 
   void Terrain::tick(float dt) {
-    // TODO: Check where the camera is currently and generate terrain around it
-    auto cameraPos = m_camera->position();
+    m_updateCamera();
 
-    m_enqueueTerrain(cameraPos);
-
-    // TODO: Add any recently generated terrain to the scene
-    std::shared_ptr<TerrainMesh> mesh;
-    while (mesh = m_terrainGenerator.getRecentMesh()) {
-      if (!mesh->isEmpty()) {
-        this->addChild(mesh);
-      }
+    // Inform nodes of recently generated meshes
+    RecentMesh recentMesh;
+    while ((recentMesh = m_getRecentMesh()).mesh) {
+      m_handleNewMesh(recentMesh.mesh, recentMesh.node);
     }
   }
 
   void Terrain::draw(const glm::mat4 &modelWorld,
       const glm::mat4 &worldView, const glm::mat4 &projection,
-      float alpha, bool debug) const
+      float alpha, bool debug)
   {
     // Draw a wireframe representation of the LOD octree
-    m_drawLodOctree(modelWorld, worldView, projection);
+//    m_drawLodOctree(modelWorld, worldView, projection);
   }
 
   void Terrain::m_generateCubeWireframe() {
@@ -234,52 +213,27 @@ namespace mc { namespace samples { namespace terrain {
     }
   }
 
-  void Terrain::m_enqueueTerrain(const glm::vec3 &cameraPos) {
-    // FIXME: This routine might actually be more at home within the
-    // TerrainGenerator class.
-    // Determine the voxel block that we are currently in
+  void Terrain::m_updateCamera() {
+    // TODO: Add some logic to Terrain::m_updateCamera() that considers the
+    // direction the camera is facing and the viewing angle of the camera's
+    // projection.
+
+    // Check if the camera moved to a different voxel block
     LodTree::Coordinates cameraBlock;
-    LodTree::posToBlock(cameraPos, &cameraBlock);
-    // Check if the voxel block changed
-    if (memcmp(&m_lastBlock, &cameraBlock, sizeof(cameraBlock)) == 0)
+    LodTree::posToBlock(m_camera->position(), &cameraBlock);
+    if (memcmp(&m_lastCameraBlock, &cameraBlock, sizeof(cameraBlock)) == 0)
       return;
     fprintf(stderr, "cameraBlock: (%d, %d, %d)\n",
         cameraBlock.x,
         cameraBlock.y,
         cameraBlock.z);
-    memcpy(&m_lastBlock, &cameraBlock, sizeof(cameraBlock));
-    // TODO: Determine the delta terrain?
-    // TODO: How far out to draw each level of detail? Each level of detail
-    // needs to have at least eight meshes generated for it so that it can
-    // match up with the next higher level of detail.
-    //
-    // The camera is located at a specific node in the octree for which we
-    // would like to generate the highest level of detail. We also want to
-    // generate high level of detail meshes in all nodes adjacent to the node
-    // that the camera is in. We query the LOD tree and mark these nodes, 3^3 =
-    // 27 in total, as the highest level of detail.
-    //
-    // Now, for each marked node, we start by generating meshes of the lowest
-    // level of detail. Since the lower level of detail meshes are orders of
-    // magnitude (by powers of 2) larger than the higher level of detail
-    // meshes, most of these low resolution meshes will cover more than one of
-    // the 27 voxel blocks we are interested in rendering at the highest
-    // resolution.
-    //
-    // How do we decide the order in which to generate meshes? For each of the
-    // 27 high resolution nodes of interest, we submit requests for meshes of
-    // each level of detail at that node. Since meshes must be generated in 2^3
-    // = 8 mesh blocks, each request for a mesh will mark eight nodes on the
-    // octree for generation, although there is much overlap. Each node marked
-    // for mesh generation will be placed into a priority heap ordered by least
-    // level of detail to highest level of detail.
-
-    // Ensure that terrain around this position is enqueued for generation
+    memcpy(&m_lastCameraBlock, &cameraBlock, sizeof(cameraBlock));
 
     // Iterate over all of the levels of detail we want to generate
-    for (int lod = MINIMUM_LOD; lod >= 0; --lod) {
+    for (int lod = m_minimumLod; lod >= 0; --lod) {
+      fprintf(stderr, "lod: %d\n", lod);
       auto cameraNode = m_lodTree.getNode(cameraBlock, lod);
-      // TODO: Iterate over the voxel blocks around the camera
+      // Iterate over the voxel blocks around the camera
       for (int z = -1; z <= 1; ++z) {
         for (int y = -1; y <= 1; ++y) {
           for (int x = -1; x <= 1; ++x) {
@@ -287,14 +241,82 @@ namespace mc { namespace samples { namespace terrain {
             offset.x = x;
             offset.y = y;
             offset.z = z;
-            // XXX: Experiment with the LOD tree
             auto node = m_lodTree.getRelativeNode(*cameraNode, offset);
-            // Mark this node for high LOD generation by the terrain
-            // generator thread
-            m_terrainGenerator.requestDetail(node->block(), lod);
+            // Mark this node for terrain generation at this level of detail
+            m_requestDetail(*node);
           }
         }
       }
     }
+  }
+
+  void Terrain::m_requestDetail(LodTree::Node &node) {
+    // Generate terrain for this node and all of its siblings. It is necessary
+    // to generate terrain for all of the siblings at once so that the meshes
+    // generated will match up with meshes of lower levels of detail in larger
+    // nodes.
+    auto parent = node.parent();
+    fprintf(stderr, "m_requsetDetail: node->lod(): %d\n", node.lod());
+    for (int i = 0; i < 8; ++i) {
+      auto sibling = parent->getChild(i);
+      // FIXME: It doesn't feel right tampering with the node state machine
+      // from outside of the node class, but for now this is acceptable.
+      switch (sibling->state()) {
+        case LodTree::Node::State::INITIAL:
+          sibling->setState(LodTree::Node::State::REQUESTED);
+          m_generateTerrain(sibling);
+          break;
+      }
+    }
+  }
+
+  void Terrain::m_generateTerrain(std::shared_ptr<LodTree::Node> node) {
+    // Create a task for generating the terrain at this node
+    auto terrainTask = std::shared_ptr<GenerateTerrainTask>(
+        new GenerateTerrainTask(
+          node,  // node
+          this  // terrain
+          ));
+    m_workers.dispatch(terrainTask);
+  }
+
+  void Terrain::m_handleNewMesh(
+      std::shared_ptr<TerrainMesh> mesh,
+      std::shared_ptr<LodTree::Node> node)
+  {
+    // Check if we can now add the node and its mesh to the scene
+    fprintf(stderr, "Handling new mesh, block: (%d, %d, %d,), lod: %d\n",
+        node->block().x,
+        node->block().y,
+        node->block().z,
+        node->lod());
+    node->setMesh(mesh, this);
+  }
+
+  void Terrain::addRecentMesh(
+      std::shared_ptr<TerrainMesh> mesh,
+      std::shared_ptr<LodTree::Node> node)
+  {
+    RecentMesh recentMesh;
+    // Add this mesh to the list of recent meshes
+    std::unique_lock<std::mutex> lock(m_recentMeshesMutex);
+    recentMesh.mesh = mesh;
+    recentMesh.node = node;
+    m_recentMeshes.push(recentMesh);
+  }
+
+  Terrain::RecentMesh Terrain::m_getRecentMesh() {
+    RecentMesh result;
+    std::unique_lock<std::mutex> lock(m_recentMeshesMutex);
+    if (m_recentMeshes.empty()) {
+      // Indicate an empty queue with null pointers
+      result.mesh = nullptr;
+      result.node = nullptr;
+      return result;
+    }
+    // Remove and return a recent mesh from the queue of recent meshes
+    result = m_recentMeshes.front();
+    m_recentMeshes.pop();
+    return result;
   }
 } } }

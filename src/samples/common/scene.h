@@ -26,6 +26,7 @@
 
 #include <SDL.h>
 #include <memory>
+#include <unordered_map>
 #include <vector>
 
 namespace mc { namespace samples {
@@ -39,7 +40,9 @@ namespace mc { namespace samples {
    */
   class Scene {
     private:
-      std::vector<std::shared_ptr<SceneObject>> m_objects;
+      std::unordered_map<
+        const SceneObject *,
+        std::shared_ptr<SceneObject>> m_objects;
 
     public:
       /**
@@ -56,16 +59,16 @@ namespace mc { namespace samples {
        * Adds the given scene object to the top level of this graphics scene.
        */
       void addObject(std::shared_ptr<SceneObject> object) {
-        this->m_objects.push_back(object);
+        this->m_objects.insert({object.get(), object});
       }
 
       /**
-       * \return A reference to the array of top-level objects in this graphics
-       * scene.
+       * Locates the scene object with the given memory address and removes
+       * that object from the scene.
+       *
+       * \param address The memory address of the scene object to remove.
        */
-      std::vector<std::shared_ptr<SceneObject>> &sceneObjects() {
-        return this->m_objects;
-      }
+      void removeObject(const SceneObject *address);
 
       /**
        * Allow objects in the scene to handle the given event. All SDL

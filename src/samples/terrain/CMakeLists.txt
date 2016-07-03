@@ -3,7 +3,6 @@ add_executable(terrain
     lodTree.cpp
     main.cpp
     terrain.cpp
-    terrainGenerator.cpp
     terrainMesh.cpp
     )
 target_link_libraries(terrain

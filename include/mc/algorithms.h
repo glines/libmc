@@ -148,6 +148,7 @@ typedef void * mcAlgorithmParams;
  */
 typedef enum mcAlgorithmParamsType {
   MC_CUBERILLE_PARAMS,
+  MC_TRANSVOXEL_PARAMS,
 } mcAlgorithmParamsType;
 
 /** @} */

@@ -318,7 +318,7 @@ namespace mc { namespace samples { namespace terrain {
            * \return Size of one side of this node in terms of world space
            * units.
            */
-          float size();
+          float size() const;
 
           /**
            * Returns an iterator starting at this LOD tree node for iterating
@@ -415,8 +415,6 @@ namespace mc { namespace samples { namespace terrain {
            * \param lod The level of detail to look at.
            * \return Pointer to the node at the given block coordinates and
            * level of detail.
-           *
-           * \todo This should be renamed to getDescendant().
            */
           std::shared_ptr<Node> getDescendant(
               const Coordinates &block, int lod);

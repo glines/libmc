@@ -21,10 +21,26 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef MC_ALGORITHMS_PATCH_H_
-#define MC_ALGORITHMS_PATCH_H_
-
-#include <mc/algorithms/patch/common.h>
-#include <mc/algorithms/patch/patch.h>
-
-#endif
+namespace mc { namespace samples { namespace transition {
+  /**
+   * This scene object class demonstrates the transition between voxel meshes
+   * of different resolutions. This is particularly useful when developing
+   * algorithms such as Eric Lengyel's Transvoxel algorithm.
+   *
+   * Since voxel transitions involve much more complicated scenarios than with
+   * ordinary marching cubes, the TransitionObject class cannot be configured
+   * with a simple bitwise specification of the scalar field function as with
+   * the CubeObject class. Instead, the TransitionObject class uses an octree
+   * specification for representing the scalar field function that models the
+   * different transition scenarios. Corners of each node in the octree are
+   * given scalar field values, typically -1.0f or 1.0f.  These values are
+   * interpolated within the volume of the octree in order to calculate the
+   * scalar field function values.
+   */
+  class TransitionObject {
+    public:
+      TransitionObject(
+          const glm::vec3 &position,
+          const glm::quat &orientation);
+  };
+} } }

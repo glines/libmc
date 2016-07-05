@@ -21,10 +21,22 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef MC_ALGORITHMS_PATCH_H_
-#define MC_ALGORITHMS_PATCH_H_
+#ifndef MC_ALGORITHMS_TRANSVOXEL_TRANSVOXEL_H_
+#define MC_ALGORITHMS_TRANSVOXEL_TRANSVOXEL_H_
 
-#include <mc/algorithms/patch/common.h>
-#include <mc/algorithms/patch/patch.h>
+#include <mc/mesh.h>
+#include <mc/scalarField.h>
+#include <mc/vector.h>
+
+typedef struct mcTransvoxelParams {
+  unsigned int transitionFaces;
+} mcTransvoxelParams;
+
+void mcTransvoxel_isosurfaceFromField(
+    mcScalarFieldWithArgs sf, const void *args,
+    unsigned int x_res, unsigned int y_res, unsigned int z_res,
+    const mcVec3 *min, const mcVec3 *max,
+    const mcTransvoxelParams *params,
+    mcMesh *mesh);
 
 #endif

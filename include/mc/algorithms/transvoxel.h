@@ -21,10 +21,9 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef MC_ALGORITHMS_PATCH_H_
-#define MC_ALGORITHMS_PATCH_H_
+#ifndef MC_ALGORITHMS_TRANSVOXEL_H_
+#define MC_ALGORITHMS_TRANSVOXEL_H_
 
-#include <mc/algorithms/patch/common.h>
-#include <mc/algorithms/patch/patch.h>
+#include <mc/algorithms/transvoxel/transvoxel.h>
 
 #endif

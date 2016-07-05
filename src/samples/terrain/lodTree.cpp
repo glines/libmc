@@ -152,7 +152,7 @@ namespace mc { namespace samples { namespace terrain {
     return result;
   }
 
-  float LodTree::Node::size() {
+  float LodTree::Node::size() const {
     return (float)((1 << m_lod) * TerrainMesh::BLOCK_SIZE) *
       TerrainMesh::VOXEL_DELTA;
   }

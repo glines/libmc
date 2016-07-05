@@ -21,7 +21,6 @@
  * IN THE SOFTWARE.
  */
 
-#include <cmath>
 #include <cstdlib>
 
 #ifdef __EMSCRIPTEN__
@@ -31,29 +30,18 @@
 #include "../common/demo.h"
 #include "../common/scene.h"
 #include "../common/wasdCamera.h"
-#include "terrain.h"
+#include "interpolatingOctree.h"
 
 using namespace mc::samples;
-using namespace mc::samples::terrain;
+using namespace mc::samples::transition;
 
-/**
- * Class representing the voxel terrain sample program.
- */
-class TerrainDemo : public Demo {
+class TransitionDemo : public Demo {
   private:
+    std::shared_ptr<InterpolatingOctree> m_octree;
     std::shared_ptr<WasdCamera> m_camera;
-    std::shared_ptr<Terrain> m_terrain;
   public:
-    /**
-     * Construct an object representing the voxel terrain sample program with
-     * the given command line arguments.
-     *
-     * \param argv The number of command line arguments, including the command
-     * image name.
-     * \param argc Array of the command line arguments passed.
-     */
-    TerrainDemo(int argc, char **argv)
-      : Demo(argc, argv, "Terrain Demo")
+    TransitionDemo(int argc, char **argv)
+      : Demo(argc, argv, "Transition Voxel Demo")
     {
       if (this->argError())
         return;
@@ -64,30 +52,41 @@ class TerrainDemo : public Demo {
             80.0f * ((float)M_PI / 180.0f),  // fovy
             0.1f,  // near
             100000.0f,  // far
-            glm::vec3(0.0f, 0.0f, 15.0f),  // position
+            glm::vec3(0.0f, -5.0f, 0.0f),  // position
             glm::angleAxis(
-              (float)M_PI / 4.0f,
+              (float)M_PI / 2.0f,
               glm::vec3(1.0f, 0.0f, 0.0f))  // orientation
             ));
       this->scene()->addObject(m_camera);
       this->setCamera(m_camera);
-      m_terrain = std::shared_ptr<Terrain>(
-          new Terrain(
-            m_camera,  // camera
-            12  // minimumLod
-            ));
-      this->scene()->addObject(m_terrain);
+      m_octree = std::shared_ptr<InterpolatingOctree>(
+          new InterpolatingOctree());
+      this->scene()->addObject(m_octree);
+      // XXX: Test the octree
+      OctreeCoordinates pos;
+      pos.x = 0;
+      pos.y = 0;
+      pos.z = 0;
+      m_octree->getNode(pos, 0);
+      pos.x = 1;
+      pos.y = 1;
+      pos.z = 1;
+      m_octree->getNode(pos, 0);
+      pos.x = 2;
+      pos.y = 2;
+      pos.z = 2;
+      m_octree->getNode(pos, 0);
     }
 };
 
-TerrainDemo *demo;
+TransitionDemo *demo;
 
 void main_loop() {
   demo->mainLoop();
 }
 
 int main(int argc, char **argv) {
-  demo = new TerrainDemo(argc, argv);
+  demo = new TransitionDemo(argc, argv);
   if (demo->argError()) {
     delete demo;
     return EXIT_FAILURE;

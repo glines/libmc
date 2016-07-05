@@ -74,6 +74,14 @@ namespace mc { namespace samples { namespace transition {
        * \param sampleIndex The index of the sample within this node.
        */
       void setSample(float value, int sampleIndex = 0);
+
+      /**
+       * Returns the sample value for this node at the given sample index.
+       *
+       * \param sampleIndex The index of the sample to retrieve.
+       * \return The sample value.
+       */
+      float sample(int sampleIndex) const { return m_samples[sampleIndex]; }
   };
 
   class InterpolatingOctree :
@@ -86,12 +94,22 @@ namespace mc { namespace samples { namespace transition {
         float pos[3];
         float color[3];
       } WireframeVertex;
-      GLuint m_cubeWireframeVertices, m_cubeWireframeIndices;
+      typedef struct BillboardVertex {
+        float pos[3];
+        float tex[2];
+      } BillboardVertex;
+      GLuint m_cubeWireframeVertices, m_cubeWireframeIndices,
+             m_billboardVertices, m_billboardIndices;
 
       float m_defaultSample;
 
       void m_generateCubeWireframe();
+      void m_generateBillboard();
       void m_drawOctreeWireframe(
+          const glm::mat4 &modelWorld,
+          const glm::mat4 &worldView,
+          const glm::mat4 &projection) const;
+      void m_drawSamplePoints(
           const glm::mat4 &modelWorld,
           const glm::mat4 &worldView,
           const glm::mat4 &projection) const;
@@ -102,6 +120,10 @@ namespace mc { namespace samples { namespace transition {
        * is assumed for unspecified samples. The default, and recommended
        * value, for this sample is a positive value, and thus outside of the
        * volume contained by the isosurface.
+       *
+       * \fixme The defaultSample value is not actually used to set the defalut
+       * samples of nodes at this time. It is hard-coded to 1.0f in the
+       * InterpolatingNode class.
        */
       InterpolatingOctree(
           const glm::vec3 &position = glm::vec3(0.0f, 0.0f, 0.0f),

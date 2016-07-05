@@ -185,6 +185,8 @@ namespace mc { namespace samples {
         m_shaderProgram, "lightIntensity");
     m_timeLocation = glGetUniformLocation(
         m_shaderProgram, "time");
+    m_colorLocation = glGetUniformLocation(
+        m_shaderProgram, "color");
 
     m_vertPositionLocation = glGetAttribLocation(
         m_shaderProgram, "vertPosition");

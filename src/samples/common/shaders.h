@@ -53,6 +53,11 @@ namespace mc { namespace samples {
 #define DECLARE_SHADER(shader) \
       static std::shared_ptr<ShaderProgram> shader ## Shader()
 
+      /** Shader for drawing quad billboards. */
+      DECLARE_SHADER(billboard);
+      /** Shader for drawing points as billboards (since WebGL doesn't support
+       * point sprites). */
+      DECLARE_SHADER(billboardPoint);
       /** Shader implementing Gouraud shading. */
       DECLARE_SHADER(gouraud);
       /** Shader for drawing debugging points. */

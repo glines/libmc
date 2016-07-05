@@ -48,6 +48,22 @@ namespace mc { namespace samples {
 #define DEFINE_SHADER(shader) DEFINE_SHADER_BASE(shader, SHADER_DIR)
 
 #ifdef __EMSCRIPTEN__
+#include "assets_shaders_webgl_billboard.vert.c"
+#include "assets_shaders_webgl_billboard.frag.c"
+#else
+#include "assets_shaders_glsl_billboard.vert.c"
+#include "assets_shaders_glsl_billboard.frag.c"
+#endif
+  DEFINE_SHADER(billboard)
+#ifdef __EMSCRIPTEN__
+#include "assets_shaders_webgl_billboardPoint.vert.c"
+#include "assets_shaders_webgl_billboardPoint.frag.c"
+#else
+#include "assets_shaders_glsl_billboardPoint.vert.c"
+#include "assets_shaders_glsl_billboardPoint.frag.c"
+#endif
+  DEFINE_SHADER(billboardPoint)
+#ifdef __EMSCRIPTEN__
 #include "assets_shaders_webgl_gouraud.vert.c"
 #include "assets_shaders_webgl_gouraud.frag.c"
 #else

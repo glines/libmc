@@ -40,6 +40,9 @@ namespace mc { namespace samples { namespace transition {
       int index)
     : OctreeNode(parent, index)
   {
+    for (int i = 0; i < 8; ++i) {
+      m_samples[i] = 1.0f;
+    }
   }
 
   glm::vec3 InterpolatingNode::worldPos() const {
@@ -78,13 +81,13 @@ namespace mc { namespace samples { namespace transition {
           relativeOffset.z = z;
           // NOTE: When the offset is (0, 0, 0), we set the sample value for
           // this node.
+          auto node = this->relativeNode(relativeOffset);
 #ifndef NDEBUG
-          if (x == y == z == 0) {
-            assert(this->hasRelativeNode(relativeOffset));
+          if (x == 0 && y == 0 && z == 0) {
+            assert(node);
           }
 #endif
-          if (this->hasRelativeNode(relativeOffset)) {
-            auto node = this->getRelativeNode(relativeOffset);
+          if (node) {
             int i = 0;
             i |= (relativeOffset.x == 0) ? (xOffset << 0) : ((~xOffset & 1) << 0);
             i |= (relativeOffset.y == 0) ? (yOffset << 1) : ((~yOffset & 1) << 1);
@@ -121,8 +124,9 @@ namespace mc { namespace samples { namespace transition {
       float defaultSample)
     : SceneObject(position, orientation), m_defaultSample(defaultSample)
   {
-    // Upload debugging vertices to the GL
+    // Upload vertices to the GL
     m_generateCubeWireframe();
+    m_generateBillboard();
   }
 
   float InterpolatingOctree::operator()(float x, float y, float z) {
@@ -135,9 +139,10 @@ namespace mc { namespace samples { namespace transition {
   void InterpolatingOctree::setSample(
       const OctreeCoordinates &pos, float value)
   {
-    // TODO: We need to set several samples in the octree
-    // TODO: Find the octree node at the given position
+    // Get the node at the sample position
+    // FIXME: Do we really need to get a node at octree level 0?
     auto node = this->getNode(pos);
+    // Set all nodes around this node recursively
     node->setSample(value);
   }
 
@@ -186,6 +191,45 @@ namespace mc { namespace samples { namespace transition {
         sizeof(unsigned int) * MC_CUBE_NUM_EDGES * 2,  /* size */
         indices,  /* data */
         GL_STATIC_DRAW  /* usage */
+        );
+    FORCE_ASSERT_GL_ERROR();
+  }
+
+  void InterpolatingOctree::m_generateBillboard() {
+    // Make four vertices in a quad arrangement around a center point
+    BillboardVertex vertices[] = {
+      { .pos = { -1.0f, -1.0f, -1.0f, }, .tex = { 0.0f, 0.0f, }, },
+      { .pos = {  1.0f, -1.0f, -1.0f, }, .tex = { 1.0f, 0.0f, }, },
+      { .pos = { -1.0f,  1.0f, -1.0f, }, .tex = { 0.0f, 1.0f, }, },
+      { .pos = {  1.0f,  1.0f, -1.0f, }, .tex = { 1.0f, 1.0f, }, },
+    };
+    // Send the vertex data to the GL
+    glGenBuffers(1, &m_billboardVertices);
+    FORCE_ASSERT_GL_ERROR();
+    glBindBuffer(GL_ARRAY_BUFFER, m_billboardVertices);
+    FORCE_ASSERT_GL_ERROR();
+    glBufferData(
+        GL_ARRAY_BUFFER,  // target
+        sizeof(vertices),  // size
+        vertices,  // data
+        GL_STATIC_DRAW  // usage
+        );
+    FORCE_ASSERT_GL_ERROR();
+    // Make two triangles into a quad from our vertices
+    unsigned int indices[] = {
+      0, 1, 3,
+      3, 2, 0,
+    };
+    // Send the indices to the GL
+    glGenBuffers(1, &m_billboardIndices);
+    FORCE_ASSERT_GL_ERROR();
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_billboardIndices);
+    FORCE_ASSERT_GL_ERROR();
+    glBufferData(
+        GL_ELEMENT_ARRAY_BUFFER,  // target
+        sizeof(indices),  // size
+        indices,  // data
+        GL_STATIC_DRAW  // usage
         );
     FORCE_ASSERT_GL_ERROR();
   }
@@ -241,9 +285,9 @@ namespace mc { namespace samples { namespace transition {
     // Traverse entire octree and draw a cube for each node
     for (auto node : *this) {
       glm::mat4 mw = modelWorld;
-      // Translate the cube wireframe to this node's voxel block position
+      // Translate the cube wireframe to this node's octree position
       mw = glm::translate(mw, node.worldPos());
-      // Scale the cube wireframe according to this node's level of detail
+      // Scale the cube wireframe according to this node's octree level
       mw = glm::scale(mw, glm::vec3(node.size()));
       // Update the model-view transform uniform
       glm::mat4 mv = worldView * mw;
@@ -269,11 +313,131 @@ namespace mc { namespace samples { namespace transition {
     }
   }
 
+  void InterpolatingOctree::m_drawSamplePoints(
+      const glm::mat4 &modelWorld,
+      const glm::mat4 &worldView,
+      const glm::mat4 &projection) const
+  {
+    // Use the billboard shader
+    auto shader = Shaders::billboardPointShader();
+    shader->use();
+
+    // Prepare the uniform values
+    assert(shader->modelViewLocation() != -1);
+    assert(shader->colorLocation() != -1);
+    assert(shader->projectionLocation() != -1);
+    glUniformMatrix4fv(
+        shader->projectionLocation(),  // location
+        1,  // count
+        0,  // transpose
+        glm::value_ptr(projection)  // value
+        );
+    ASSERT_GL_ERROR();
+
+    // Prepare the vertex attributes
+    glBindBuffer(GL_ARRAY_BUFFER, m_billboardVertices);
+    ASSERT_GL_ERROR();
+    assert(shader->vertPositionLocation() != -1);
+    glEnableVertexAttribArray(shader->vertPositionLocation());
+    ASSERT_GL_ERROR();
+    glVertexAttribPointer(
+        shader->vertPositionLocation(),  // index
+        3,  // size
+        GL_FLOAT,  // type
+        0,  // normalized
+        sizeof(BillboardVertex),  // stride
+        &(((BillboardVertex *)0)->pos[0])  // pointer
+        );
+    /*
+    assert(shader->vertTexCoordLocation() != -1);
+    glEnableVertexAttribArray(shader->vertTexCoordLocation());
+    ASSERT_GL_ERROR();
+    glVertexAttribPointer(
+        shader->vertTexCoordLocation(),  // index
+        2,  // size
+        GL_FLOAT,  // type
+        0,  // normalized
+        sizeof(BillboardVertex),  // stride
+        &(((BillboardVertex *)0)->tex[0])  // pointer
+        );
+        */
+
+    // Traverse the octree
+    for (auto node : *this) {
+      // Iterate through each sample in this node
+      for (int i = 0; i < 8; ++i) {
+        // FIXME: Avoid drawing duplicate samples
+        glm::mat4 mw = modelWorld;
+        // Translate the sample to this node's octree position
+        mw = glm::translate(mw, node.worldPos());
+        // Scale the sample to the size of the node
+        mw = glm::scale(mw, glm::vec3(node.size()));
+        // Translate the sample to its correct corner
+        glm::vec3 corner;
+        corner.x = (i & (1 << 0)) ? 1.0f : 0.0f;
+        corner.y = (i & (1 << 1)) ? 1.0f : 0.0f;
+        corner.z = (i & (1 << 2)) ? 1.0f : 0.0f;
+        mw = glm::translate(mw, corner);
+        // Remove the rotation component of the matrix for proper billboarding
+        glm::mat4 mv = worldView * mw;
+        mv[0][0] = 1.0f;
+        mv[0][1] = 0.0f;
+        mv[0][2] = 0.0f;
+        mv[1][0] = 0.0f;
+        mv[1][1] = 1.0f;
+        mv[1][2] = 0.0f;
+        mv[2][0] = 0.0f;
+        mv[2][1] = 0.0f;
+        mv[2][2] = 1.0f;
+        mv = glm::scale(mv, glm::vec3(0.05));  // XXX
+        // Update the model-view transform uniform
+        glUniformMatrix4fv(
+            shader->modelViewLocation(),  // location
+            1,  // count
+            0,  // transpose
+            glm::value_ptr(mv)  // value
+            );
+        ASSERT_GL_ERROR();
+        // Set the color based on the sample value
+        float color[3];
+        if (node.sample(i) > 0) {
+          color[0] = 1.0f;
+          color[1] = 0.0f;
+          color[2] = 0.0f;
+        } else {
+          color[0] = 0.0f;
+          color[1] = 1.0f;
+          color[2] = 0.0f;
+        }
+        glUniform3f(
+            shader->colorLocation(),  // location
+            color[0],  // v0
+            color[1],  // v1
+            color[2]  // v2
+            );
+        ASSERT_GL_ERROR();
+        // Draw the billboarded points
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_billboardIndices);
+        ASSERT_GL_ERROR();
+        glDrawElements(
+            GL_TRIANGLES,  // mode
+            6,  // count
+            GL_UNSIGNED_INT,  // type
+            0  // indices
+            );
+        ASSERT_GL_ERROR();
+      }
+    }
+  }
+
   void InterpolatingOctree::draw(const glm::mat4 &modelWorld,
       const glm::mat4 &worldView, const glm::mat4 &projection,
       float alpha, bool debug)
   {
     // Draw a wireframe for the octree nodes
     m_drawOctreeWireframe(modelWorld, worldView, projection);
+
+    // Draw dots for the sample points
+    m_drawSamplePoints(modelWorld, worldView, projection);
   }
 } } }

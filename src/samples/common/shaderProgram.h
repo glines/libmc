@@ -40,7 +40,7 @@ namespace mc { namespace samples {
       GLuint m_modelViewLocation, m_projectionLocation,
              m_modelViewProjectionLocation, m_normalTransformLocation,
              m_lightPositionLocation, m_lightIntensityLocation,
-             m_timeLocation;
+             m_timeLocation, m_colorLocation;
       GLuint m_vertPositionLocation, m_vertNormalLocation, m_vertColorLocation,
              m_vertTexCoordLocation, m_vertVelocityLocation;
       GLuint m_vertStartTimeLocation;
@@ -131,6 +131,10 @@ namespace mc { namespace samples {
        * \return Location of the current time uniform in the shader.
        */
       GLuint timeLocation() const { return m_timeLocation; }
+      /**
+       * \return Location of the color uniform in the shader.
+       */
+      GLuint colorLocation() const { return m_colorLocation; }
       /**
        * \return Location of the vertex position vertex attribute in the
        * shader.

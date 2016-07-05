@@ -64,6 +64,7 @@ class TransitionDemo : public Demo {
       this->scene()->addObject(m_octree);
       // XXX: Test the octree
       OctreeCoordinates pos;
+      /*
       pos.x = 0;
       pos.y = 0;
       pos.z = 0;
@@ -76,6 +77,11 @@ class TransitionDemo : public Demo {
       pos.y = 2;
       pos.z = 2;
       m_octree->getNode(pos, 0);
+      */
+      pos.x = 0;
+      pos.y = 0;
+      pos.z = 0;
+      m_octree->setSample(pos, -1.0f);
     }
 };
 

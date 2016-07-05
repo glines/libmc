@@ -43,7 +43,7 @@ namespace mc { namespace samples {
     public:
       // FIXME: This is public because we can no longer friend the octree
       // class.
-      int m_childIndexContainingPos(const OctreeCoordinates &pos);
+      int m_childIndexContainingPos(const OctreeCoordinates &pos) const;
 
       class Iterator {
         friend OctreeNode;
@@ -157,30 +157,13 @@ namespace mc { namespace samples {
       bool contains(const OctreeCoordinates &pos, int level) const;
 
       /**
-       * This method searches for a node at the given offset at the same octree
-       * level as this node and returns true if such a node is found.
-       *
-       * The offset is given in terms of nodes, \em not absolute octree
-       * coordinates. For example, an offset of (2, 0, 0) would look for a node
-       * two nodes over in the x-axis direction; it does not look at
-       * this->pos() + (2, 0, 0).
-       *
-       * \param offset The offset of the node to look for relative to this node
-       * at this node's level in the octree.
-       * \return True if a node exists at the relative offset, false otherwise.
-       *
-       * \sa getRelativeNode()
-       */
-      bool hasRelativeNode(const OctreeCoordinates &offset) const;
-
-      /**
        * Returns the node at the same level of the octree as this node at the
        * given offset. This offset is given in terms of nodes at this level of
        * the octree, i.e. an offset of 2 would refer to a node 2 nodes over,
        * not two octree units over.
        *
-       * If the node at the offset does not exist, then it and its parent nodes
-       * are created.
+       * If the node at the offset does not exist, then a null pointer is
+       * returned.
        *
        * \param node The originating node of which to find a relative node.
        * \param offset The offset given in terms of nodes at the same level of
@@ -188,7 +171,7 @@ namespace mc { namespace samples {
        * \return Shared pointer to the node at the offset relative to this
        * node.
        */
-      std::shared_ptr<N> getRelativeNode(const OctreeCoordinates &offset);
+      std::shared_ptr<N> relativeNode(const OctreeCoordinates &offset);
 
       /**
        * Returns an iterator starting at this octree node for iterating over
@@ -344,7 +327,7 @@ namespace mc { namespace samples {
 
   template <class N>
     int OctreeNode<N>::m_childIndexContainingPos(
-        const OctreeCoordinates &pos)
+        const OctreeCoordinates &pos) const
     {
       // We assume that the given position is contained in one of our child
       // nodes.  We can find the index of that child node by leveraging the
@@ -545,25 +528,38 @@ namespace mc { namespace samples {
     }
 
   template <class N>
-    bool OctreeNode<N>::hasRelativeNode(
-        const OctreeCoordinates &offset) const
-    {
-      // TODO
-      assert(false);
-    }
-
-  template <class N>
-    std::shared_ptr<N> OctreeNode<N>::getRelativeNode(
+    std::shared_ptr<N> OctreeNode<N>::relativeNode(
         const OctreeCoordinates &offset)
     {
-      // It is not valid to look for nodes relative to the root node
-      assert(m_parent != nullptr);
+      if (m_parent == nullptr) {
+        // The root node has no relatives
+        return nullptr;
+      }
       assert(this->isAligned());
-      // TODO: This is a difficult method to implement because we must
-      // recursively look for the correct parent node in each direction. For
-      // now it is implemented in the Octree class as a top down search from
-      // the root node.
-      assert(false);
+      // Traverse up the octree until we find a node that straddles the
+      // border between this node and the node we are looking for
+      OctreeCoordinates offsetNodePos;
+      offsetNodePos.x = m_pos.x + (offset.x * (1 << m_level));
+      offsetNodePos.y = m_pos.y + (offset.y * (1 << m_level));
+      offsetNodePos.z = m_pos.z + (offset.z * (1 << m_level));
+      auto parent = m_parent;
+      while (parent && !parent->contains(offsetNodePos, m_level)) {
+        parent = parent->m_parent;
+      }
+      if (parent == nullptr)
+        return nullptr;
+      // Traverse the octree downwards until we find the node
+      int index = parent->m_childIndexContainingPos(offsetNodePos);
+      auto child = parent->m_children[index];
+      while (child && child->m_level > this->m_level) {
+        index = child->m_childIndexContainingPos(offsetNodePos);
+        child = child->m_children[index];
+      }
+      if (!child)
+        return nullptr;
+      assert(memcmp(&child->m_pos, &offsetNodePos, sizeof(offsetNodePos)) == 0);
+      assert(child->m_level == this->m_level);
+      return child;
     }
 
   template <class N>

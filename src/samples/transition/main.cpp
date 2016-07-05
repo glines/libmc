@@ -78,8 +78,26 @@ class TransitionDemo : public Demo {
       pos.z = 2;
       m_octree->getNode(pos, 0);
       */
+      /*
+      pos.x = -1;
+      pos.y = -1;
+      pos.z = -1;
+      m_octree->setSample(pos, -1.0f);
+      */
+      pos.x = -1;
+      pos.y = -1;
+      pos.z = -1;
+      m_octree->setSample(pos, -1.0f);
       pos.x = 0;
+      pos.y = -1;
+      pos.z = -1;
+      m_octree->setSample(pos, -1.0f);
+      pos.x = -1;
       pos.y = 0;
+      pos.z = -1;
+      m_octree->setSample(pos, -1.0f);
+      pos.x = -1;
+      pos.y = -1;
       pos.z = 0;
       m_octree->setSample(pos, -1.0f);
     }

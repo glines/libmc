@@ -37,6 +37,8 @@ namespace mc { namespace samples { namespace transition {
 
       bool m_isValid();
 
+      void m_setSample(float value, int sampleIndex);
+
     public:
       InterpolatingNode(
           InterpolatingNode *parent,

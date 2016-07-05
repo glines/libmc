@@ -168,10 +168,9 @@ namespace mc { namespace samples {
        * \param node The originating node of which to find a relative node.
        * \param offset The offset given in terms of nodes at the same level of
        * the octree adjacent to the given node node. 
-       * \return Shared pointer to the node at the offset relative to this
-       * node.
+       * \return Pointer to the node at the offset relative to this node.
        */
-      std::shared_ptr<N> relativeNode(const OctreeCoordinates &offset);
+      N *relativeNode(const OctreeCoordinates &offset);
 
       /**
        * Returns an iterator starting at this octree node for iterating over
@@ -528,10 +527,13 @@ namespace mc { namespace samples {
     }
 
   template <class N>
-    std::shared_ptr<N> OctreeNode<N>::relativeNode(
+    N *OctreeNode<N>::relativeNode(
         const OctreeCoordinates &offset)
     {
       if (m_parent == nullptr) {
+        if (offset.x == 0 && offset.y == 0 && offset.z == 0) {
+          return static_cast<N*>(this);
+        }
         // The root node has no relatives
         return nullptr;
       }
@@ -559,7 +561,7 @@ namespace mc { namespace samples {
         return nullptr;
       assert(memcmp(&child->m_pos, &offsetNodePos, sizeof(offsetNodePos)) == 0);
       assert(child->m_level == this->m_level);
-      return child;
+      return child.get();
     }
 
   template <class N>

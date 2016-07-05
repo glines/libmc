@@ -58,6 +58,44 @@ namespace mc { namespace samples { namespace transition {
   }
 
   void InterpolatingNode::setSample(float value, int sampleIndex) {
+    OctreeCoordinates absoluteSamplePos;
+    absoluteSamplePos.x = this->pos().x + (sampleIndex & (1 << 0) ? 1 << this->level() : 0);
+    absoluteSamplePos.y = this->pos().y + (sampleIndex & (1 << 1) ? 1 << this->level() : 0);
+    absoluteSamplePos.z = this->pos().z + (sampleIndex & (1 << 2) ? 1 << this->level() : 0);
+    // Traverse the octree upwards to make sure that we set all sample values
+    // in our parent node
+    auto node = this;
+    auto parent = this->parent();
+    while (parent) {
+      // Only one of the sample points for this node is aligned with the octree
+      // lattice of our parent. If our sample point happens to be different, we
+      // can break out of this loop.
+      if (parent->parent() == nullptr) {
+        // The root node needs special treatment since it is not aligned to the
+        // octree lattice
+#define IS_ALIGNED_OFFSET(pos,level,offset) (!(((pos) - (offset)) & ((1 << (level)) - 1)))
+        if (!IS_ALIGNED_OFFSET(absoluteSamplePos.x, parent->level(), parent->pos().x))
+          break;
+        if (!IS_ALIGNED_OFFSET(absoluteSamplePos.y, parent->level(), parent->pos().y))
+          break;
+        if (!IS_ALIGNED_OFFSET(absoluteSamplePos.z, parent->level(), parent->pos().z))
+          break;
+      } else {
+#define IS_ALIGNED(pos,level) (!((pos) & ((1 << (level)) - 1)))
+        if (!IS_ALIGNED(absoluteSamplePos.x, parent->level()))
+          break;
+        if (!IS_ALIGNED(absoluteSamplePos.y, parent->level()))
+          break;
+        if (!IS_ALIGNED(absoluteSamplePos.z, parent->level()))
+          break;
+      }
+      node = parent;
+      parent = parent->parent();
+    }
+    node->m_setSample(value, sampleIndex);
+  }
+
+  void InterpolatingNode::m_setSample(float value, int sampleIndex) {
     // Iterate over all eight nodes that share this sample
     bool madeRecursiveCall = false;
     int xOffset = (sampleIndex & (1 << 0)) ? 1 : 0;
@@ -94,11 +132,11 @@ namespace mc { namespace samples { namespace transition {
             i |= (relativeOffset.z == 0) ? (zOffset << 2) : ((~zOffset & 1) << 2);
             node->m_samples[i] = value;
 #ifndef NDEBUG
-            if (x == y == z == 0) {
-              assert(node.get() == this);
+            if (x == 0 && y == 0 && z == 0) {
+              assert(node == this);
             }
-            if (node.get() == this) {
-              assert(x == y == z == 0);
+            if (node == this) {
+              assert(x == 0 && y == 0 && z == 0);
               assert(i == sampleIndex);
             }
 #endif
@@ -108,7 +146,7 @@ namespace mc { namespace samples { namespace transition {
               // one recursion would be redundant.
               auto child = node->getChild(i);
               // Recurse to propagate the sample value to child nodes
-              child->setSample(value, i);
+              child->m_setSample(value, i);
               madeRecursiveCall = true;
             }
           }
@@ -142,8 +180,18 @@ namespace mc { namespace samples { namespace transition {
     // Get the node at the sample position
     // FIXME: Do we really need to get a node at octree level 0?
     auto node = this->getNode(pos);
+    fprintf(stderr,
+        "pos: (%d, %d, %d)\n"
+        "node->pos(): (%d, %d, %d)\n",
+        pos.x,
+        pos.y,
+        pos.z,
+        node->pos().x,
+        node->pos().y,
+        node->pos().z);
+
     // Set all nodes around this node recursively
-    node->setSample(value);
+    node->setSample(value, 0);
   }
 
   void InterpolatingOctree::m_generateCubeWireframe() {

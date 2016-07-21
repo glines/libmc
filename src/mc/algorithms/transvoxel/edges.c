@@ -21,13 +21,17 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef MC_ALGORITHMS_TRANSVOXEL_H_
-#define MC_ALGORITHMS_TRANSVOXEL_H_
+#include <assert.h>
+#include <string.h>
 
-#include <mc/algorithms/transvoxel/canonical.h>
-#include <mc/algorithms/transvoxel/common.h>
 #include <mc/algorithms/transvoxel/edges.h>
-#include <mc/algorithms/transvoxel/transform.h>
-#include <mc/algorithms/transvoxel/transvoxel.h>
 
-#endif
+#include "transvoxel_edge_tables.c"
+
+void mcTransvoxel_transitionCellEdgeSamples(int edge, int *sampleIndices) {
+  assert(edge >= 0);
+  assert(edge < MC_TRANSVOXEL_NUM_TRANSITION_CELL_EDGES);
+  memcpy(sampleIndices,
+      &mcTransvoxel_transitionCellEdgeSamplesTable[edge * 2],
+      sizeof(int) * 2);
+}

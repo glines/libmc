@@ -21,13 +21,30 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef MC_ALGORITHMS_TRANSVOXEL_H_
-#define MC_ALGORITHMS_TRANSVOXEL_H_
+#ifndef MC_ALGORITHMS_TRANSVOXEL_COMMON_H_
+#define MC_ALGORITHMS_TRANSVOXEL_COMMON_H_
 
-#include <mc/algorithms/transvoxel/canonical.h>
-#include <mc/algorithms/transvoxel/common.h>
-#include <mc/algorithms/transvoxel/edges.h>
-#include <mc/algorithms/transvoxel/transform.h>
-#include <mc/algorithms/transvoxel/transvoxel.h>
+#define MC_TRANSVOXEL_NUM_CANONICAL_REGULAR_CELLS 18
+#define MC_TRANSVOXEL_NUM_TRANSITION_CELLS 512
+#define MC_TRANSVOXEL_NUM_CANONICAL_TRANSITION_CELLS 73
+#define MC_TRANSVOXEL_MAX_TRANSITION_CELL_EDGE_INTERSECTIONS 42  /* XXX: I don't know what this number actually is */
+#define MC_TRANSVOXEL_NUM_TRANSITION_CELL_EDGES 16
+#define MC_TRANSVOXEL_NUM_TRANSITION_CELL_SAMPLES 9
+#define MC_TRANSVOXEL_MAX_TRANSITION_CELL_TRIANGLES 42  /* XXX: I don't know what this number actually is */
+
+typedef struct {
+} mcTransvoxel_RegularCell;
+
+typedef struct {
+  int edges[MC_TRANSVOXEL_MAX_TRANSITION_CELL_EDGE_INTERSECTIONS];
+} mcTransvoxel_TransitionCellEdgeIntersectionList;
+
+typedef struct {
+  int edgeIntersections[3];
+} mcTransvoxel_Triangle;
+
+typedef struct {
+  mcTransvoxel_Triangle triangles[MC_TRANSVOXEL_MAX_TRANSITION_CELL_TRIANGLES];
+} mcTransvoxel_TransitionCellTriangleList;
 
 #endif

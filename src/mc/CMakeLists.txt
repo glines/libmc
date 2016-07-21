@@ -17,6 +17,7 @@ target_link_libraries(mc
     mc_algorithms_simple
     mc_algorithms_snapmc
     mc_algorithms_surfaceNet
+    mc_algorithms_transvoxel
     mc_common
     )
 

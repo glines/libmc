@@ -55,6 +55,10 @@ namespace mc {
        * \return The mcVec3 representation of this vector.
        */
       const mcVec3 &to_mcVec3() const { return m_internal; }
+
+      float x() const { return m_internal.x; }
+      float y() const { return m_internal.y; }
+      float z() const { return m_internal.z; }
   };
 }
 

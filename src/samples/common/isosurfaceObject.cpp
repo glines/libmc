@@ -22,45 +22,54 @@
  */
 
 #include <mcxx/isosurfaceBuilder.h>
-#include <mcxx/vector.h>
 
-#include "terrainMesh.h"
+#include "isosurfaceObject.h"
 
-namespace mc { namespace samples { namespace terrain {
-  TerrainMesh::TerrainMesh(
-      ScalarField &sf,
-      const LodTree::Coordinates &block,
-      int lod)
-    : MeshObject(
-        glm::vec3(
-          (float)block.x * VOXEL_DELTA * (float)BLOCK_SIZE,
-          (float)block.y * VOXEL_DELTA * (float)BLOCK_SIZE,
-          (float)block.z * VOXEL_DELTA * (float)BLOCK_SIZE),  // position
-        glm::quat()  // orientation
-        )
+namespace mc { namespace samples {
+  IsosurfaceObject::IsosurfaceObject(
+      const glm::vec3 &position,
+      const glm::quat &orientation)
+    : MeshObject(position, orientation),
+    m_algorithm(MC_ORIGINAL_MARCHING_CUBES),
+    m_res(8),
+    m_min(0.0f, 0.0f, 0.0f),
+    m_max(1.0f, 1.0f, 1.0f)
   {
-    // Generate the terrain mesh by extracting the isosurface for the
-    // given scalar field
-    // TODO: Implement support for more than one level of detail in the terrain
-    // mesh.
+  }
+
+  void IsosurfaceObject::m_update() {
+    if (!m_sf)
+      return;
     IsosurfaceBuilder ib;
     auto mesh = ib.buildIsosurface(
-        sf,  // scalar field
-        MC_ORIGINAL_MARCHING_CUBES,  // algorithm
-        BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE,  // resolution
-        Vec3(
-          this->position().x,
-          this->position().y,
-          this->position().z),  // min
-        Vec3(
-          this->position().x + (float)BLOCK_SIZE * VOXEL_DELTA * (1 << lod),
-          this->position().y + (float)BLOCK_SIZE * VOXEL_DELTA * (1 << lod),
-          this->position().z + (float)BLOCK_SIZE * VOXEL_DELTA * (1 << lod)) // max
+        *m_sf,  // scalar field
+        m_algorithm,  // algorithm
+        m_res * (m_max.x() - m_min.x()),  // x resolution
+        m_res * (m_max.y() - m_min.y()),  // y resolution
+        m_res * (m_max.z() - m_min.z()),  // z resolution
+        m_min,  // min
+        m_max  // max
         );
-    m_empty = mesh->numVertices() == 0;
     this->setMesh(*mesh);
   }
 
-  TerrainMesh::~TerrainMesh() {
+  void IsosurfaceObject::setAlgorithm(mcAlgorithmFlag algorithm) {
+    m_algorithm = algorithm;
+    m_update();
   }
-} } }
+
+  void IsosurfaceObject::setScalarField(std::shared_ptr<ScalarField> sf) {
+    m_sf = sf;
+    m_update();
+  }
+
+  void IsosurfaceObject::setMin(const Vec3 &min) {
+    m_min = min;
+    m_update();
+  }
+
+  void IsosurfaceObject::setMax(const Vec3 &max) {
+    m_max = max;
+    m_update();
+  }
+} }

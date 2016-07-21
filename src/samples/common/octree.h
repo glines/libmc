@@ -24,6 +24,11 @@
 #ifndef MC_SAMPLES_COMMON_OCTREE_H_
 #define MC_SAMPLES_COMMON_OCTREE_H_
 
+#include <cassert>
+#include <cstdio>
+#include <cstring>
+#include <memory>
+
 namespace mc { namespace samples {
   typedef struct OctreeCoordinates {
     int x, y, z;

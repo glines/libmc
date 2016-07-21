@@ -26,6 +26,7 @@
 
 #include <GL/glew.h>
 #include <mcxx/scalarField.h>
+#include <mcxx/vector.h>
 
 #include "../common/octree.h"
 #include "../common/sceneObject.h"
@@ -84,6 +85,8 @@ namespace mc { namespace samples { namespace transition {
        * \return The sample value.
        */
       float sample(int sampleIndex) const { return m_samples[sampleIndex]; }
+
+      float interpolate(const mc::Vec3 &pos);
   };
 
   class InterpolatingOctree :
@@ -133,6 +136,8 @@ namespace mc { namespace samples { namespace transition {
           float defaultSample = 1.0f);
 
       void setSample(const OctreeCoordinates &pos, float value);
+
+      std::shared_ptr<InterpolatingNode> findNode(const mc::Vec3 &pos);
 
       float operator()(float x, float y, float z);
 

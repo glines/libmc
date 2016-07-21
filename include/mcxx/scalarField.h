@@ -66,7 +66,7 @@ namespace mc {
        * Implementing classes must implement this method with their definition
        * of the scalar field function.
        */
-      virtual float operator()(float x, float y, float z) const;
+      virtual float operator()(float x, float y, float z);
   };
 }
 

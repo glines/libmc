@@ -238,9 +238,7 @@ void mcPatch_computePatchList(
       }
     }
     /* Cube inversion affects patch winding order */
-    /* FIXME: I'm not sure why the inversion byte needs to be negated here.
-     * Something is off somewhere. */
-    if (!get_byte(rotation, 3)) {
+    if (get_byte(rotation, 3)) {
       /* Reverse patch winding order to get correct front/back faces */
       mcPatch_reversePatchWindingOrder(patch);
     }

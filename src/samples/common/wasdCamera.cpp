@@ -139,7 +139,7 @@ namespace mc { namespace samples {
   }
 
   void WasdCamera::tick(float dt) {
-#define CAMERA_MAX_VELOCITY 0.000001f
+#define CAMERA_MAX_VELOCITY 0.000005f
 #define CAMERA_ACCELERATION 0.0001f
 #define CAMERA_FRICTION 0.0001f
     m_accel = glm::vec3(0.0f, 0.0f, 0.0f);

@@ -102,6 +102,8 @@ namespace mc {
        * \return Whether or not this mesh is a triangle mesh.
        */
       bool isTriangleMesh() const { return m_internal->isTriangleMesh; }
+
+      const mcMesh *internal() const { return m_internal; }
   };
 }
 

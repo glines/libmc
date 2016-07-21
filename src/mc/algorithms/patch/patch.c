@@ -156,7 +156,7 @@ void mcPatch_isosurfaceFromField(
                                   args));
 #endif
           /* Add the bit this vertex contributes to the cube */
-          cube |= (samples[i] >= 0.0f ? 1 : 0) << vertex;
+          cube |= (samples[i] >= 0.0f ? 0 : 1) << vertex;
         }
         /* Look in the edge table for the edges that intersect the
          * isosurface */

@@ -27,6 +27,10 @@
 #include <GL/glew.h>
 #include <mcxx/mesh.h>
 
+extern "C" {
+#include <mc/mesh.h>
+}
+
 #include "sceneObject.h"
 
 namespace mc { namespace samples {
@@ -56,10 +60,10 @@ namespace mc { namespace samples {
         WireframeVertex *surfaceNormalVertices;
         unsigned int numVertices, numTriangles, numWireframeLines;
 
-        void initialize(const mc::Mesh &mesh);
-        void m_initializeTriangles(const mc::Mesh &mesh);
-        void m_initializeWireframe(const mc::Mesh &mesh);
-        void m_initializeSurfaceNormals(const mc::Mesh &mesh);
+        void initialize(const mcMesh &mesh);
+        void m_initializeTriangles(const mcMesh &mesh);
+        void m_initializeWireframe(const mcMesh &mesh);
+        void m_initializeSurfaceNormals(const mcMesh &mesh);
         void destroy();
       } MeshStruct;
 
@@ -189,6 +193,8 @@ namespace mc { namespace samples {
        * we cannot risk making GL calls outside of the draw thread.
        */
       void setMesh(const mc::Mesh &mesh);
+
+      void setMesh(const mcMesh &mesh);
   };
 } }
 

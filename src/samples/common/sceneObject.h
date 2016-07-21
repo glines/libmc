@@ -80,7 +80,9 @@ namespace mc { namespace samples {
        * \param position The position of the scene object.
        * \param orientation The orientation of the scene object.
        */
-      SceneObject(const glm::vec3 &position, const glm::quat &orientation);
+      SceneObject(
+          const glm::vec3 &position = glm::vec3(0.0f),
+          const glm::quat &orientation = glm::quat());
       /**
        * Destroys this scene object. Since SceneObject is a polymorphic class,
        * this destructor is virtual.

@@ -21,13 +21,14 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef MC_ALGORITHMS_TRANSVOXEL_H_
-#define MC_ALGORITHMS_TRANSVOXEL_H_
+#ifndef MC_ALGORITHMS_TRANSVOXEL_EDGES_H_
+#define MC_ALGORITHMS_TRANSVOXEL_EDGES_H_
 
-#include <mc/algorithms/transvoxel/canonical.h>
 #include <mc/algorithms/transvoxel/common.h>
-#include <mc/algorithms/transvoxel/edges.h>
-#include <mc/algorithms/transvoxel/transform.h>
-#include <mc/algorithms/transvoxel/transvoxel.h>
+
+extern const mcTransvoxel_TransitionCellEdgeIntersectionList
+mcTransvoxel_transitionCellEdgeIntersectionTable[];
+
+void mcTransvoxel_transitionCellEdgeSamples(int cell, int *sampleIndices);
 
 #endif

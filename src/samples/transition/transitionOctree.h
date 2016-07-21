@@ -21,13 +21,45 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef MC_ALGORITHMS_TRANSVOXEL_H_
-#define MC_ALGORITHMS_TRANSVOXEL_H_
+#ifndef MC_SAMPLES_TRANSITION_TRANSITION_OCTREE_H_
+#define MC_SAMPLES_TRANSITION_TRANSITION_OCTREE_H_
 
-#include <mc/algorithms/transvoxel/canonical.h>
-#include <mc/algorithms/transvoxel/common.h>
-#include <mc/algorithms/transvoxel/edges.h>
-#include <mc/algorithms/transvoxel/transform.h>
-#include <mc/algorithms/transvoxel/transvoxel.h>
+#include "../common/octree.h"
+#include "../common/sceneObject.h"
+
+namespace mc { namespace samples { namespace transition {
+  class TransitionNode :
+    public OctreeNode<TransitionNode>,
+    public SceneObject
+  {
+    public:
+      TransitionNode(
+          TransitionNode *parent,
+          int index);
+
+      void draw(const glm::mat4 &modelWorld,
+          const glm::mat4 &worldView, const glm::mat4 &projection,
+          float alpha, bool debug);
+  };
+
+  /**
+   * This class is used to visualize the geometry of transition nodes in the
+   * cascading transition cell octree structure.
+   */
+  class TransitionOctree :
+    public Octree<TransitionNode>,
+    public SceneObject
+  {
+    public:
+      TransitionOctree(
+          const glm::vec3 &position = glm::vec3(0.0f, 0.0f, 0.0f),
+          const glm::quat &orientation = glm::quat());
+      ~TransitionOctree();
+
+      void draw(const glm::mat4 &modelWorld,
+          const glm::mat4 &worldView, const glm::mat4 &projection,
+          float alpha, bool debug);
+  };
+} } }
 
 #endif

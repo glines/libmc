@@ -366,7 +366,7 @@ namespace mc {namespace samples { namespace cubes {
     x = (x + 1.0f) / 2.0f;
     y = (y + 1.0f) / 2.0f;
     z = (z + 1.0f) / 2.0f;
-    // A tri-linear interpolation between the cube vertices
+    // A trilinear interpolation between the cube vertices
     float result = 0.0f;
     for (unsigned int z_index = 0; z_index <= 1; ++z_index) {
       for (unsigned int y_index = 0; y_index <= 1; ++y_index) {

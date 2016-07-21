@@ -99,7 +99,7 @@ void computeTriangleList(
     triangle->edgeIntersections[0] = a; \
     triangle->edgeIntersections[1] = b; \
     triangle->edgeIntersections[2] = c; \
-  } while(0)
+  } while (0)
   switch (canonical) {
     case MC_CUBE_CANONICAL_ORIENTATION_INVERSION_0:
       /* This is a cube entirely inside or outside the isosurface, with no need
@@ -249,9 +249,7 @@ void computeTriangleList(
       }
     }
     /* Cube inversion affects triangle winding order */
-    /* FIXME: I'm not sure why the inversion byte needs to be negated here.
-     * Something is off somewhere. */
-    if (!get_byte(rotation, 3)) {
+    if (get_byte(rotation, 3)) {
       /* Reverse triangle winding order to get correct front/back faces */
       int temp = triangle->edgeIntersections[0];
       triangle->edgeIntersections[0] = triangle->edgeIntersections[2];

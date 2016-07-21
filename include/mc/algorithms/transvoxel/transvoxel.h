@@ -28,15 +28,22 @@
 #include <mc/scalarField.h>
 #include <mc/vector.h>
 
-typedef struct mcTransvoxelParams {
-  unsigned int transitionFaces;
-} mcTransvoxelParams;
+typedef struct {
+  unsigned int transitionFace;
+  float transitionScale;
+} mcTransvoxel_Params;
+
+void mcTransvoxel_transitionMeshFromField(
+    mcScalarFieldWithArgs sf, const void *args,
+    unsigned int x_res, unsigned int y_res,
+    const mcVec3 *min, const mcVec3 *max,
+    mcMesh *mesh);
 
 void mcTransvoxel_isosurfaceFromField(
     mcScalarFieldWithArgs sf, const void *args,
     unsigned int x_res, unsigned int y_res, unsigned int z_res,
     const mcVec3 *min, const mcVec3 *max,
-    const mcTransvoxelParams *params,
+    const mcTransvoxel_Params *params,
     mcMesh *mesh);
 
 #endif

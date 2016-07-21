@@ -52,13 +52,13 @@ namespace mc {
   */
 
   float IsosurfaceBuilder::m_wrapScalarField(
-      float x, float y, float z, const ScalarField *sf)
+      float x, float y, float z, ScalarField *sf)
   {
     return (*sf)(x, y, z);
   }
 
   const Mesh *IsosurfaceBuilder::buildIsosurface(
-      const ScalarField &sf,
+      ScalarField &sf,
       mcAlgorithmFlag algorithm,
       unsigned int x_res, unsigned int y_res, unsigned int z_res,
       const Vec3 &min, const Vec3 &max)

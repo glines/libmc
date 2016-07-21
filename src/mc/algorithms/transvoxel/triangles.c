@@ -21,13 +21,6 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef MC_ALGORITHMS_TRANSVOXEL_H_
-#define MC_ALGORITHMS_TRANSVOXEL_H_
+#include <mc/algorithms/transvoxel/triangles.h>
 
-#include <mc/algorithms/transvoxel/canonical.h>
-#include <mc/algorithms/transvoxel/common.h>
-#include <mc/algorithms/transvoxel/edges.h>
-#include <mc/algorithms/transvoxel/transform.h>
-#include <mc/algorithms/transvoxel/transvoxel.h>
-
-#endif
+#include "transvoxel_triangulation_tables.c"

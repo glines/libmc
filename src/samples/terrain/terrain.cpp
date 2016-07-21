@@ -54,10 +54,25 @@ namespace mc { namespace samples { namespace terrain {
     return z - (cos(x / interval) * sin(y / interval)) * amplitude;
   }
 
+  float hills(float x, float y, float z) {
+    float interval = 800.0f;
+    float amplitude = 1000.0f;
+#define ADD_HILLS(interval,amplitude) \
+    ((cos(x / interval) * sin(y / interval)) * amplitude)
+#define ADD_RANDOM_HILLS(interval,amplitude) \
+    (( \
+      cos(x / (interval + glm::simplex(glm::vec2(x, y)))) \
+      * sin(y / (interval + 0.3f * glm::simplex(glm::vec2(x, y))))) * amplitude)
+    return z -
+      (ADD_HILLS(800.0f, 100.0f)
+       + ADD_HILLS(72.0f, 25.0f)
+       + ADD_HILLS(40.0f, 50.0f));
+  }
+
   Terrain::Terrain(std::shared_ptr<Camera> camera, int minimumLod)
     : SceneObject(glm::vec3(0.0f, 0.0f, 0.0f), glm::quat()),
     m_camera(camera),
-    m_sf(wave),
+    m_sf(hills),
     m_workers(std::thread::hardware_concurrency()),
     m_minimumLod(minimumLod)
   {
@@ -84,7 +99,7 @@ namespace mc { namespace samples { namespace terrain {
       float alpha, bool debug)
   {
     // Draw a wireframe representation of the LOD octree
-//    m_drawLodOctree(modelWorld, worldView, projection);
+    m_drawLodOctree(modelWorld, worldView, projection);
   }
 
   void Terrain::m_generateCubeWireframe() {

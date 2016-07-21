@@ -187,7 +187,7 @@ namespace mc { namespace samples {
     return m_samples[i];
   }
 
-  const ScalarField &Scan::scalarField() {
+  ScalarField &Scan::scalarField() {
     return m_scalarField;
   }
 

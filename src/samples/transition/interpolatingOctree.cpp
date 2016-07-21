@@ -167,11 +167,52 @@ namespace mc { namespace samples { namespace transition {
     m_generateBillboard();
   }
 
+  std::shared_ptr<InterpolatingNode> InterpolatingOctree::findNode(
+      const mc::Vec3 &pos)
+  {
+    OctreeCoordinates absPos;
+    absPos.x = (int)floor(pos.x());
+    absPos.y = (int)floor(pos.y());
+    absPos.z = (int)floor(pos.z());
+    // FIXME: Do we really need to get a node at octree level 0?
+    return this->getNode(absPos, 0);
+  }
+
+  float InterpolatingNode::interpolate(const mc::Vec3 &pos) {
+    // Perform trilinear interpolation on the samples
+    float relPos[3];
+    // FIXME: This does not account for node octree level
+    relPos[0] = pos.x() - floor(pos.x());
+    relPos[1] = pos.y() - floor(pos.y());
+    relPos[2] = pos.z() - floor(pos.z());
+    float result = 0;
+    for (int z = 0; z < 2; ++z) {
+      for (int y = 0; y < 2; ++y) {
+        for (int x = 0; x < 2; ++x) {
+          int i = 0;
+          i |= x ? (1 << 0) : 0;
+          i |= y ? (1 << 1) : 0;
+          i |= z ? (1 << 2) : 0;
+          result +=
+            (x ? relPos[0] : 1.0f - relPos[0]) *
+            (y ? relPos[1] : 1.0f - relPos[1]) *
+            (z ? relPos[2] : 1.0f - relPos[2]) *
+            m_samples[i];
+        }
+      }
+    }
+    return result;
+  }
+
   float InterpolatingOctree::operator()(float x, float y, float z) {
+    mc::Vec3 position(x, y, z);
+    auto node = this->findNode(position);
+    return node->interpolate(position);
     // TODO: Look for the octree node that contains this point
     // TODO: Determine if this node needs to be further subdivided before
     // interpolation
     // TODO: Perform trilinear interpolation
+    return z - sin(x * M_PI);  // XXX
   }
 
   void InterpolatingOctree::setSample(
@@ -396,7 +437,6 @@ namespace mc { namespace samples { namespace transition {
         sizeof(BillboardVertex),  // stride
         &(((BillboardVertex *)0)->pos[0])  // pointer
         );
-    /*
     assert(shader->vertTexCoordLocation() != -1);
     glEnableVertexAttribArray(shader->vertTexCoordLocation());
     ASSERT_GL_ERROR();
@@ -408,8 +448,11 @@ namespace mc { namespace samples { namespace transition {
         sizeof(BillboardVertex),  // stride
         &(((BillboardVertex *)0)->tex[0])  // pointer
         );
-        */
 
+    glEnable(GL_BLEND);
+    ASSERT_GL_ERROR();
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    ASSERT_GL_ERROR();
     // Traverse the octree
     for (auto node : *this) {
       // Iterate through each sample in this node
@@ -437,7 +480,7 @@ namespace mc { namespace samples { namespace transition {
         mv[2][0] = 0.0f;
         mv[2][1] = 0.0f;
         mv[2][2] = 1.0f;
-        mv = glm::scale(mv, glm::vec3(0.05));  // XXX
+        mv = glm::scale(mv, glm::vec3(0.08));  // XXX
         // Update the model-view transform uniform
         glUniformMatrix4fv(
             shader->modelViewLocation(),  // location

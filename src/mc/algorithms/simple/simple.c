@@ -159,7 +159,7 @@ void mcSimple_isosurfaceFromField(
           i = x + pos[0]
               + (y + pos[1]) * x_res
               + ((sampleSliceIndex + pos[2]) % 4) * x_res * y_res;
-#ifndef __EMSCRIPTEN__
+#if 0
           /* NOTE: This assertion does not work with Emscripten for
            * some reason */
           assert(samples[i] == sf(min->x + (x + pos[0]) * delta_x,
@@ -168,7 +168,7 @@ void mcSimple_isosurfaceFromField(
                                   args));
 #endif
           /* Add the bit this vertex contributes to the cube */
-          cube |= (samples[i] >= 0.0f ? 1 : 0) << vertex;
+          cube |= (samples[i] >= 0.0f ? 0 : 1) << vertex;
         }
         /* Look in the edge table for the edges that intersect the
          * isosurface */
@@ -283,7 +283,7 @@ void mcSimple_isosurfaceFromField(
                 j = abs[0]
                     + abs[1] * x_res
                     + ((sampleSliceIndex + pos[2]) % 4) * x_res * y_res;
-#ifndef __EMSCRIPTEN__
+#if 0
                 /* NOTE: This assertion does not work with Emscripten for
                  * some reason */
                 assert(samples[j] == sf(min->x + latticePos[i].x,
@@ -384,11 +384,11 @@ void mcSimple_isosurfaceFromField(
           if (mcSimple_triangulationTable[cube].triangles[j].edgeIntersections[0] == -1)
             break;  /* No more triangles */
           mcFace_init(&face, 3);
-          mcSimpleTriangle triangle =
-            mcSimple_triangulationTable[cube].triangles[j];
-          face.indices[0] = vertexIndices[triangle.edgeIntersections[0]];
-          face.indices[1] = vertexIndices[triangle.edgeIntersections[1]];
-          face.indices[2] = vertexIndices[triangle.edgeIntersections[2]];
+          const mcSimpleTriangle *triangle =
+            &mcSimple_triangulationTable[cube].triangles[j];
+          face.indices[0] = vertexIndices[triangle->edgeIntersections[0]];
+          face.indices[1] = vertexIndices[triangle->edgeIntersections[1]];
+          face.indices[2] = vertexIndices[triangle->edgeIntersections[2]];
           mcMesh_addFace(mesh, &face);
           mcFace_destroy(&face);
         }

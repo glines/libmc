@@ -72,7 +72,7 @@ namespace mc { namespace samples { namespace terrain {
        * reduce the level of detail by half in each dimension.
        */
       TerrainMesh(
-          const ScalarField &sf,
+          ScalarField &sf,
           const LodTree::Coordinates &block,
           int lod);
 

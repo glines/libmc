@@ -3,6 +3,7 @@ add_library(samples_common STATIC
     camera.cpp
     demo.cpp
     glError.cpp
+    isosurfaceObject.cpp
     meshObject.cpp
     orthographicCamera.cpp
     perspectiveCamera.cpp
@@ -25,6 +26,7 @@ target_include_directories(samples_common
 target_link_libraries(samples_common
     ${LUA_LIBRARIES}
     ${PNG_LIBRARY}
+    mcxx
     )
 
 if(DEFINED ENV{EMSCRIPTEN})

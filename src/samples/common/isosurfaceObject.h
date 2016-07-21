@@ -21,13 +21,39 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef MC_ALGORITHMS_TRANSVOXEL_H_
-#define MC_ALGORITHMS_TRANSVOXEL_H_
+#ifndef MC_SAMPLES_COMMON_ISOSURFACE_OBJECT_H_
+#define MC_SAMPLES_COMMON_ISOSURFACE_OBJECT_H_
 
-#include <mc/algorithms/transvoxel/canonical.h>
-#include <mc/algorithms/transvoxel/common.h>
-#include <mc/algorithms/transvoxel/edges.h>
-#include <mc/algorithms/transvoxel/transform.h>
-#include <mc/algorithms/transvoxel/transvoxel.h>
+#include <GL/glew.h>
+#include <mcxx/scalarField.h>
+#include <mcxx/vector.h>
+
+extern "C" {
+#include <mc/algorithms.h>
+}
+
+#include "meshObject.h"
+
+namespace mc { namespace samples {
+  class IsosurfaceObject : public MeshObject {
+    private:
+      std::shared_ptr<ScalarField> m_sf;
+      Vec3 m_min, m_max;
+      mcAlgorithmFlag m_algorithm;
+      int m_res;
+
+      void m_update();
+    public:
+      IsosurfaceObject(
+          const glm::vec3 &position = glm::vec3(0.0f),
+          const glm::quat &orientation = glm::quat());
+
+      void setAlgorithm(mcAlgorithmFlag algorithm);
+      void setScalarField(std::shared_ptr<ScalarField> sf);
+      void setMin(const Vec3 &min);
+      void setMax(const Vec3 &max);
+      void setres(int res);
+  };
+} }
 
 #endif

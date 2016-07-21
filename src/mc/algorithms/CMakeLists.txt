@@ -1,3 +1,18 @@
+function(generate_files executable)
+  foreach(filename IN LISTS ARGN)
+    if(DEFINED ENV{EMSCRIPTEN})
+      add_custom_target(${filename}
+          COMMAND node ${executable}.js ${filename} > ${filename}
+          )
+    else()
+      add_custom_target(${filename}
+          COMMAND ${executable} ${filename} > ${filename}
+          )
+    endif()
+    add_dependencies(${filename} ${executable})
+  endforeach()
+endfunction(generate_files)
+
 function(take_screenshots algorithm)
   if(BUILD_SCREENSHOTS AND NOT DEFINED ENV{EMSCRIPTEN})
     # Take screenshots representitive of the given algorithm

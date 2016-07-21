@@ -43,10 +43,14 @@ namespace mc { namespace samples {
 
   MeshObject::~MeshObject() {}
 
-  void MeshObject::setMesh(const mc::Mesh &mesh) {
-    // Copy the mesh to the buffers that we will later copy to the GL
+  void MeshObject::setMesh(const mcMesh &mesh) {
     m_meshStruct = new MeshStruct;
     m_meshStruct->initialize(mesh);
+  }
+
+  void MeshObject::setMesh(const mc::Mesh &mesh) {
+    // Copy the mesh to the buffers that we will later copy to the GL
+    this->setMesh(*mesh.internal());
   }
 
   void MeshObject::m_uploadMesh(const MeshStruct &mesh) {
@@ -66,107 +70,107 @@ namespace mc { namespace samples {
     m_uploadTriangles(mesh);
   }
 
-  void MeshObject::MeshStruct::initialize(const mc::Mesh &mesh) {
-    this->numVertices = mesh.numVertices();
+  void MeshObject::MeshStruct::initialize(const mcMesh &mesh) {
+    this->numVertices = mesh.numVertices;
     m_initializeTriangles(mesh);
     m_initializeWireframe(mesh);
     m_initializeSurfaceNormals(mesh);
   }
 
-  void MeshObject::MeshStruct::m_initializeTriangles(const mc::Mesh &mesh) {
+  void MeshObject::MeshStruct::m_initializeTriangles(const mcMesh &mesh) {
     // Copy the vertices from the mesh to our buffer
-    this->triangleVertices = new Vertex[mesh.numVertices()];
-    for (int i = 0; i < mesh.numVertices(); ++i) {
-      auto vertex = mesh.vertex(i);
-      this->triangleVertices[i].pos[0] = vertex.pos.x;
-      this->triangleVertices[i].pos[1] = vertex.pos.y;
-      this->triangleVertices[i].pos[2] = vertex.pos.z;
-      this->triangleVertices[i].norm[0] = vertex.norm.x;
-      this->triangleVertices[i].norm[1] = vertex.norm.y;
-      this->triangleVertices[i].norm[2] = vertex.norm.z;
+    this->triangleVertices = new Vertex[mesh.numVertices];
+    for (int i = 0; i < mesh.numVertices; ++i) {
+      auto vertex = &mesh.vertices[i];
+      this->triangleVertices[i].pos[0] = vertex->pos.x;
+      this->triangleVertices[i].pos[1] = vertex->pos.y;
+      this->triangleVertices[i].pos[2] = vertex->pos.z;
+      this->triangleVertices[i].norm[0] = vertex->norm.x;
+      this->triangleVertices[i].norm[1] = vertex->norm.y;
+      this->triangleVertices[i].norm[2] = vertex->norm.z;
     }
     // Copy the triangle indices from the mesh to a buffer
     unsigned int numIndices;
-    if (mesh.isTriangleMesh()) {
-      numIndices = mesh.numFaces() * 3;
+    if (mesh.isTriangleMesh) {
+      numIndices = mesh.numFaces * 3;
     } else {
       // Determine how many indices are needed in order to triangulate this
       // mesh
       numIndices = 0;
-      for (int i = 0; i < mesh.numFaces(); ++i) {
-        auto face = mesh.face(i);
-        assert(face.numIndices >= 3);
-        numIndices += 3 + (face.numIndices - 3) * 3;
+      for (int i = 0; i < mesh.numFaces; ++i) {
+        auto face = &mesh.faces[i];
+        assert(face->numIndices >= 3);
+        numIndices += 3 + (face->numIndices - 3) * 3;
       }
     }
     this->triangleIndices = new unsigned int [numIndices];
     unsigned int currentIndex = 0;
     this->numTriangles = 0;
-    for (int i = 0; i < mesh.numFaces(); ++i) {
-      auto face = mesh.face(i);
-      assert(face.numIndices >= 3);
+    for (int i = 0; i < mesh.numFaces; ++i) {
+      auto face = &mesh.faces[i];
+      assert(face->numIndices >= 3);
       for (int j = 0; j < 3; ++j) {
         assert(currentIndex < numIndices);
-        this->triangleIndices[currentIndex++] = face.indices[j];
+        this->triangleIndices[currentIndex++] = face->indices[j];
       }
       this->numTriangles += 1;
-      for (int j = 3; j < face.numIndices; ++j) {
+      for (int j = 3; j < face->numIndices; ++j) {
         /* Draw the remaining parts of the face with a triangle fan. This might
          * not make optimal geometry, but this is acceptable for a debugging
          * program. */
         assert(currentIndex < numIndices);
-        this->triangleIndices[currentIndex++] = face.indices[0];
+        this->triangleIndices[currentIndex++] = face->indices[0];
         assert(currentIndex < numIndices);
-        this->triangleIndices[currentIndex++] = face.indices[j - 1];
+        this->triangleIndices[currentIndex++] = face->indices[j - 1];
         assert(currentIndex < numIndices);
-        this->triangleIndices[currentIndex++] = face.indices[j];
+        this->triangleIndices[currentIndex++] = face->indices[j];
         this->numTriangles += 1;
       }
     }
   }
 
-  void MeshObject::MeshStruct::m_initializeWireframe(const mc::Mesh &mesh) {
+  void MeshObject::MeshStruct::m_initializeWireframe(const mcMesh &mesh) {
     // Copy the vertices from the mesh
-    this->wireframeVertices = new WireframeVertex[mesh.numVertices()];
-    for (unsigned int i = 0; i < mesh.numVertices(); ++i) {
-      auto vertex = mesh.vertex(i);
-      this->wireframeVertices[i].pos[0] = vertex.pos.x;
-      this->wireframeVertices[i].pos[1] = vertex.pos.y;
-      this->wireframeVertices[i].pos[2] = vertex.pos.z;
+    this->wireframeVertices = new WireframeVertex[mesh.numVertices];
+    for (unsigned int i = 0; i < mesh.numVertices; ++i) {
+      auto vertex = &mesh.vertices[i];
+      this->wireframeVertices[i].pos[0] = vertex->pos.x;
+      this->wireframeVertices[i].pos[1] = vertex->pos.y;
+      this->wireframeVertices[i].pos[2] = vertex->pos.z;
       this->wireframeVertices[i].color[0] = 1.0f;
       this->wireframeVertices[i].color[1] = 1.0f;
       this->wireframeVertices[i].color[2] = 1.0f;
     }
     // Create lines from the face indices of the mesh
-    this->wireframeIndices = new unsigned int[mesh.numIndices() * 2];
+    this->wireframeIndices = new unsigned int[mesh.numIndices * 2];
     unsigned int currentIndex = 0;
-    for (unsigned int i = 0; i < mesh.numFaces(); ++i) {
-      auto face = mesh.face(i);
-      for (unsigned int j = 0; j < face.numIndices; ++j) {
-        assert(currentIndex < mesh.numIndices() * 2);
-        this->wireframeIndices[currentIndex++] = face.indices[j];
-        assert(currentIndex < mesh.numIndices() * 2);
-        this->wireframeIndices[currentIndex++] = face.indices[(j + 1) % face.numIndices];
+    for (unsigned int i = 0; i < mesh.numFaces; ++i) {
+      auto face = &mesh.faces[i];
+      for (unsigned int j = 0; j < face->numIndices; ++j) {
+        assert(currentIndex < mesh.numIndices * 2);
+        this->wireframeIndices[currentIndex++] = face->indices[j];
+        assert(currentIndex < mesh.numIndices * 2);
+        this->wireframeIndices[currentIndex++] = face->indices[(j + 1) % face->numIndices];
       }
     }
-    this->numWireframeLines = mesh.numIndices();
+    this->numWireframeLines = mesh.numIndices;
   }
 
   void MeshObject::MeshStruct::m_initializeSurfaceNormals(
-      const mc::Mesh &mesh)
+      const mcMesh &mesh)
   {
     // Allocate memory for the surface normal lines
-    this->surfaceNormalVertices = new WireframeVertex[mesh.numVertices() * 2];
+    this->surfaceNormalVertices = new WireframeVertex[mesh.numVertices * 2];
     // Iterate through the mesh vertices
-    for (unsigned int i = 0; i < mesh.numVertices(); ++i) {
+    for (unsigned int i = 0; i < mesh.numVertices; ++i) {
       // Make a line to represent the surface normal
-      auto v = mesh.vertex(i);
-      this->surfaceNormalVertices[i * 2].pos[0] = v.pos.x;
-      this->surfaceNormalVertices[i * 2].pos[1] = v.pos.y;
-      this->surfaceNormalVertices[i * 2].pos[2] = v.pos.z;
-      this->surfaceNormalVertices[i * 2 + 1].pos[0] = v.pos.x + v.norm.x;
-      this->surfaceNormalVertices[i * 2 + 1].pos[1] = v.pos.y + v.norm.y;
-      this->surfaceNormalVertices[i * 2 + 1].pos[2] = v.pos.z + v.norm.z;
+      auto v = &mesh.vertices[i];
+      this->surfaceNormalVertices[i * 2].pos[0] = v->pos.x;
+      this->surfaceNormalVertices[i * 2].pos[1] = v->pos.y;
+      this->surfaceNormalVertices[i * 2].pos[2] = v->pos.z;
+      this->surfaceNormalVertices[i * 2 + 1].pos[0] = v->pos.x + v->norm.x;
+      this->surfaceNormalVertices[i * 2 + 1].pos[1] = v->pos.y + v->norm.y;
+      this->surfaceNormalVertices[i * 2 + 1].pos[2] = v->pos.z + v->norm.z;
       this->surfaceNormalVertices[i * 2].color[0] = 0.0f;
       this->surfaceNormalVertices[i * 2].color[1] = 0.0f;
       this->surfaceNormalVertices[i * 2].color[2] = 1.0f;

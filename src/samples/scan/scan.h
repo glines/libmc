@@ -97,7 +97,7 @@ namespace mc { namespace samples {
        * \return A const reference to a scalar field representation of the
        * scan.
        */
-      const ScalarField &scalarField();
+      ScalarField &scalarField();
   };
 } }
 

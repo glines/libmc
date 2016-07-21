@@ -21,13 +21,35 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef MC_ALGORITHMS_TRANSVOXEL_H_
-#define MC_ALGORITHMS_TRANSVOXEL_H_
+#ifndef MC_SAMPLES_TRANSITION_INTERPOLATING_LATTICE_H_
+#define MC_SAMPLES_TRANSITION_INTERPOLATING_LATTICE_H_
 
-#include <mc/algorithms/transvoxel/canonical.h>
-#include <mc/algorithms/transvoxel/common.h>
-#include <mc/algorithms/transvoxel/edges.h>
-#include <mc/algorithms/transvoxel/transform.h>
-#include <mc/algorithms/transvoxel/transvoxel.h>
+#include <mcxx/scalarField.h>
+#include <mcxx/vector.h>
+#include <vector>
+
+namespace mc { namespace samples { namespace transition {
+  class InterpolatingLattice : public mc::ScalarField {
+    private:
+      std::vector<std::vector<std::vector<float>>> m_samples;
+      mc::Vec3 m_min, m_max;
+      struct {
+        int x, y, z;
+      } m_latticeSize;
+      float m_defaultSample;
+
+      void m_growLattice(int x, int y, int z);
+    public:
+      InterpolatingLattice(
+          const mc::Vec3 &min,
+          const mc::Vec3 &max,
+          float defaultSample = 0.0f);
+
+      void setSample(int x, int y, int z, float value);
+      float getSample(int x, int y, int z) const;
+
+      float operator()(float x, float y, float z);
+  };
+} } }
 
 #endif

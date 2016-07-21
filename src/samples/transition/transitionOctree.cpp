@@ -21,13 +21,35 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef MC_ALGORITHMS_TRANSVOXEL_H_
-#define MC_ALGORITHMS_TRANSVOXEL_H_
+#include "transitionOctree.h"
 
-#include <mc/algorithms/transvoxel/canonical.h>
-#include <mc/algorithms/transvoxel/common.h>
-#include <mc/algorithms/transvoxel/edges.h>
-#include <mc/algorithms/transvoxel/transform.h>
-#include <mc/algorithms/transvoxel/transvoxel.h>
+namespace mc { namespace samples { namespace transition {
+  TransitionNode::TransitionNode(TransitionNode *parent, int index)
+    : OctreeNode<TransitionNode>(parent, index)
+  {
+  }
 
-#endif
+  void TransitionNode::draw(const glm::mat4 &modelWorld,
+      const glm::mat4 &worldView, const glm::mat4 &projection,
+      float alpha, bool debug)
+  {
+  }
+
+  TransitionOctree::TransitionOctree(
+          const glm::vec3 &position,
+          const glm::quat &orientation)
+    : SceneObject(position, orientation)
+  {
+  }
+
+  TransitionOctree::~TransitionOctree()
+  {
+  }
+
+  void TransitionOctree::draw(const glm::mat4 &modelWorld,
+      const glm::mat4 &worldView, const glm::mat4 &projection,
+      float alpha, bool debug)
+  {
+    // TODO: Recursively draw all of our children?
+  }
+} } }

@@ -1,6 +1,9 @@
 add_executable(transition
+    interpolatingLattice.cpp
     interpolatingOctree.cpp
     main.cpp
+    transitionObject.cpp
+    transitionOctree.cpp
     )
 target_link_libraries(transition
     ${GLEW_LIBRARY}

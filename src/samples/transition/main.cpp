@@ -22,23 +22,32 @@
  */
 
 #include <cstdlib>
+#include <mcxx/vector.h>
+
+extern "C" {
+#include <mc/algorithms/transvoxel.h>
+}
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
 #endif
 
 #include "../common/demo.h"
+#include "../common/isosurfaceObject.h"
 #include "../common/scene.h"
 #include "../common/wasdCamera.h"
 #include "interpolatingOctree.h"
+#include "transitionObject.h"
 
 using namespace mc::samples;
 using namespace mc::samples::transition;
 
 class TransitionDemo : public Demo {
   private:
-    std::shared_ptr<InterpolatingOctree> m_octree;
     std::shared_ptr<WasdCamera> m_camera;
+    std::shared_ptr<InterpolatingOctree> m_octree;
+    std::shared_ptr<IsosurfaceObject> m_isosurface;
+    std::shared_ptr<TransitionObject> m_transitionObject;
   public:
     TransitionDemo(int argc, char **argv)
       : Demo(argc, argv, "Transition Voxel Demo")
@@ -59,11 +68,13 @@ class TransitionDemo : public Demo {
             ));
       this->scene()->addObject(m_camera);
       this->setCamera(m_camera);
+      /*
       m_octree = std::shared_ptr<InterpolatingOctree>(
           new InterpolatingOctree());
       this->scene()->addObject(m_octree);
       // XXX: Test the octree
       OctreeCoordinates pos;
+      */
       /*
       pos.x = 0;
       pos.y = 0;
@@ -84,22 +95,79 @@ class TransitionDemo : public Demo {
       pos.z = -1;
       m_octree->setSample(pos, -1.0f);
       */
-      pos.x = -1;
-      pos.y = -1;
-      pos.z = -1;
-      m_octree->setSample(pos, -1.0f);
-      pos.x = 0;
-      pos.y = -1;
-      pos.z = -1;
-      m_octree->setSample(pos, -1.0f);
-      pos.x = -1;
-      pos.y = 0;
-      pos.z = -1;
-      m_octree->setSample(pos, -1.0f);
-      pos.x = -1;
-      pos.y = -1;
-      pos.z = 0;
-      m_octree->setSample(pos, -1.0f);
+      /*
+      for (int x = 0; x < 3; ++x) {
+        for (int y = 0; y < 3; ++y) {
+          pos.x = x;
+          pos.y = y;
+          pos.z = 0;
+          m_octree->setSample(pos, -1.0f);
+        }
+      }
+      m_isosurface = std::shared_ptr<IsosurfaceObject>(
+          new IsosurfaceObject());
+      m_isosurface->setScalarField(m_octree);
+      mc::Vec3 min(-2.0f, -2.0f, -2.0f);
+      m_isosurface->setMin(min);
+      mc::Vec3 max(2.0f, 2.0f, 2.0f);
+      m_isosurface->setMax(max);
+      m_isosurface->setPosition(glm::vec3(-2.0f, -2.0f, -2.0f));
+      this->scene()->addObject(m_isosurface);
+      */
+      // Test the transition object
+      m_transitionObject = std::shared_ptr<TransitionObject>(
+          new TransitionObject(0x01));
+      this->scene()->addObject(m_transitionObject);
+    }
+
+    bool handleEvent(const SDL_Event &event) {
+      switch (event.type) {
+        case SDL_KEYDOWN:
+          switch (event.key.keysym.scancode) {
+            case SDL_SCANCODE_PAGEUP:
+              if (SDL_GetModState() & KMOD_SHIFT) {
+                for (
+                    int i = MC_TRANSVOXEL_NUM_CANONICAL_TRANSITION_CELLS - 1;
+                    i >= 0;
+                    --i)
+                {
+                  if (mcTransvoxel_canonicalTransitionCells[i] < m_transitionObject->cell()) {
+                    fprintf(stdout, "mcTransvoxel_canonicalTransitionCells[%d]: 0x%03x\n",
+                        i, mcTransvoxel_canonicalTransitionCells[i]);
+                    m_transitionObject->setCell(
+                        mcTransvoxel_canonicalTransitionCells[i]);
+                    break;
+                  }
+                }
+              } else {
+                m_transitionObject->setCell(
+                    (m_transitionObject->cell() - 1) % 512);
+              }
+              break;
+            case SDL_SCANCODE_PAGEDOWN:
+              if (SDL_GetModState() & KMOD_SHIFT) {
+                for (
+                    int i = 0;
+                    i < MC_TRANSVOXEL_NUM_CANONICAL_TRANSITION_CELLS;
+                    ++i)
+                {
+                  if (mcTransvoxel_canonicalTransitionCells[i] > m_transitionObject->cell()) {
+                    fprintf(stdout, "mcTransvoxel_canonicalTransitionCells[%d]: 0x%03x\n",
+                        i, mcTransvoxel_canonicalTransitionCells[i]);
+                    m_transitionObject->setCell(
+                        mcTransvoxel_canonicalTransitionCells[i]);
+                    break;
+                  }
+                }
+              } else {
+                m_transitionObject->setCell(
+                    (m_transitionObject->cell() + 1) % 512);
+              }
+              break;
+          }
+          break;
+      }
+      return false;
     }
 };
 

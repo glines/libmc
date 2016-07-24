@@ -225,7 +225,9 @@ namespace mc {namespace samples { namespace cubes {
     // Draw the wireframe lines
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_cubeWireframeIndices);
     ASSERT_GL_ERROR();
-    glLineWidth(1.0f);
+    glLineWidth(10.0f);
+    ASSERT_GL_ERROR();
+    glEnable(GL_LINE_SMOOTH);
     ASSERT_GL_ERROR();
     glDrawElements(
         GL_LINES,  // mode
@@ -361,7 +363,7 @@ namespace mc {namespace samples { namespace cubes {
   }
 
   float CubeObject::CubeScalarField::operator()(
-      float x, float y, float z) const
+      float x, float y, float z)
   {
     x = (x + 1.0f) / 2.0f;
     y = (y + 1.0f) / 2.0f;

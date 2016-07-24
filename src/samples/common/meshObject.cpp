@@ -319,7 +319,9 @@ namespace mc { namespace samples {
     // Draw the wireframe lines
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_wireframeIndices);
     ASSERT_GL_ERROR();
-    glLineWidth(1.0f);
+    glLineWidth(5.0f);
+    ASSERT_GL_ERROR();
+    glEnable(GL_LINE_SMOOTH);
     ASSERT_GL_ERROR();
     glDrawElements(
         GL_LINES,  // mode

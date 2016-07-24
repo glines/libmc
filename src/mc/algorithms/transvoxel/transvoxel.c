@@ -45,7 +45,22 @@ void mcTransvoxel_transitionMeshFromField(
 {
   mcFace triangle;
   mcFace_init(&triangle, 3);
-//  assert(min->z == max->z);
+  /*
+  switch (face) {
+    case MC_CUBE_FACE_FRONT:
+      break;
+    case MC_CUBE_FACE_LEFT:
+      break;
+    case MC_CUBE_FACE_TOP:
+      break;
+    case MC_CUBE_FACE_BOTTOM:
+      break;
+    case MC_CUBE_FACE_RIGHT:
+      break;
+    case MC_CUBE_FACE_BACK:
+      break;
+  }
+  */
   float delta_x = fabs(max->x - min->x) / (float)(x_res - 1);
   float delta_y = fabs(max->y - min->y) / (float)(y_res - 1);
   /* FIMXE: Should delta_z be determined by the transition scale parameter? */
@@ -192,7 +207,6 @@ void mcTransvoxel_transitionMeshFromField(
               mesh->vertices[index].pos.x,
               mesh->vertices[index].pos.y,
               mesh->vertices[index].pos.z);
-
         }
       }
     }

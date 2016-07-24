@@ -43,6 +43,10 @@ docs:
 	echo "PROJECT_NUMBER=\"$$(git describe --always --dirty)\"") \
 	| doxygen - 1>/dev/null
 
+screenshots:
+	mkdir -p ./build
+	cd ./build && cmake -DBUILD_SCREENSHOTS=ON .. && make -j $(num_threads)
+
 .PHONY: upload
 upload: build-html
 	export targets=$$( \

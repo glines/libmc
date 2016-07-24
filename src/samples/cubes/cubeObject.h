@@ -79,7 +79,7 @@ namespace mc { namespace samples { namespace cubes {
               unsigned int cube,
               float intensity = 1.0f);
 
-          float operator()(float x, float y, float z) const;
+          float operator()(float x, float y, float z);
       };
     public:
       /**

@@ -67,7 +67,7 @@ namespace mc { namespace samples { namespace screenshots {
         public:
           RepeatingScalarField(std::shared_ptr<ScalarField> sf);
 
-          float operator()(float x, float y, float z) const;
+          float operator()(float x, float y, float z);
       };
     public:
       /**

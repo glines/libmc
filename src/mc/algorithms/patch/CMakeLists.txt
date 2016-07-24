@@ -31,3 +31,6 @@ add_dependencies(mc_algorithms_patch patch_tables.c)
 target_include_directories(mc_algorithms_patch
     PRIVATE "${CMAKE_CURRENT_BINARY_DIR}"
     )
+
+# Take screenshots representitive of the patch marching cubes algorithm
+take_screenshots("MC_PATCH_MARCHING_CUBES")

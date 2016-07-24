@@ -28,6 +28,7 @@ function(take_screenshots algorithm)
       add_custom_target(${screenshot} ALL
           COMMAND cubes
             --scene "${scene}"
+            --width 1500 --height 1500
             --screenshot - > "${CMAKE_BINARY_DIR}/${screenshot}"
           )
       add_dependencies(${screenshot}

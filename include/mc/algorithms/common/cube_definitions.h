@@ -37,7 +37,7 @@
  * considered relative to the cube not relative to the viewer. This is easiest
  * to understand with an actual die in hand.
  */
-typedef enum mcCubeFace {
+typedef enum {
   MC_CUBE_FACE_FRONT = 0,
   MC_CUBE_FACE_LEFT,
   MC_CUBE_FACE_TOP,

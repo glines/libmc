@@ -60,7 +60,7 @@ namespace mc { namespace samples { namespace screenshots {
   }
 
   float RepeatingIsosurface::RepeatingScalarField::operator()(
-      float x, float y, float z) const
+      float x, float y, float z)
   {
     return (*m_sf)(mod(x, 1.0f), mod(y, 1.0f), z);
   }

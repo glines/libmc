@@ -116,8 +116,94 @@ class TransitionDemo : public Demo {
       */
       // Test the transition object
       m_transitionObject = std::shared_ptr<TransitionObject>(
-          new TransitionObject(0x01));
+          new TransitionObject(
+            0x01,  // transition cell configuration
+            glm::vec3(-0.5f, -0.5f, -0.5f)  // position
+            ));
       this->scene()->addObject(m_transitionObject);
+
+      // Parse the scene string
+      if (this->sceneString() != nullptr) {
+        fprintf(stderr, "sceneString: %s\n", this->sceneString());
+        if (!setSceneString(this->sceneString())) {
+          // TODO: Pass this error to the context constructing this class
+        }
+      }
+    }
+
+    /**
+     * Configures the transition cell scene according to the given string. The
+     * string is encoded in a format that allows one to specify the camera
+     * angle, transition cell configuration, and other parameters of the
+     * transition cell to be drawn.
+     *
+     * \param scene String representing the camera angle, cell configuration,
+     * etc.
+     * \return True if the scene string passed was valid, false otherwise.
+     *
+     * camera=topLeft,cell=0x04e,res=2
+     */
+    bool setSceneString(const char *scene) {
+      std::shared_ptr<char> copy;
+      int length;
+      length = strlen(scene) + 1;
+      fprintf(stderr, "scene string: %s\n", scene);
+      copy = std::shared_ptr<char>(new char[length]);
+      memcpy(copy.get(), scene, sizeof(char) * length);
+      // Tokenify the string
+      char *token, *state;
+      // FIXME: strtok_r() might not be portable C99
+      token = strtok_r(copy.get(), ",", &state);
+      while (token != nullptr) {
+        // Split the token into identifier and value
+        char *ident, *value, *state2;
+        ident = strtok_r(token, "=", &state2);
+        value = strtok_r(nullptr, "=", &state2);
+        if (strcmp(ident, "camera") == 0) {
+          if (strcmp(value, "topLeft") == 0) {
+            // Set the camera looking down on the top left corner of the cube
+            auto camera = std::shared_ptr<Camera>(
+                new PerspectiveCamera(
+                  9.0f * ((float)M_PI / 180.0f),  // fovy
+                  0.1f,  // near
+                  1000.0f,  // far
+                  glm::vec3(7.48113f, -6.50764f, 5.34367f),  // position
+                  glm::quat(0.783f, 0.461f, 0.217f, 0.356f)  // orientation
+                  ));
+            this->scene()->addObject(camera);
+            this->setCamera(camera);
+          } else {
+            fprintf(stderr, "Error: Unknown camera angle '%s'\n",
+                value);
+            return false;
+          }
+        } else if (strcmp(ident, "cell") == 0) {
+          int cell = strtol(value, nullptr, 16);
+          if (cell >= 0 && cell <= 0x1ff) {
+            m_transitionObject->setCell(cell);
+          } else {
+            fprintf(stderr, "Invalid value '0x%x' for cell configuration\n",
+                cell);
+            return false;
+          }
+        } else if (strcmp(ident, "res") == 0) {
+          int res = strtol(value, nullptr, 10);
+          if (res > 0) {
+            // TODO
+//            this->setResolution(res);
+          } else {
+            fprintf(stderr, "Invalid value '%x' for sample lattice resolution\n",
+                res);
+            return false;
+          }
+        } else {
+          fprintf(stderr, "Unknown identifier '%s'\n", ident);
+          return false;
+        }
+        // Move on to the next token
+        token = strtok_r(nullptr, ",", &state);
+      }
+      return true;
     }
 
     bool handleEvent(const SDL_Event &event) {

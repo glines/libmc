@@ -11,6 +11,9 @@ add_executable(transvoxel_generate_canonical_tables
     generate_canonical_tables.c
     transform.c
     )
+target_link_libraries(transvoxel_generate_canonical_tables
+    mc_algorithms_common
+    )
 add_dependencies(transvoxel_generate_canonical_tables
     transvoxel_transform_tables.c
     )

@@ -34,12 +34,40 @@
 
 #define get_byte(num, byte) (((num) & (0xff << (8 * byte))) >> (8 * byte))
 
-void mcTransvoxel_computeRegularCellTriangulationTable() {
+void mcTransvoxel_computeRegularCellTriangulationTable(
+    mcTransvoxel_RegularCellTriangleList *table)
+{
   /* The triangulation table used in the Transvoxel algorithm solves the face
    * ambiguity problem in marching cubes by not inverting the cases with
    * ambiguous faces. This results in a few additional equivalence classes
    * which arbitrarily decide the triangulation for these otherwise ambiguous
    * cases. */
+  /* Iterate over all regular cells */
+  for (int cell = 0; cell <= 0xff; ++cell) {
+    mcTransvoxel_RegularCellTriangleList *list = &table[cell];
+    int numTriangles = 0;
+    memset(list->triangles, -1, sizeof(list->triangles));
+    /* Determine the canonical orientation for this regular cell and the
+     * sequence of operations needed to get to that orientation */
+    int canonical = mcTransvoxel_canonicalRegularCell(cell);
+    int sequence = mcTransvoxel_canonicalRegularCellSequence(cell);
+    /* Generate triangles for the canonical regular cell */
+#define MAKE_TRIANGLE(a, b, c) \
+    do { \
+      mcTransvoxel_Triangle *triangle = &list->triangles[numTriangles++]; \
+      triangle->edgeIntersections[0] = a; \
+      triangle->edgeIntersections[1] = b; \
+      triangle->edgeIntersections[2] = c; \
+    } while (0)
+    switch (canonical) {
+      case MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_0:
+        /* This is the trivial case with all samples above the isosurface. No
+         * triangles are needed. */
+        break;
+      case MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_1:
+        break;
+    }
+  }
 }
 
 void mcTransvoxel_computeTransitionCellTriangulationTable(
@@ -54,7 +82,7 @@ void mcTransvoxel_computeTransitionCellTriangulationTable(
      * sequence of operations needed to get to that orientation */
     int canonical = mcTransvoxel_canonicalTransitionCell(cell);
     int sequence = mcTransvoxel_canonicalTransitionCellSequence(cell);
-    /* Generate triangles using the canonical transition cell */
+    /* Generate triangles for the canonical transition cell */
 #define MAKE_TRIANGLE(a, b, c) \
     do { \
       mcTransvoxel_Triangle *triangle = &list->triangles[numTriangles++]; \

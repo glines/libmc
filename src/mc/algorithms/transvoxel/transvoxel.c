@@ -217,21 +217,33 @@ void mcTransvoxel_isosurfaceFromField(
     mcScalarFieldWithArgs sf, const void *args,
     unsigned int x_res, unsigned int y_res, unsigned int z_res,
     const mcVec3 *min, const mcVec3 *max,
-    const mcTransvoxel_Params *params,
     mcMesh *mesh)
 {
-  if (params == NULL) {
-    params = &mcTransvoxel_defaultParams;
-  }
   float delta_x = fabs(max->x - min->x) / (float)(x_res - 1);
   float delta_y = fabs(max->y - min->y) / (float)(y_res - 1);
   float delta_z = fabs(max->z - min->z) / (float)(z_res - 1);
   // Iterate through the sample lattice
-  if (params->transitionFace & (1 << MC_CUBE_FACE_BOTTOM))
-    fprintf(stderr, "Transition on bottom face!\n");
   for (int z = 0; z < z_res - 1; ++z) {
     for (int y = 0; y < y_res - 1; ++y) {
       for (int x = 0; x < x_res - 1; ++x) {
+        /* Determine the cell configuration index by iterating over the eight
+         * cell samples */
+        unsigned int cell = 0;
+        for (int sampleIndex = 0; sampleIndex < 8; ++sampleIndex) {
+          unsigned int pos[3];
+          unsigned int i;
+          /* Determine this sample's relative position in the cell */
+          mcCube_vertexRelativePosition(sampleIndex, pos);
+          /* TODO: Retrive the sample value from a buffer rather than computing
+           * it every time */
+          float sampleValue = sf(min->x + (float)(x + pos[0]) * delta_x,
+                                 min->y + (float)(y + pos[1]) * delta_y,
+                                 min->z + (float)(z + pos[2]) * delta_z,
+                                 args);
+          /* Add the bit this sample contributes to the cell */
+          cell |= (sampleValue >= 0.0f ? 0 : 1) << sampleIndex;
+        }
+        fprintf(stderr, "transvoxel regular cell: 0x%02x\n", cell);
       }
     }
   }

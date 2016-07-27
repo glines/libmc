@@ -424,6 +424,24 @@ unsigned int mcCube_canonicalRotationInversionSequence(unsigned int cube) {
   return mcCube_canonicalRotationInversionSequenceTable[cube];
 }
 
+int mcCube_rotateCubeX(int cube) {
+  assert(cube >= 0);
+  assert(cube <= 0xff);
+  return mcCube_rotationTableX[cube];
+}
+
+int mcCube_rotateCubeY(int cube) {
+  assert(cube >= 0);
+  assert(cube <= 0xff);
+  return mcCube_rotationTableY[cube];
+}
+
+int mcCube_rotateCubeZ(int cube) {
+  assert(cube >= 0);
+  assert(cube <= 0xff);
+  return mcCube_rotationTableZ[cube];
+}
+
 unsigned int mcCube_rotateEdgeX(unsigned int edge) {
   assert(edge < MC_CUBE_NUM_EDGES);
   return mcCube_edgeRotationTableX[edge];
@@ -458,4 +476,66 @@ unsigned int mcCube_translateEdge(unsigned int edge, unsigned int face) {
   assert(edge < MC_CUBE_NUM_EDGES);
   assert(face < MC_CUBE_NUM_FACES);
   return mcCube_edgeTranslationTable[(face << 4) + edge];
+}
+
+int mcCube_getCubeFace(int cube, int faceIndex) {
+  int result = 0;
+#define FACE_BIT(in, out) \
+  result |= (cube & (1 << (in))) ? (1 << (out)) : 0;
+#define FACE_BITS(a, b, c, d) \
+  do { \
+    FACE_BIT(a, 0) \
+    FACE_BIT(b, 1) \
+    FACE_BIT(c, 2) \
+    FACE_BIT(d, 3) \
+  } while (0)
+  switch (faceIndex) {
+    case 0:
+      /* The front face */
+      FACE_BITS(0, 1, 2, 3);
+      break;
+    case 1:
+      /* The left face */
+      FACE_BITS(1, 5, 6, 2);
+      break;
+    case 2:
+      /* The top face */
+      FACE_BITS(2, 6, 7, 3);
+      break;
+    case 3:
+      /* The bottom face */
+      FACE_BITS(0, 4, 5, 1);
+      break;
+    case 4:
+      /* The right face */
+      FACE_BITS(0, 3, 7, 4);
+      break;
+    case 5:
+      /* The back face */
+      FACE_BITS(4, 7, 6, 5);
+      break;
+  }
+  return result;
+}
+
+int mcCube_isAmbiguousFace(int face) {
+  assert(face >= 0);
+  assert(face <= 0xf);
+  switch (face) {
+    case 0x5:
+    case 0xa:
+      return 1;
+  }
+  return 0;
+}
+
+int mcCube_hasAmbiguousFace(int cube) {
+  /* Check all faces of the cube for the ambiguous cases */
+  for (int faceIndex = 0; faceIndex < 6; ++faceIndex) {
+    int face = mcCube_getCubeFace(cube, faceIndex);
+    if (mcCube_isAmbiguousFace(face)) {
+      return 1;
+    }
+  }
+  return 0;
 }

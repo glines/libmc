@@ -24,7 +24,10 @@
 #ifndef MC_ALGORITHMS_TRANSVOXEL_COMMON_H_
 #define MC_ALGORITHMS_TRANSVOXEL_COMMON_H_
 
+#define MC_TRANSVOXEL_NUM_REGULAR_CELLS 256
 #define MC_TRANSVOXEL_NUM_CANONICAL_REGULAR_CELLS 18
+#define MC_TRANSVOXEL_MAX_REGULAR_CELL_TRIANGLES 42  /* XXX: I don't know what this number actually is */
+
 #define MC_TRANSVOXEL_NUM_TRANSITION_CELLS 512
 #define MC_TRANSVOXEL_NUM_CANONICAL_TRANSITION_CELLS 73
 #define MC_TRANSVOXEL_MAX_TRANSITION_CELL_EDGE_INTERSECTIONS 42  /* XXX: I don't know what this number actually is */
@@ -44,7 +47,11 @@ typedef struct {
 } mcTransvoxel_Triangle;
 
 typedef struct {
-  mcTransvoxel_Triangle triangles[MC_TRANSVOXEL_MAX_TRANSITION_CELL_TRIANGLES];
+  mcTransvoxel_Triangle triangles[MC_TRANSVOXEL_MAX_REGULAR_CELL_TRIANGLES];
 } mcTransvoxel_TransitionCellTriangleList;
+
+typedef struct {
+  mcTransvoxel_Triangle triangles[MC_TRANSVOXEL_MAX_TRANSITION_CELL_TRIANGLES];
+} mcTransvoxel_RegularCellTriangleList;
 
 #endif

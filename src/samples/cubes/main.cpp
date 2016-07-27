@@ -34,6 +34,8 @@
 
 extern "C" {
 #include <mc/algorithms/common/cube.h>
+#include <mc/algorithms/transvoxel/canonical.h>
+#include <mc/algorithms/transvoxel/common.h>
 }
 
 #include "../common/arcballCamera.h"
@@ -93,6 +95,7 @@ class Cubes : public Demo {
             ));
       this->scene()->addObject(m_cubeObject);
 
+      // Parse the scene string
       if (this->sceneString() != nullptr) {
         fprintf(stderr, "sceneString: %s\n", this->sceneString());
         if (!setSceneString(this->sceneString())) {
@@ -227,6 +230,9 @@ class Cubes : public Demo {
             case SDLK_u:
               m_cubeObject->setAlgorithm(MC_NIELSON_DUAL);
               return true;
+            case SDLK_t:
+              m_cubeObject->setAlgorithm(MC_TRANSVOXEL);
+              return true;
 #define INTENSITY_DELTA 0.1f
             case SDLK_COMMA:
               m_cubeObject->setIntensity(
@@ -263,12 +269,12 @@ class Cubes : public Demo {
               return true;
             case SDL_SCANCODE_PAGEUP:
               if (SDL_GetModState() & KMOD_SHIFT) {
-                for (int i = MC_CUBE_NUM_CANONICAL_ORIENTATION_INVERSIONS - 1; i >= 0; --i) {
-                  if (mcCube_canonicalOrientationInversions[i] < m_cubeObject->cube()) {
-                    fprintf(stdout, "mcCube_canonicalOrientationInversions[%d]: 0x%02x\n",
-                        i, mcCube_canonicalOrientationInversions[i]);
+                for (int i = MC_TRANSVOXEL_NUM_CANONICAL_REGULAR_CELLS - 1; i >= 0; --i) {
+                  if (mcTransvoxel_canonicalRegularCells[i] < m_cubeObject->cube()) {
+                    fprintf(stdout, "mcTransvoxel_canonicalRegularCells[%d]: 0x%02x\n",
+                        i, mcTransvoxel_canonicalRegularCells[i]);
                     m_cubeObject->setCube(
-                        mcCube_canonicalOrientationInversions[i]);
+                        mcTransvoxel_canonicalRegularCells[i]);
                     return true;
                   }
                 }
@@ -285,12 +291,12 @@ class Cubes : public Demo {
               break;
             case SDL_SCANCODE_PAGEDOWN:
               if (SDL_GetModState() & KMOD_SHIFT) {
-                for (int i = 0; i < MC_CUBE_NUM_CANONICAL_ORIENTATION_INVERSIONS; ++i) {
-                  if (mcCube_canonicalOrientationInversions[i] > m_cubeObject->cube()) {
-                    fprintf(stdout, "mcCube_canonicalOrientationInversions[%d]: 0x%02x\n",
-                        i, mcCube_canonicalOrientationInversions[i]);
+                for (int i = 0; i < MC_TRANSVOXEL_NUM_CANONICAL_REGULAR_CELLS; ++i) {
+                  if (mcTransvoxel_canonicalRegularCells[i] > m_cubeObject->cube()) {
+                    fprintf(stdout, "mcTransvoxel_canonicalRegularCells[%d]: 0x%02x\n",
+                        i, mcTransvoxel_canonicalRegularCells[i]);
                     m_cubeObject->setCube(
-                        mcCube_canonicalOrientationInversions[i]);
+                        mcTransvoxel_canonicalRegularCells[i]);
                     return true;
                   }
                 }

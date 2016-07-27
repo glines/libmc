@@ -113,6 +113,7 @@ typedef enum mcAlgorithmFlag {
   MC_NIELSON_DUAL,
   /** The original marching cubes as described by Lorensen. \cite Lorensen:1987 */
   MC_ORIGINAL_MARCHING_CUBES,
+  MC_TRANSVOXEL,
 } mcAlgorithmFlag;
 
 /**

@@ -72,6 +72,14 @@ namespace mc { namespace samples {
 #endif
   DEFINE_SHADER(gouraud)
 #ifdef __EMSCRIPTEN__
+#include "assets_shaders_webgl_gouraudWinding.vert.c"
+#include "assets_shaders_webgl_gouraudWinding.frag.c"
+#else
+#include "assets_shaders_glsl_gouraudWinding.vert.c"
+#include "assets_shaders_glsl_gouraudWinding.frag.c"
+#endif
+  DEFINE_SHADER(gouraudWinding)
+#ifdef __EMSCRIPTEN__
 #include "assets_shaders_webgl_point.vert.c"
 #include "assets_shaders_webgl_point.frag.c"
 #else

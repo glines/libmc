@@ -37,7 +37,7 @@ namespace mc { namespace samples {
     : SceneObject(position, orientation),
     m_meshStruct(nullptr),
     m_isDrawWireframe(true), m_isDrawNormals(false), m_isDrawOpaque(true),
-    m_isInitialized(false)
+    m_isInitialized(false), m_isDrawWinding(false)
   {
   }
 
@@ -406,7 +406,12 @@ namespace mc { namespace samples {
     // TODO: Support Gouraud, Phong, and flat shading
     // TODO: Support specular highlights
     // Use the Gouraud shader program
-    auto shader = Shaders::gouraudShader();
+    std::shared_ptr<ShaderProgram> shader;
+    if (m_isDrawWinding) {
+      shader = Shaders::gouraudWindingShader();
+    } else {
+      shader = Shaders::gouraudShader();
+    }
     shader->use();
 
     // Prepare the uniform values

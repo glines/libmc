@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <mc/algorithms/common/cube.h>
 #include <mc/algorithms/transvoxel/common.h>
 #include <mc/algorithms/transvoxel/transform.h>
 
@@ -38,10 +39,86 @@ void mcTransvoxel_computeCanonicalRegularCellTable(
     int *table,
     int *sequenceTable)
 {
+  unsigned int listIndex;
+
+  memset(table, -1, sizeof(int) * 256);
+  memset(sequenceTable, -1, sizeof(int) * 256);
+  listIndex = 0;
+
   /* Iterate over all possible cell configurations */
   for (int cell = 0; cell <= 0xff; ++cell) {
-    /* TODO */
+    int canonical = -1;
+    /* Iterate to invert the cube */
+    int inverted = cell;
+    for (int i = 0; i < 2; ++i) {
+      /* Rotate the cell in all directions */
+      for (mcCubeFace face = 0; face < MC_CUBE_NUM_FACES; ++face) {
+        int rotated, sequence;
+        /* Set the inversion byte */
+        sequence = set_byte(0, 3, i);
+        rotated = inverted;
+        /* Determine the face direction and rotate accordingly */
+        switch (face) {
+          case MC_CUBE_FACE_LEFT:
+            rotated = mcCube_rotateCubeZ(rotated);
+            sequence = incr_byte(sequence, 0);
+          case MC_CUBE_FACE_BACK:
+            rotated = mcCube_rotateCubeZ(rotated);
+            sequence = incr_byte(sequence, 0);
+          case MC_CUBE_FACE_RIGHT:
+            rotated = mcCube_rotateCubeZ(rotated);
+            sequence = incr_byte(sequence, 0);
+          case MC_CUBE_FACE_FRONT:
+            break;
+          case MC_CUBE_FACE_BOTTOM:
+            rotated = mcCube_rotateCubeX(rotated);
+            rotated = mcCube_rotateCubeX(rotated);
+            sequence = incr_byte(sequence, 1);
+            sequence = incr_byte(sequence, 1);
+          case MC_CUBE_FACE_TOP:
+            rotated = mcCube_rotateCubeX(rotated);
+            sequence = incr_byte(sequence, 1);
+            break;
+        }
+        /* Rotate about the Y axis four times */
+        for (int j = 0; j < 4; ++j) {
+          if (table[rotated] != -1) {
+            if (canonical == -1) {
+              /* We found the canonical orientation for this cube */
+              canonical = table[rotated];
+              table[cell] = canonical;
+            } else {
+              assert(table[rotated] == canonical);
+            }
+          }
+          if (rotated == canonical) {
+            /* We found the rotation sequence that brings us into the canonical
+             * orientation for this cell */
+            /* Store the rotation sequence and inversion flag */
+            sequenceTable[cell] = sequence;
+          }
+          rotated = mcCube_rotateCubeY(rotated);
+          sequence = incr_byte(sequence, 2);
+        }
+      }
+      if (mcCube_hasAmbiguousFace(cell)) {
+        /* Don't invert cell configurations that have ambiguous faces */
+        break;
+      }
+      /* Invert the cell */
+      inverted = ~inverted & 0xff;
+    }
+    if (canonical == -1) {
+      /* We could not find the current cell configuration in the table, so this
+       * cell configuration defines a canonical cell orientation+inversion */
+      canonical = cell;
+      list[listIndex++] = canonical;
+      table[cell] = canonical;
+      sequenceTable[cell] = 0;
+    }
   }
+
+  assert(listIndex == MC_TRANSVOXEL_NUM_CANONICAL_REGULAR_CELLS);
 }
 
 int mcTransvoxel_getTransitionCellFace(int cell, int index) {
@@ -258,6 +335,25 @@ void mcTransvoxel_printCanonicalTransitionCellTable(int *table, FILE *fp) {
   fprintf(fp, "};\n");
 }
 
+void mcTransvoxel_printCanonicalRegularCellSequenceTable(
+    int *table, FILE *fp)
+{
+  fprintf(fp, "int mcTransvoxel_canonicalRegularCellSequenceTable[] = {\n");
+  /* Iterate over all transition cell configurations and print the table */
+  for (int i = 0; i <= 0xff; i += 4) {
+    fprintf(fp, "  ");
+    for (int j = 0; j < 4; ++j) {
+      int cell = i + j;
+      fprintf(fp, "0x%08x,", table[cell]);
+      if (j == 3)
+        fprintf(fp, "\n");
+      else
+        fprintf(fp, " ");
+    }
+  }
+  fprintf(fp, "};\n");
+}
+
 void mcTransvoxel_printCanonicalTransitionCellSequenceTable(
     int *table, FILE *fp)
 {
@@ -275,6 +371,18 @@ void mcTransvoxel_printCanonicalTransitionCellSequenceTable(
     }
   }
   fprintf(fp, "};\n");
+}
+
+void mcTransvoxel_printCanonicalRegularCellList(
+    int *list, FILE *fp)
+{
+  fprintf(fp, "typedef enum {\n");
+  for (int i = 0; i < MC_TRANSVOXEL_NUM_CANONICAL_REGULAR_CELLS; ++i) {
+    fprintf(fp,
+        "  MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_%d = 0x%03x,\n",
+        i, list[i]);
+  }
+  fprintf(fp, "} mcTransvoxel_CanonicalRegularCell;\n");
 }
 
 void mcTransvoxel_printCanonicalTransitionCellList(
@@ -328,10 +436,12 @@ int main(int argc, char **argv) {
   }
 
   /* Allocate memory for each table */
-  canonicalRegularCellList = (int*)malloc(sizeof(int) * 512);
+  canonicalRegularCellList = (int*)malloc(
+      sizeof(int) * MC_TRANSVOXEL_NUM_REGULAR_CELLS);
   canonicalRegularCellTable = (int*)malloc(sizeof(int) * 512);
   canonicalRegularCellSequenceTable = (int*)malloc(sizeof(int) * 512);
-  canonicalTransitionCellList = (int*)malloc(sizeof(int) * 512);
+  canonicalTransitionCellList = (int*)malloc(
+      sizeof(int) * MC_TRANSVOXEL_NUM_TRANSITION_CELLS);
   canonicalTransitionCellTable = (int*)malloc(sizeof(int) * 512);
   canonicalTransitionCellSequenceTable = (int*)malloc(sizeof(int) * 512);
 
@@ -356,6 +466,9 @@ int main(int argc, char **argv) {
       mcTransvoxel_printCanonicalRegularCellTable(
           canonicalRegularCellTable, stdout);
       fprintf(stdout, "\n");
+      mcTransvoxel_printCanonicalRegularCellSequenceTable(
+          canonicalRegularCellSequenceTable, stdout);
+      fprintf(stdout, "\n");
       mcTransvoxel_printCanonicalTransitionCellTable(
           canonicalTransitionCellTable, stdout);
       fprintf(stdout, "\n");
@@ -363,11 +476,9 @@ int main(int argc, char **argv) {
           canonicalTransitionCellSequenceTable, stdout);
       break;
     case TRANSVOXEL_CANONICAL_CELLS_H:
-      /* TODO
       mcTransvoxel_printCanonicalRegularCellList(
           canonicalRegularCellList, stdout);
       fprintf(stdout, "\n");
-          */
       mcTransvoxel_printCanonicalTransitionCellList(
           canonicalTransitionCellList, stdout);
       break;

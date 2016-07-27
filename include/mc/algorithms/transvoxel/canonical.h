@@ -24,7 +24,11 @@
 #ifndef MC_ALGORITHMS_TRANSVOXEL_CANONICAL_H_
 #define MC_ALGORITHMS_TRANSVOXEL_CANONICAL_H_
 
+extern const int mcTransvoxel_canonicalRegularCells[];
 extern const int mcTransvoxel_canonicalTransitionCells[];
+
+int mcTransvoxel_canonicalRegularCell(int cell);
+int mcTransvoxel_canonicalRegularCellSequence(int cell);
 
 /**
  * This routine finds the canonical transition cell configuration for the given

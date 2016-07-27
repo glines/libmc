@@ -48,6 +48,8 @@ namespace mc { namespace samples { namespace transition {
     m_generateBillboard();
     m_generateTransitionCellWireframe();
 
+    this->setDrawWinding(true);
+
     this->setCell(cell);
   }
 
@@ -256,13 +258,13 @@ namespace mc { namespace samples { namespace transition {
     // Set the color based on the sample value
     float color[3];
     if (value > 0) {
-      color[0] = 1.0f;
-      color[1] = 0.0f;
-      color[2] = 0.0f;
+      color[0] = 0.9333f;
+      color[1] = 0.3020f;
+      color[2] = 0.3686f;
     } else {
-      color[0] = 0.0f;
-      color[1] = 1.0f;
-      color[2] = 0.0f;
+      color[0] = 0.4588f;
+      color[1] = 0.7961f;
+      color[2] = 0.3608f;
     }
     glUniform3f(
         shader->colorLocation(),  // location

@@ -74,7 +74,7 @@ namespace mc { namespace samples {
              m_vertexBuffer, m_indexBuffer;
       unsigned int m_numTriangles, m_numVertices,
                    m_numWireframeLines;
-      bool m_isDrawWireframe, m_isDrawNormals, m_isDrawOpaque, m_isInitialized;
+      bool m_isDrawWireframe, m_isDrawNormals, m_isDrawOpaque, m_isInitialized, m_isDrawWinding;
 
       void m_uploadMesh(const MeshStruct &mesh);
       void m_initGl();
@@ -184,6 +184,14 @@ namespace mc { namespace samples {
        */
       void setDrawOpaque(bool flag) {
         m_isDrawOpaque = flag;
+      }
+
+      bool isDrawWinding() const {
+        return m_isDrawWinding;
+      }
+
+      void setDrawWinding(bool flag) {
+        m_isDrawWinding = flag;
       }
 
     protected:

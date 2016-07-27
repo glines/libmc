@@ -65,7 +65,7 @@ void mcCuberille_isosurfaceFromField(
      * not sample space coordinates. The vertices of the mesh we
      * generate must be in mesh space coordinates in which min is
      * at the origin. */
-    mcVec3_subtract(&node->pos, &min, &vertex.pos);
+    mcVec3_subtract(&node->pos, min, &vertex.pos);
     /* TODO: Calculate the surface normal */
     /* NOTE: Since cubes have sharp corners, we need multiple vertices in
      * strategic places in order to accurately represent the sharp angles.

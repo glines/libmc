@@ -202,6 +202,10 @@ unsigned int mcCube_canonicalOrientationInversion(unsigned int cube);
  */
 unsigned int mcCube_canonicalRotationInversionSequence(unsigned int cube);
 
+int mcCube_rotateCubeX(int cube);
+int mcCube_rotateCubeY(int cube);
+int mcCube_rotateCubeZ(int cube);
+
 /**
  * Rotates the given cube about the x-axis by 90-degrees and returns the
  * resulting edge. This function uses a pre-computed lookup table.
@@ -241,12 +245,25 @@ unsigned int mcCube_rotateEdgeReverseY(unsigned int edge);
  */
 unsigned int mcCube_rotateEdgeReverseZ(unsigned int edge);
 
-/* Translates the edge of the given face/edge combination into that edge's
+/**
+ * Translates the edge of the given face/edge combination into that edge's
  * index with respect to the voxel cube on the other side of the given face.
  *
  * If the given face does not include the given edge, (i.e. the two voxel cubes
  * on that face do not share the given edge) then this routine returns the
  * pseudo index -1. */
 unsigned int mcCube_translateEdge(unsigned int edge, unsigned int face);
+
+/**
+ * This routine returns true if the given cube has at least one ambiguous face.
+ * Ambiguous faces have two samples on opposite corners above the isosurface,
+ * and the other two corners below the isosurface. These faces can cause
+ * problems if inversion is performed in the relation that determines the
+ * canonical cube configuration.
+ *
+ * \param cube Cube configuration for which to check for ambiguous face.
+ * \return 1 if the given cube has an ambiguous face, 0 otherwise.
+ */
+int mcCube_hasAmbiguousFace(int cube);
 
 #endif

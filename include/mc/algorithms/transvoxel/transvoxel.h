@@ -43,7 +43,6 @@ void mcTransvoxel_isosurfaceFromField(
     mcScalarFieldWithArgs sf, const void *args,
     unsigned int x_res, unsigned int y_res, unsigned int z_res,
     const mcVec3 *min, const mcVec3 *max,
-    const mcTransvoxel_Params *params,
     mcMesh *mesh);
 
 #endif

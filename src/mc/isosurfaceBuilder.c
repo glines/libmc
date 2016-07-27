@@ -31,6 +31,7 @@
 #include <mc/algorithms/nielsonDual.h>
 #include <mc/algorithms/patch.h>
 #include <mc/algorithms/simple.h>
+#include <mc/algorithms/transvoxel.h>
 #include <mc/isosurfaceBuilder.h>
 #include <mc/mesh.h>
 
@@ -213,6 +214,13 @@ const mcMesh *mcIsosurfaceBuilder_isosurfaceFromFieldWithArgs(
       break;
     case MC_NIELSON_DUAL:
       mcNielsonDual_isosurfaceFromField(
+          sf, args,
+          x_res, y_res, z_res,
+          min, max,
+          mesh);
+      break;
+    case MC_TRANSVOXEL:
+      mcTransvoxel_isosurfaceFromField(
           sf, args,
           x_res, y_res, z_res,
           min, max,

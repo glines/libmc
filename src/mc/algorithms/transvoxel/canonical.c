@@ -30,6 +30,29 @@
 
 /* NOTE: This is a little bit awkward, but it is difficult to export the
  * generated list of canonical cells as an enum type. */
+const int mcTransvoxel_canonicalRegularCells[] = {
+  MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_0,
+  MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_1,
+  MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_2,
+  MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_3,
+  MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_4,
+  MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_5,
+  MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_6,
+  MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_7,
+  MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_8,
+  MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_9,
+  MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_10,
+  MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_11,
+  MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_12,
+  MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_13,
+  MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_14,
+  MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_15,
+  MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_16,
+  MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_17,
+};
+
+/* NOTE: This is a little bit awkward, but it is difficult to export the
+ * generated list of canonical cells as an enum type. */
 const int mcTransvoxel_canonicalTransitionCells[] = {
   MC_TRANSVOXEL_CANONICAL_TRANSITION_CELL_0,
   MC_TRANSVOXEL_CANONICAL_TRANSITION_CELL_1,
@@ -105,6 +128,16 @@ const int mcTransvoxel_canonicalTransitionCells[] = {
   MC_TRANSVOXEL_CANONICAL_TRANSITION_CELL_71,
   MC_TRANSVOXEL_CANONICAL_TRANSITION_CELL_72,
 };
+
+int mcTransvoxel_canonicalRegularCell(int cell) {
+  assert((cell & ~(0xff)) == 0);
+  return mcTransvoxel_canonicalRegularCellTable[cell];
+}
+
+int mcTransvoxel_canonicalRegularCellSequence(int cell) {
+  assert((cell & ~(0xff)) == 0);
+  return mcTransvoxel_canonicalRegularCellSequenceTable[cell];
+}
 
 int mcTransvoxel_canonicalTransitionCell(int cell) {
   assert((cell & ~(0x1ff)) == 0);

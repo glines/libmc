@@ -6,7 +6,7 @@ all: build build-html docs
 .PHONY: build
 build:
 	mkdir -p ./build
-	cd ./build && cmake .. && make -j $(num_threads)
+	cd ./build && cmake -DBUILD_SCREENSHOTS=OFF .. && make -j $(num_threads)
 
 .PHONY: build-html
 build-html: lua-js

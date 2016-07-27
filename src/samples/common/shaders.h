@@ -60,6 +60,8 @@ namespace mc { namespace samples {
       DECLARE_SHADER(billboardPoint);
       /** Shader implementing Gouraud shading. */
       DECLARE_SHADER(gouraud);
+      /** Shader implementing Gouraud shading with front/back face coloring. */
+      DECLARE_SHADER(gouraudWinding);
       /** Shader for drawing debugging points. */
       DECLARE_SHADER(point);
       /** Shader for drawing debugging lines. */

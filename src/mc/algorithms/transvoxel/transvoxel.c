@@ -273,15 +273,6 @@ void mcTransvoxel_isosurfaceFromField(
               vertexIndices[edge] = mcMesh_addVertex(mesh, &vertex);
               fprintf(stderr, "added mesh vertex: %d\n",
                   vertexIndices[edge]);
-              /* XXX: Draw a small triangle to aid in debugging of the vertices */
-              vertex.pos.x = vertex.pos.x + 0.1 * delta_x;
-              mcMesh_addVertex(mesh, &vertex);
-              vertex.pos.y = vertex.pos.y + 0.1 * delta_y;
-              mcMesh_addVertex(mesh, &vertex);
-              triangle.indices[0] = vertexIndices[edge];
-              triangle.indices[1] = vertexIndices[edge] + 1;
-              triangle.indices[2] = vertexIndices[edge] + 2;
-              mcMesh_addFace(mesh, &triangle);
             }
             edgeIntersectionsIndex += 1;
           }
@@ -298,11 +289,9 @@ void mcTransvoxel_isosurfaceFromField(
           triangle.indices[0] = vertexIndices[t->edgeIntersections[0]];
           triangle.indices[1] = vertexIndices[t->edgeIntersections[1]];
           triangle.indices[2] = vertexIndices[t->edgeIntersections[2]];
-          /*
           assert(triangle.indices[0] != -1);
           assert(triangle.indices[1] != -1);
           assert(triangle.indices[2] != -1);
-          */
           mcMesh_addFace(mesh, &triangle);
         }
       }

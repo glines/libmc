@@ -81,74 +81,129 @@ void mcTransvoxel_computeRegularCellTriangulationTable(
          * isosurface on the same face. This generates two separate triangles
          * on each of these corners. The face these samples are on is an
          * ambiguous face. */
-        MAKE_TRIANGLE(0, 8, 3);
-        MAKE_TRIANGLE(1, 2, 11);
+        MAKE_TRIANGLE(0, 1, 9);
+        MAKE_TRIANGLE(4, 7, 8);
         break;
       case MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_4:
+        /* This case has three samples on the front face in an "L" shape that are
+         * below the isosurface. The result resembles a fan or paper airplane. */
         /* This case corresponds to equivalence class #5 in \cite Lengyel:2010. */
-        MAKE_TRIANGLE(2, 11, 3);
-        MAKE_TRIANGLE(3, 11, 8);
-        MAKE_TRIANGLE(8, 11, 9);
+        MAKE_TRIANGLE(1, 9, 3);
+        MAKE_TRIANGLE(3, 9, 4);
+        MAKE_TRIANGLE(3, 4, 7);
         break;
       case MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_5:
-        MAKE_TRIANGLE(8, 10, 11);
-        MAKE_TRIANGLE(8, 11, 9);
+        /* In this case, four samples on one face are below the isosurface. This
+         * gives a quad that divides the cube squarely in half. */
+        MAKE_TRIANGLE(1, 7, 3);
+        MAKE_TRIANGLE(1, 5, 7);
         break;
       case MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_6:
-        MAKE_TRIANGLE(1, 2, 11);
+      /* This case has three samples mutually diagonal from each other that
+       * generate three separate triangles. This case has a number of ambiguous
+       * faces. */
+        MAKE_TRIANGLE(0, 1, 9);
         MAKE_TRIANGLE(4, 7, 8);
+        MAKE_TRIANGLE(2, 3, 10);
         break;
       case MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_7:
-        MAKE_TRIANGLE(0, 4, 3);
-        MAKE_TRIANGLE(3, 4, 7);
-        MAKE_TRIANGLE(1, 2, 11);
+        /* This case places has four samples below the isosurface arranged
+         * symmetrically so that the isosurface appears to intersect the cube
+         * at an angle into equal parts. */
+        MAKE_TRIANGLE(1, 9, 4);
+        MAKE_TRIANGLE(4, 2, 1);
+        MAKE_TRIANGLE(7, 2, 4);
+        MAKE_TRIANGLE(2, 7, 10);
         break;
       case MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_8:
-        MAKE_TRIANGLE(2, 11, 9);
-        MAKE_TRIANGLE(2, 7, 3);
-        MAKE_TRIANGLE(4, 7, 9);
-        MAKE_TRIANGLE(2, 9, 7);
+        /* This case has two samples below the isosurface on opposite corners
+         * of the cube. */
+        MAKE_TRIANGLE(4, 9, 5);
+        MAKE_TRIANGLE(2, 3, 10);
         break;
       case MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_9:
-        MAKE_TRIANGLE(1, 9, 0);
-        MAKE_TRIANGLE(2, 3, 10);
-        MAKE_TRIANGLE(4, 7, 8);
+        /* This case has two samples on the same edge that are below the
+         * isosurface that generate a quad, and a third sample diagonal from
+         * the other two that generates a lone triangle. Since this case has a
+         * face with samples diagonal from each other, we again have an
+         * ambiguous face. */
+        MAKE_TRIANGLE(4, 9, 5);
+        MAKE_TRIANGLE(0, 10, 2);
+        MAKE_TRIANGLE(0, 8, 10);
         break;
       case MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_10:
-        MAKE_TRIANGLE(2, 7, 10);
-        MAKE_TRIANGLE(1, 9, 2);
-        MAKE_TRIANGLE(4, 7, 9);
-        MAKE_TRIANGLE(2, 9, 7);
+        /* For this case, the four samples below the isosurface are arranged in
+         * what appears to be a serpentine shape along the edges of the cube.
+         * This is one of two cases that look like this. Only way to
+         * differentiate these two cases visually is by observing the
+         * handedness of the shape. This particular case has a "Z" shape when
+         * viewed from the outside of the isosurface looking in. */
+        MAKE_TRIANGLE(1, 5, 4);
+        MAKE_TRIANGLE(1, 10, 2);
+        MAKE_TRIANGLE(4, 8, 10);
+        MAKE_TRIANGLE(1, 4, 10);
         break;
       case MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_11:
-        MAKE_TRIANGLE(7, 10, 11);
-        MAKE_TRIANGLE(0, 11, 1);
-        MAKE_TRIANGLE(0, 4, 7);
-        MAKE_TRIANGLE(0, 7, 11);
+        /* For this case, the four samples below the isosurface are arranged in
+         * what appears to be a serpentine shape along the edges of the cube.
+         * This is one of two cases that look like this. Only way to
+         * differentiate these two cases visually is by observing the
+         * handedness of the shape. This particular case has a "S" shape when
+         * viewed from the outside of the isosurface looking in. */
+        MAKE_TRIANGLE(5, 7, 9);
+        MAKE_TRIANGLE(0, 9, 2);
+        MAKE_TRIANGLE(7, 10, 2);
+        MAKE_TRIANGLE(2, 9, 7);
         break;
       case MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_12:
-        MAKE_TRIANGLE(0, 3, 10);
-        MAKE_TRIANGLE(0, 10, 9);
-        MAKE_TRIANGLE(9, 10, 11);
-        MAKE_TRIANGLE(4, 7, 8);
+        /* This configuration has three samples under the isosurface in an "L"
+         * shape, and a fourth sample apart from the other three. */
+        MAKE_TRIANGLE(0, 1, 8);
+        MAKE_TRIANGLE(1, 7, 8);
+        MAKE_TRIANGLE(1, 5, 7);
+        MAKE_TRIANGLE(2, 3, 10);
         break;
       case MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_13:
-        MAKE_TRIANGLE(3, 10, 11);
-        MAKE_TRIANGLE(1, 3, 11);
-        MAKE_TRIANGLE(5, 7, 8);
-        MAKE_TRIANGLE(5, 8, 9);
+        /* This is the case with two quads facing each other. Two ambiguous
+         * edges are present. */
+        MAKE_TRIANGLE(5, 7, 9);
+        MAKE_TRIANGLE(7, 8, 9);
+        MAKE_TRIANGLE(1, 3, 10);
+        MAKE_TRIANGLE(1, 10, 11);
         break;
       case MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_14:
-        MAKE_TRIANGLE(0, 1, 9);
-        MAKE_TRIANGLE(2, 3, 10);
-        MAKE_TRIANGLE(4, 7, 8);
-        MAKE_TRIANGLE(5, 11, 6);
+        /* This case corresponds to equivalence class #16 in \cite
+         * Lengyel:2010. */
+        MAKE_TRIANGLE(0, 11, 1);
+        MAKE_TRIANGLE(0, 10, 11);
+        MAKE_TRIANGLE(0, 7, 10);
+        MAKE_TRIANGLE(0, 5, 7);
+        MAKE_TRIANGLE(0, 9, 5);
         break;
       case MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_15:
+        /* This case has four separated samples below the isosurface that
+         * generate four separate triangles. */
+        MAKE_TRIANGLE(0, 8, 3);
+        MAKE_TRIANGLE(1, 2, 11);
+        MAKE_TRIANGLE(4, 9, 5);
+        MAKE_TRIANGLE(6, 10, 7);
         break;
       case MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_16:
+        /* This case corresponds to equivalence class #17 in \cite
+         * Lengyel:2010. */
+        MAKE_TRIANGLE(6, 10, 7);
+        MAKE_TRIANGLE(2, 8, 3);
+        MAKE_TRIANGLE(2, 4, 8);
+        MAKE_TRIANGLE(2, 11, 4);
+        MAKE_TRIANGLE(11, 5, 4);
         break;
       case MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_17:
+        /* This case corresponds to equivalence class #15 in \cite
+         * Lengyel:2010. */
+        MAKE_TRIANGLE(2, 5, 3);
+        MAKE_TRIANGLE(3, 5, 10);
+        MAKE_TRIANGLE(2, 11, 5);
+        MAKE_TRIANGLE(5, 6, 10);
         break;
     }
     /* Rotate the canonical triangles back into our cell's orientation */

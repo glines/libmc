@@ -58,19 +58,19 @@ void computeEdgeList(
     unsigned int cube,
     mcSimpleEdgeIntersectionList *edgeList)
 {
-  unsigned int vertices[2];
+  unsigned int sampleIndices[2];
   unsigned int listIndex = 0;
   /* Iterate through all edges */
   /* NOTE: The edges MUST be in sorted order. This makes it much easier for the
    * marching cubes algorithm to determine which edges are not in the edge
    * list. */
   for (unsigned int edge = 0; edge < MC_CUBE_NUM_EDGES; ++edge) {
-    /* Determine the two vertex values */
-    mcCube_edgeVertices(edge, vertices);
-    if (mcCube_vertexValue(vertices[0], cube)
-        != mcCube_vertexValue(vertices[1], cube))
+    /* Determine the two sample indices */
+    mcCube_edgeSampleIndices(edge, sampleIndices);
+    if (mcCube_sampleValue(sampleIndices[0], cube)
+        != mcCube_sampleValue(sampleIndices[1], cube))
     {
-      /* If the vertex values disagree, we have an edge intersection */
+      /* If the sample values disagree, we have an edge intersection */
       /* Add this edge to the edge list */
       edgeList->edges[listIndex++] = edge;
     }
@@ -120,72 +120,66 @@ void computeTriangleList(
        * isosurface. Since these samples are diagonal from each other, this is
        * a case of an ambiguous face. See "The asymptotic Decider: Resolving
        * the Ambiguity in Marching Cubes," Nielson. */
-      make_triangle(0, 8, 3);
-      make_triangle(1, 2, 11);
+      make_triangle(0, 1, 9);
+      make_triangle(4, 7, 8);
       break;
     case MC_CUBE_CANONICAL_ORIENTATION_INVERSION_4:
       /* This case has three samples on the front face in an "L" shape that are
        * below the isosurface. The result resembles a fan or paper airplane. */
-      make_triangle(2, 11, 3);
-      make_triangle(3, 11, 8);
-      make_triangle(8, 11, 9);
-      /* Alternative triangulation: */
-      /*
-      make_triangle(3, 9, 8);
-      make_triangle(2, 11, 9);
-      make_triangle(2, 9, 3);
-      */
+      make_triangle(1, 9, 4);
+      make_triangle(1, 4, 7);
+      make_triangle(1, 7, 3);
       break;
     case MC_CUBE_CANONICAL_ORIENTATION_INVERSION_5:
       /* In this case, four samples on one face are below the isosurface. This
        * gives a quad that divides the cube squarely in half. */
-      make_triangle(8, 10, 11);
-      make_triangle(8, 11, 9);
+      make_triangle(1, 7, 3);
+      make_triangle(1, 5, 7);
       break;
     case MC_CUBE_CANONICAL_ORIENTATION_INVERSION_6:
-      /* This case has two samples below the isosurface on opposite corners of
-       * the cube. */
-      make_triangle(1, 2, 11);
+      /* This case has three samples mutually diagonal from each other that
+       * generate three separate triangles. This case has a number of ambiguous
+       * faces. */
+      make_triangle(0, 1, 9);
       make_triangle(4, 7, 8);
+      make_triangle(2, 3, 10);
       break;
     case MC_CUBE_CANONICAL_ORIENTATION_INVERSION_7:
+      /* This case places has four samples below the isosurface arranged
+       * symmetrically so that the isosurface appears to intersect the cube at
+       * an angle into equal parts. */
+      make_triangle(1, 9, 4);
+      make_triangle(4, 2, 1);
+      make_triangle(7, 2, 4);
+      make_triangle(2, 7, 10);
+      break;
+    case MC_CUBE_CANONICAL_ORIENTATION_INVERSION_8:
+      /* This case has two samples below the isosurface on opposite corners of
+       * the cube. */
+      make_triangle(4, 9, 5);
+      make_triangle(2, 3, 10);
+      break;
+    case MC_CUBE_CANONICAL_ORIENTATION_INVERSION_9:
       /* This case has two samples on the same edge that are below the
        * isosurface that generate a quad, and a third sample diagonal from the
        * other two that generates a lone triangle. Since this case has a face
        * with samples diagonal from each other, we again have an ambiguous
        * face. */
-      make_triangle(0, 4, 3);
-      make_triangle(3, 4, 7);
-      make_triangle(1, 2, 11);
+      make_triangle(4, 9, 5);
+      make_triangle(0, 10, 2);
+      make_triangle(0, 8, 10);
       break;
-    case MC_CUBE_CANONICAL_ORIENTATION_INVERSION_8:
+    case MC_CUBE_CANONICAL_ORIENTATION_INVERSION_10:
       /* For this case, the four samples below the isosurface are arranged in
        * what appears to be a serpentine shape along the edges of the cube.
        * This is one of two cases that look like this. Only way to
        * differentiate these two cases visually is by observing the handedness
        * of the shape. This particular case has a "Z" shape when viewed from
        * the outside of the isosurface looking in. */
-      make_triangle(2, 11, 9);
-      make_triangle(2, 7, 3);
-      make_triangle(4, 7, 9);
-      make_triangle(2, 9, 7);
-      break;
-    case MC_CUBE_CANONICAL_ORIENTATION_INVERSION_9:
-      /* This case has three samples mutually diagonal from each other that
-       * generate three separate triangles. This case has a number of ambiguous
-       * faces. */
-      make_triangle(1, 9, 0);
-      make_triangle(2, 3, 10);
-      make_triangle(4, 7, 8);
-      break;
-    case MC_CUBE_CANONICAL_ORIENTATION_INVERSION_10:
-      /* This case places has four samples below the isosurface arranged
-       * symmetrically so that the isosurface appears to intersect the cube at
-       * an angle into equal parts. */
-      make_triangle(2, 7, 10);
-      make_triangle(1, 9, 2);
-      make_triangle(4, 7, 9);
-      make_triangle(2, 9, 7);
+      make_triangle(1, 5, 4);
+      make_triangle(1, 10, 2);
+      make_triangle(4, 8, 10);
+      make_triangle(1, 4, 10);
       break;
     case MC_CUBE_CANONICAL_ORIENTATION_INVERSION_11:
       /* For this case, the four samples below the isosurface are arranged in
@@ -194,34 +188,34 @@ void computeTriangleList(
        * differentiate these two cases visually is by observing the handedness
        * of the shape. This particular case has a "S" shape when viewed from
        * the outside of the isosurface looking in. */
-      make_triangle(7, 10, 11);
-      make_triangle(0, 11, 1);
-      make_triangle(0, 4, 7);
-      make_triangle(0, 7, 11);
+      make_triangle(5, 7, 9);
+      make_triangle(0, 9, 2);
+      make_triangle(7, 10, 2);
+      make_triangle(2, 9, 7);
       break;
     case MC_CUBE_CANONICAL_ORIENTATION_INVERSION_12:
       /* This configuration has three samples under the isosurface in an "L"
        * shape, and a fourth sample apart from the other three. */
-      make_triangle(0, 3, 10);
-      make_triangle(0, 10, 9);
-      make_triangle(9, 10, 11);
-      make_triangle(4, 7, 8);
+      make_triangle(0, 1, 8);
+      make_triangle(1, 7, 8);
+      make_triangle(1, 5, 7);
+      make_triangle(2, 3, 10);
       break;
     case MC_CUBE_CANONICAL_ORIENTATION_INVERSION_13:
       /* This is the case with two quads facing each other. Two ambiguous edges
        * are present. */
-      make_triangle(3, 10, 11);
-      make_triangle(1, 3, 11);
-      make_triangle(5, 7, 8);
-      make_triangle(5, 8, 9);
+      make_triangle(5, 7, 9);
+      make_triangle(7, 8, 9);
+      make_triangle(1, 3, 10);
+      make_triangle(1, 10, 11);
       break;
     case MC_CUBE_CANONICAL_ORIENTATION_INVERSION_14:
       /* This case has four separated samples below the isosurface that
        * generate four separate triangles. */
-      make_triangle(0, 1, 9);
-      make_triangle(2, 3, 10);
-      make_triangle(4, 7, 8);
-      make_triangle(5, 11, 6);
+      make_triangle(0, 8, 3);
+      make_triangle(1, 2, 11);
+      make_triangle(4, 9, 5);
+      make_triangle(6, 10, 7);
       break;
   }
 
@@ -349,7 +343,7 @@ int main(int argc, char **argv) {
             break;
           }
         }
-        assert(found);
+//        assert(found);
       }
     }
 #endif

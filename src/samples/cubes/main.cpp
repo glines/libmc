@@ -39,6 +39,7 @@ extern "C" {
 }
 
 #include "../common/arcballCamera.h"
+#include "../common/axisObject.h"
 #include "../common/demo.h"
 #include "../common/scene.h"
 #include "cubeObject.h"
@@ -56,6 +57,7 @@ class Cubes : public Demo {
   private:
     std::shared_ptr<ArcballCamera> m_camera;
     std::shared_ptr<CubeObject> m_cubeObject;
+    std::shared_ptr<AxisObject> m_axisObject;
     int m_res;
   public:
     /**
@@ -94,6 +96,10 @@ class Cubes : public Demo {
             glm::vec3(-1.0f, -1.0f, -1.0f)  // position
             ));
       this->scene()->addObject(m_cubeObject);
+
+      m_axisObject = std::shared_ptr<AxisObject>(
+          new AxisObject());
+      this->scene()->addObject(m_axisObject);
 
       // Parse the scene string
       if (this->sceneString() != nullptr) {
@@ -279,11 +285,11 @@ class Cubes : public Demo {
                   }
                 }
               } else {
-                for (int i = MC_CUBE_NUM_CANONICAL_ORIENTATIONS - 1; i >= 0; --i) {
-                  if (mcCube_canonicalOrientations[i] < m_cubeObject->cube()) {
-                    fprintf(stdout, "mcCube_canonicalOrientations[%d]: 0x%02x\n",
+                for (int i = MC_CUBE_NUM_CANONICAL_ORIENTATION_INVERSIONS - 1; i >= 0; --i) {
+                  if (mcCube_canonicalOrientationInversions[i] < m_cubeObject->cube()) {
+                    fprintf(stdout, "mcCube_canonicalOrientationInversions[%d]: 0x%02x\n",
                         i, mcCube_canonicalOrientations[i]);
-                    m_cubeObject->setCube(mcCube_canonicalOrientations[i]);
+                    m_cubeObject->setCube(mcCube_canonicalOrientationInversions[i]);
                     return true;
                   }
                 }
@@ -301,11 +307,11 @@ class Cubes : public Demo {
                   }
                 }
               } else {
-                for (int i = 0; i < MC_CUBE_NUM_CANONICAL_ORIENTATIONS; ++i) {
-                  if (mcCube_canonicalOrientations[i] > m_cubeObject->cube()) {
-                    fprintf(stdout, "mcCube_canonicalOrientations[%d]: 0x%02x\n",
-                        i, mcCube_canonicalOrientations[i]);
-                    m_cubeObject->setCube(mcCube_canonicalOrientations[i]);
+                for (int i = 0; i < MC_CUBE_NUM_CANONICAL_ORIENTATION_INVERSIONS; ++i) {
+                  if (mcCube_canonicalOrientationInversions[i] > m_cubeObject->cube()) {
+                    fprintf(stdout, "mcCube_canonicalOrientationInversions[%d]: 0x%02x\n",
+                        i, mcCube_canonicalOrientationInversions[i]);
+                    m_cubeObject->setCube(mcCube_canonicalOrientationInversions[i]);
                     return true;
                   }
                 }

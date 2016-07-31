@@ -78,33 +78,35 @@ const unsigned int mcCube_canonicalOrientationInversions[] = {
   MC_CUBE_CANONICAL_ORIENTATION_INVERSION_14,
 };
 
-void mcCube_edgeVertices(unsigned int edge, unsigned int *vertices) {
-  typedef struct VertexPair {
-    int vertices[2];
-  } VertexPair;
-  static const VertexPair table[] = {
-    { .vertices = { 0, 1 } },  /* Edge 0 */
-    { .vertices = { 1, 2 } },  /* Edge 1 */
-    { .vertices = { 2, 3 } },  /* Edge 2 */
-    { .vertices = { 0, 3 } },  /* Edge 3 */
-    { .vertices = { 4, 5 } },  /* Edge 4 */
-    { .vertices = { 5, 6 } },  /* Edge 5 */
-    { .vertices = { 6, 7 } },  /* Edge 6 */
-    { .vertices = { 4, 7 } },  /* Edge 7 */
-    { .vertices = { 0, 4 } },  /* Edge 8 */
-    { .vertices = { 1, 5 } },  /* Edge 9 */
-    { .vertices = { 3, 7 } },  /* Edge 10 */
-    { .vertices = { 2, 6 } },  /* Edge 11 */
+void mcCube_edgeSampleIndices(unsigned int edge, unsigned int *sampleIndices) {
+  typedef struct SampleIndexPair {
+    int sampleIndices[2];
+  } SampleIndexPair;
+  static const SampleIndexPair table[] = {
+    { .sampleIndices = { 0, 1 } },  /* Edge 0 */
+    { .sampleIndices = { 1, 5 } },  /* Edge 1 */
+    { .sampleIndices = { 4, 5 } },  /* Edge 2 */
+    { .sampleIndices = { 0, 4 } },  /* Edge 3 */
+    { .sampleIndices = { 2, 3 } },  /* Edge 4 */
+    { .sampleIndices = { 3, 7 } },  /* Edge 5 */
+    { .sampleIndices = { 6, 7 } },  /* Edge 6 */
+    { .sampleIndices = { 2, 6 } },  /* Edge 7 */
+    { .sampleIndices = { 0, 2 } },  /* Edge 8 */
+    { .sampleIndices = { 1, 3 } },  /* Edge 9 */
+    { .sampleIndices = { 4, 6 } },  /* Edge 10 */
+    { .sampleIndices = { 5, 7 } },  /* Edge 11 */
   };
   assert(edge < 12);
-  vertices[0] = table[edge].vertices[0];
-  vertices[1] = table[edge].vertices[1];
+  sampleIndices[0] = table[edge].sampleIndices[0];
+  sampleIndices[1] = table[edge].sampleIndices[1];
 }
 
 void mcCube_edgeFaces(unsigned int edge, unsigned int *faces) {
   typedef struct FacePair {
     int faces[2];
   } FacePair;
+  /* FIXME: The face pair table no longer suggests the correct winding order
+   * now that the sample indices have been changed. */
   static const FacePair table[] = {
     { .faces = { 0, 3 } },  /* Edge 0 */
     { .faces = { 0, 1 } },  /* Edge 1 */
@@ -124,7 +126,7 @@ void mcCube_edgeFaces(unsigned int edge, unsigned int *faces) {
   faces[1] = table[edge].faces[1];
 }
 
-int mcCube_verticesToEdge(unsigned int a, unsigned int b) {
+int mcCube_sampleIndicesToEdge(unsigned int a, unsigned int b) {
   assert(a >= 0);
   assert(a < 8);
   assert(b >= 0);
@@ -134,68 +136,68 @@ int mcCube_verticesToEdge(unsigned int a, unsigned int b) {
       switch (b) {
         case 1:
           return 0;
-        case 3:
-          return 4;
-        case 4:
+        case 2:
           return 8;
+        case 4:
+          return 3;
       }
       break;
     case 1:
       switch (b) {
         case 0:
           return 0;
-        case 2:
-          return 1;
-        case 5:
+        case 3:
           return 9;
+        case 5:
+          return 1;
       }
       break;
     case 2:
       switch (b) {
-        case 1:
-          return 1;
+        case 0:
+          return 8;
         case 3:
-          return 2;
+          return 4;
         case 6:
-          return 11;
+          return 7;
       }
       break;
     case 3:
       switch (b) {
-        case 0:
-          return 3;
+        case 1:
+          return 9;
         case 2:
-          return 2;
+          return 4;
         case 7:
-          return 10;
+          return 5;
       }
       break;
     case 4:
       switch (b) {
         case 0:
-          return 8;
+          return 3;
         case 5:
-          return 4;
-        case 7:
-          return 7;
+          return 2;
+        case 6:
+          return 10;
       }
       break;
     case 5:
       switch (b) {
         case 1:
-          return 9;
+          return 1;
         case 4:
-          return 4;
-        case 6:
-          return 5;
+          return 2;
+        case 7:
+          return 11;
       }
       break;
     case 6:
       switch (b) {
         case 2:
-          return 11;
-        case 5:
-          return 5;
+          return 7;
+        case 4:
+          return 10;
         case 7:
           return 6;
       }
@@ -203,9 +205,9 @@ int mcCube_verticesToEdge(unsigned int a, unsigned int b) {
     case 7:
       switch (b) {
         case 3:
-          return 10;
-        case 4:
-          return 7;
+          return 5;
+        case 5:
+          return 11;
         case 6:
           return 6;
       }
@@ -214,66 +216,59 @@ int mcCube_verticesToEdge(unsigned int a, unsigned int b) {
   return -1;
 }
 
-void mcCube_vertexEdges(unsigned int vertex, int *edges) {
+void mcCube_sampleEdges(unsigned int sampleIndex, int *edges) {
   typedef struct EdgeTriple {
     int edges[3];
   } EdgeTriple;
   static const EdgeTriple table[] = {
-    { .edges = { 0, 3, 8 } },
-    { .edges = { 0, 1, 9 } },
-    { .edges = { 1, 2, 11 } },
-    { .edges = { 2, 3, 10 } },
-    { .edges = { 4, 7, 8 } },
-    { .edges = { 4, 5, 9 } },
-    { .edges = { 5, 6, 11 } },
-    { .edges = { 6, 7, 10 } },
+    { .edges = {  0,  3,  8 } },  /* Sample 0 */
+    { .edges = {  0,  1,  9 } },  /* Sample 1 */
+    { .edges = {  4,  7,  8 } },  /* Sample 2 */
+    { .edges = {  4,  5,  9 } },  /* Sample 3 */
+    { .edges = {  2,  3, 10 } },  /* Sample 4 */
+    { .edges = {  1,  2, 11 } },  /* Sample 5 */
+    { .edges = {  6,  7, 10 } },  /* Sample 6 */
+    { .edges = {  5,  6, 11 } },  /* Sample 7 */
   };
-  assert(vertex < 8);
-  edges[0] = table[vertex].edges[0];
-  edges[1] = table[vertex].edges[1];
-  edges[2] = table[vertex].edges[2];
+  assert(sampleIndex < 8);
+  edges[0] = table[sampleIndex].edges[0];
+  edges[1] = table[sampleIndex].edges[1];
+  edges[2] = table[sampleIndex].edges[2];
 }
 
-void mcCube_adjacentVertices(unsigned int vertex, unsigned int *adjacent) {
-  typedef struct VertexTriple {
-    int vertices[3];
+void mcCube_adjacentSamples(unsigned int sampleIndex, unsigned int *adjacent) {
+  typedef struct SampleIndexTriple {
+    int sampleIndices[3];
   } VertexTriple;
   static const VertexTriple table[] = {
-    { .vertices = { 1, 3, 4 } },  /* Vertex 0 */
-    { .vertices = { 0, 2, 5 } },  /* Vertex 1 */
-    { .vertices = { 1, 3, 6 } },  /* Vertex 2 */
-    { .vertices = { 0, 2, 7 } },  /* Vertex 3 */
-    { .vertices = { 0, 5, 7 } },  /* Vertex 4 */
-    { .vertices = { 1, 4, 6 } },  /* Vertex 5 */
-    { .vertices = { 2, 5, 7 } },  /* Vertex 6 */
-    { .vertices = { 3, 4, 6 } },  /* Vertex 7 */
+    { .sampleIndices = { 1, 2, 4 } },  /* Sample 0 */
+    { .sampleIndices = { 0, 3, 5 } },  /* Sample 1 */
+    { .sampleIndices = { 0, 3, 6 } },  /* Sample 2 */
+    { .sampleIndices = { 1, 2, 7 } },  /* Sample 3 */
+    { .sampleIndices = { 0, 5, 6 } },  /* Sample 4 */
+    { .sampleIndices = { 1, 4, 7 } },  /* Sample 5 */
+    { .sampleIndices = { 2, 4, 7 } },  /* Sample 6 */
+    { .sampleIndices = { 3, 5, 6 } },  /* Sample 7 */
   };
-  assert(vertex < 8);
-  adjacent[0] = table[vertex].vertices[0];
-  adjacent[1] = table[vertex].vertices[1];
-  adjacent[2] = table[vertex].vertices[2];
+  assert(sampleIndex < 8);
+  adjacent[0] = table[sampleIndex].sampleIndices[0];
+  adjacent[1] = table[sampleIndex].sampleIndices[1];
+  adjacent[2] = table[sampleIndex].sampleIndices[2];
 }
 
-int mcCube_vertexValue(unsigned int vertex, unsigned int cube) {
-  return (cube & (1 << vertex)) >> vertex;
+int mcCube_sampleValue(unsigned int sampleIndex, unsigned int cube) {
+  return (cube & (1 << sampleIndex)) >> sampleIndex;
 }
 
-unsigned int mcCube_vertexIndex(unsigned int x, unsigned int y, unsigned int z) {
+unsigned int mcCube_sampleIndex(unsigned int x, unsigned int y, unsigned int z) {
   assert((x & ~1) == 0);
   assert((y & ~1) == 0);
   assert((z & ~1) == 0);
-  int i = x | y << 1 | z << 2;
-  static const unsigned int table[] = {
-    0,  // x = 0, y = 0, z = 0
-    1,  // x = 1, y = 0, z = 0
-    3,  // x = 0, y = 1, z = 0
-    2,  // x = 1, y = 1, z = 0
-    4,  // x = 0, y = 0, z = 1
-    5,  // x = 1, y = 0, z = 1
-    7,  // x = 0, y = 1, z = 1
-    6   // x = 1, y = 1, z = 1
-  };
-  return table[i];
+  unsigned int result = 0;
+  result |= x ? 1 << 0 : 0;
+  result |= y ? 1 << 1 : 0;
+  result |= z ? 1 << 2 : 0;
+  return result;
 }
 
 void mcCube_vertexClosure(unsigned int vertex, unsigned int cube,
@@ -286,7 +281,7 @@ void mcCube_vertexClosure(unsigned int vertex, unsigned int cube,
   unsigned int adjacent[3];
   int skip;
   int i, j;
-  int vertexValue = mcCube_vertexValue(vertex, cube);
+  int vertexValue = mcCube_sampleValue(vertex, cube);
 
   notVisited[0] = vertex;
   numNotVisited = 1;
@@ -304,7 +299,7 @@ void mcCube_vertexClosure(unsigned int vertex, unsigned int cube,
     /* Add this vertex to the closure */
     closure[(*closureSize)++] = notVisited[numNotVisited];
     /* Iterate over all adjacent vertices */
-    mcCube_adjacentVertices(notVisited[numNotVisited], adjacent);
+    mcCube_adjacentSamples(notVisited[numNotVisited], adjacent);
     for (i = 0; i < 3; ++i) {
       /* Check if this vertex has already been visited */
       skip = 0;
@@ -317,7 +312,7 @@ void mcCube_vertexClosure(unsigned int vertex, unsigned int cube,
       if (skip)
         continue;
       /* Add alike vertices to the list of not yet visited vertices */
-      if (mcCube_vertexValue(adjacent[i], cube) == vertexValue)
+      if (mcCube_sampleValue(adjacent[i], cube) == vertexValue)
         notVisited[numNotVisited++] = adjacent[i];
     }
   }
@@ -334,7 +329,7 @@ void mcCube_boundryEdges(unsigned int vertex, unsigned int cube,
   unsigned int adjacent[3];
   int skip;
   int i, j;
-  int vertexValue = mcCube_vertexValue(vertex, cube);
+  int vertexValue = mcCube_sampleValue(vertex, cube);
 
   notVisited[0] = vertex;
   numNotVisited = 1;
@@ -351,7 +346,7 @@ void mcCube_boundryEdges(unsigned int vertex, unsigned int cube,
     /* Add this vertex to the list of visited vertices */
     visited[numVisited++] = current;
     /* Iterate over all adjacent vertices */
-    mcCube_adjacentVertices(current, adjacent);
+    mcCube_adjacentSamples(current, adjacent);
     for (i = 0; i < 3; ++i) {
       /* Check if this vertex has already been visited */
       skip = 0;
@@ -363,35 +358,21 @@ void mcCube_boundryEdges(unsigned int vertex, unsigned int cube,
       }
       if (skip)
         continue;
-      if (mcCube_vertexValue(adjacent[i], cube) == vertexValue) {
+      if (mcCube_sampleValue(adjacent[i], cube) == vertexValue) {
         /* Add alike vertices to the list of not yet visited vertices */
         notVisited[numNotVisited++] = adjacent[i];
       } else {
         /* Add boundry edges to the list of edges */
-        edges[(*numEdges)++] = mcCube_verticesToEdge(current, adjacent[i]);
+        edges[(*numEdges)++] = mcCube_sampleIndicesToEdge(current, adjacent[i]);
       }
     }
   }
 }
 
-void mcCube_vertexRelativePosition(unsigned int vertex, unsigned int *pos) {
-  typedef struct Position {
-    unsigned int pos[3];
-  } Position;
-  Position table[8] = {
-    { .pos = { 0, 0, 0 } },  /* Vertex 0 */
-    { .pos = { 1, 0, 0 } },  /* Vertex 1 */
-    { .pos = { 1, 0, 1 } },  /* Vertex 2 */
-    { .pos = { 0, 0, 1 } },  /* Vertex 3 */
-    { .pos = { 0, 1, 0 } },  /* Vertex 4 */
-    { .pos = { 1, 1, 0 } },  /* Vertex 5 */
-    { .pos = { 1, 1, 1 } },  /* Vertex 6 */
-    { .pos = { 0, 1, 1 } },  /* Vertex 7 */
-  };
-  assert(vertex < 8);
-  pos[0] = table[vertex].pos[0];
-  pos[1] = table[vertex].pos[1];
-  pos[2] = table[vertex].pos[2];
+void mcCube_sampleRelativePosition(unsigned int sampleIndex, unsigned int *pos) {
+  pos[0] = (sampleIndex & (1 << 0)) >> 0;
+  pos[1] = (sampleIndex & (1 << 1)) >> 1;
+  pos[2] = (sampleIndex & (1 << 2)) >> 2;
 }
 
 unsigned int mcCube_cubeConfigurationFromSamples(float *samples) {
@@ -492,27 +473,27 @@ int mcCube_getCubeFace(int cube, int faceIndex) {
   switch (faceIndex) {
     case 0:
       /* The front face */
-      FACE_BITS(0, 1, 2, 3);
+      FACE_BITS(0, 1, 5, 4);
       break;
     case 1:
       /* The left face */
-      FACE_BITS(1, 5, 6, 2);
+      FACE_BITS(1, 3, 7, 5);
       break;
     case 2:
       /* The top face */
-      FACE_BITS(2, 6, 7, 3);
+      FACE_BITS(4, 5, 7, 6);
       break;
     case 3:
       /* The bottom face */
-      FACE_BITS(0, 4, 5, 1);
+      FACE_BITS(0, 2, 3, 1);
       break;
     case 4:
       /* The right face */
-      FACE_BITS(0, 3, 7, 4);
+      FACE_BITS(0, 4, 6, 2);
       break;
     case 5:
       /* The back face */
-      FACE_BITS(4, 7, 6, 5);
+      FACE_BITS(2, 6, 7, 3);
       break;
   }
   return result;

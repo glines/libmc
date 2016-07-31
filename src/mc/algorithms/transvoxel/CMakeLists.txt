@@ -39,6 +39,9 @@ add_executable(transvoxel_generate_triangulation_tables
     generate_triangulation_tables.c
     transform.c
     )
+target_link_libraries(transvoxel_generate_triangulation_tables
+    mc_algorithms_common
+    )
 add_dependencies(transvoxel_generate_triangulation_tables
     transvoxel_canonical_cell_tables.c
     transvoxel_canonical_cells.h
@@ -57,6 +60,9 @@ add_library(mc_algorithms_transvoxel STATIC
     transform.c
     transvoxel.c
     triangles.c
+    )
+target_link_libraries(mc_algorithms_transvoxel
+    mc_algorithms_simple
     )
 add_dependencies(mc_algorithms_transvoxel
     transvoxel_canonical_cell_tables.c

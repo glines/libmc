@@ -21,15 +21,30 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef MC_ALGORITHMS_TRANSVOXEL_TRIANGLES_C_
-#define MC_ALGORITHMS_TRANSVOXEL_TRIANGLES_C_
+#include <assert.h>
+#include <stdlib.h>
 
-#include <mc/algorithms/transvoxel/common.h>
+#include <mc/algorithms/common/cube.h>
 
-const extern mcTransvoxel_RegularCellTriangleList
-mcTransvoxel_regularCellTriangulationTable[];
+int test_mcCube_sampleRelativePosition() {
+  int pos[3];
+  for (int sampleIndex = 0; sampleIndex < 8; ++sampleIndex) {
+    mcCube_sampleRelativePosition(sampleIndex, pos);
+    assert(mcCube_sampleIndex(pos[0], pos[1], pos[2]) == sampleIndex);
+  }
 
-const extern mcTransvoxel_TransitionCellTriangleList
-mcTransvoxel_transitionCellTriangulationTable[];
+  return EXIT_SUCCESS;
+}
 
-#endif
+int main(int argc, char **argv) {
+#define TEST(routine) \
+  do { \
+    int result; \
+    if (result = test_ ## routine()) \
+      return result; \
+  } while (0)
+
+  TEST(mcCube_sampleRelativePosition);
+
+  return EXIT_SUCCESS;
+}

@@ -30,16 +30,16 @@ extern const unsigned int mcCube_canonicalOrientations[];
 extern const unsigned int mcCube_canonicalOrientationInversions[];
 
 /**
- * This routine takes the index of an edge and returns the two vertex indices
- * on that edge in vertices.
+ * This routine takes the index of an edge and returns the two sample indices
+ * on that edge in sampleIndices.
  *
- * These indices are based on the numbering scheme described by the original
- * marching cubes paper by Lorensen. These vertex numbers are always given from
- * least to greatest; a few of the algorithms depend on this behavior. For
- * example, the Nielson MC-Dual algorithm relies on this behavior to determine
- * vertex winding order about the edges.
+ * These sample indices are described in the Cube Samples section of the
+ * documentation. These sample indices are always given from least to greatest;
+ * a few of the algorithms depend on this behavior. For example, the Nielson
+ * MC-Dual algorithm relies on this behavior to determine vertex winding order
+ * about the edges.
  */
-void mcCube_edgeVertices(unsigned int edge, unsigned int *vertices);
+void mcCube_edgeSampleIndices(unsigned int edge, unsigned int *sampleIndices);
 
 /**
  * This routine determines the two cube faces that the given edge lies on and
@@ -47,21 +47,21 @@ void mcCube_edgeVertices(unsigned int edge, unsigned int *vertices);
  *
  * The edge faces are given in a specific order that suggests winding order.
  * The winding order is right-handed with the surface normal pointing from
- * least vertex index to greatest vertex index.
+ * least sample index to greatest sample index.
  */
 void mcCube_edgeFaces(unsigned int edge, unsigned int *faces);
 
 /**
- * This routine determines the edge that lies between the two given vertices
- * and returns that edge number. If the line between a and b is not incident to
- * the cube, or if a and b are the same vertex, then -1 is returned instead.
+ * This routine determines the edge that lies between the two given samples and
+ * returns that edge number. If the line between a and b is not incident to the
+ * cube, or if a and b are the same sample index, then -1 is returned instead.
  */
-int mcCube_verticesToEdge(unsigned int a, unsigned int b);
+int mcCube_sampleIndicesToEdge(unsigned int a, unsigned int b);
 
 /**
- * This routine determines the edges connected to a given vertex.
+ * This routine determines the edges connected to a given sample point.
  */
-void mcCube_vertexEdges(unsigned int vertex, int *edges);
+void mcCube_sampleEdges(unsigned int sampleIndex, int *edges);
 
 /**
  * This routine determines the vertices adjacent to the given vertex and
@@ -76,13 +76,13 @@ void mcCube_adjacentVertices(unsigned int vertex, unsigned int *adjacent);
  * The returned value is 0 for less than the isosurface value, and 1 for
  * greater than or equal to the isosurface value.
  */
-int mcCube_vertexValue(unsigned int vertex, unsigned int cube);
+int mcCube_sampleValue(unsigned int vertex, unsigned int cube);
 
 /**
- * This routine takes a vertex position on the unit cube with vertex 0
- * positioned at the origin and returns the vertex index.
+ * This routine takes a sample position on the unit cube with sample 0
+ * positioned at the origin and returns the sample index.
  */
-unsigned int mcCube_vertexIndex(
+unsigned int mcCube_sampleIndex(
     unsigned int x, unsigned int y, unsigned int z);
 
 /**
@@ -103,10 +103,10 @@ void mcCube_boundryEdges(unsigned int vertex, unsigned int cube,
     unsigned int *edges, unsigned int *numEdges);
 
 /**
- * This routine determines the XYZ-position of the given vertex relative to the
+ * This routine determines the XYZ-position of the given sample relative to the
  * origin of the cube.
  */
-void mcCube_vertexRelativePosition(unsigned int vertex, unsigned int *pos);
+void mcCube_sampleRelativePosition(unsigned int sampleIndex, unsigned int *pos);
 
 /**
  * This routine determines the bitwise cube configuration from the given array

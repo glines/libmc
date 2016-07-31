@@ -51,12 +51,17 @@ void mcTransvoxel_computeCanonicalRegularCellTable(
     /* Iterate to invert the cube */
     int inverted = cell;
     for (int i = 0; i < 2; ++i) {
+      int sequence = 0;
+      /* Set the inversion byte */
+      sequence = set_byte(0, 3, i);
       /* Rotate the cell in all directions */
       for (mcCubeFace face = 0; face < MC_CUBE_NUM_FACES; ++face) {
-        int rotated, sequence;
-        /* Set the inversion byte */
-        sequence = set_byte(0, 3, i);
+        int rotated;
         rotated = inverted;
+        /* Reset the rotation bytes */
+        sequence = set_byte(sequence, 0, 0);
+        sequence = set_byte(sequence, 1, 0);
+        sequence = set_byte(sequence, 2, 0);
         /* Determine the face direction and rotate accordingly */
         switch (face) {
           case MC_CUBE_FACE_LEFT:
@@ -233,11 +238,7 @@ void mcTransvoxel_computeCanonicalTransitionCellTable(
       for (int j = 0; j < 2; ++j) {
         /* Loop to rotate the transition cell four times */
         int rotated = mirrored;
-        fprintf(stderr, "sequence before clear rotate byte: 0x%08x\n",
-            sequence);
         sequence = set_byte(sequence, 0, 0);
-        fprintf(stderr, "sequence after clear rotate byte: 0x%08x\n",
-            sequence);
         for (int k = 0; k < 4; ++k) {
           /* Check if this orientation has already been considered */
           if (table[rotated] != -1) {
@@ -260,11 +261,7 @@ void mcTransvoxel_computeCanonicalTransitionCellTable(
           }
           /* Rotate and increment the rotation byte */
           rotated = mcTransvoxel_rotateTransitionCell(rotated);
-          fprintf(stderr, "sequence before rotate: 0x%08x\n",
-              sequence);
           sequence = incr_byte(sequence, 0);
-          fprintf(stderr, "sequence after rotate: 0x%08x\n",
-              sequence);
         }
         /* Reflect and set the mirrored byte */
         mirrored = mcTransvoxel_reflectTransitionCell(mirrored);

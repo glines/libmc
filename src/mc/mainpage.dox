@@ -107,12 +107,12 @@
  * since libmc is a C library these enumerations are modified to use zero-based
  * indexing.
  *
- * \subsubsection cube_vertices Cube Vertices
- * Cube vertices are enumerated as in the original Lorensen paper on marching
- * cubes, with the necessary modification to use zero-based indexing rather
- * than one-based indexing. This means that the first vertex in the cube is
- * considered to be vertex 0, which is adjacent to the front, bottom, and right
- * cube faces.
+ * \subsubsection cube_samples Cube Samples
+ * Cube samples are enumerated using a binary system in which the first,
+ * second, and third bit of the sample index represents the sample's position
+ * along the x, y, and z-axis respectfully.
+ * \todo Add the tikz figure of the cube sample indices to the Doxygen
+ * documentation.
  *
  * \subsubsection cube_configuration Cube Configuration Encoding
  * As with the original marching cubes algorithm as described by Lorensen and

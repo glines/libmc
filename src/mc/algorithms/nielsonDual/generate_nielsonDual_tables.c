@@ -427,7 +427,7 @@ void computeMidpointVertexList(
     mcVec3 midpoint;
     midpoint.x = midpoint.y = midpoint.z = 0.0f;
     for (int j = 0; j < MC_CUBE_NUM_EDGES; ++j) {
-      unsigned int edge, vertices[2];
+      unsigned int edge, sampleIndices[2];
       mcVec3 vertexPoints[2], edgeMidpoint;
       if (vertex->edgeIntersections[j] == -1)
         break;  /* No more edge intersections to consider */
@@ -435,10 +435,10 @@ void computeMidpointVertexList(
       edge = vertex->edgeIntersections[j];
       /* Compute the position of the midpoint of this edge on the unit cube
        * defined by the points (0.0, 0.0, 0.0) and (1.0, 1.0, 1.0) */
-      mcCube_edgeVertices(edge, vertices);
+      mcCube_edgeSampleIndices(edge, sampleIndices);
       for (int k = 0; k < 2; ++k) {
         int pos[3];
-        mcCube_vertexRelativePosition(vertices[k], (unsigned int*)pos);
+        mcCube_sampleRelativePosition(sampleIndices[k], (unsigned int*)pos);
         vertexPoints[k].x = pos[0] ? 1.0f : 0.0f;
         vertexPoints[k].y = pos[1] ? 1.0f : 0.0f;
         vertexPoints[k].z = pos[2] ? 1.0f : 0.0f;
@@ -471,17 +471,17 @@ void computeMidpointVertexList(
       /* Compute the three points of this triangle */
       for (int k = 0; k < 3; ++k) {
         int edge;
-        unsigned int vertexIndices[2];
+        unsigned int sampleIndices[2];
         mcVec3 vertices[2];
         if (k == 0)
           edge = vertex->edgeIntersections[0];
         else
           edge = vertex->edgeIntersections[j + k];
-        /* The edge intersection point is halfway between the cube vertices */
-        mcCube_edgeVertices(edge, vertexIndices);
+        /* The edge intersection point is halfway between the cube samples */
+        mcCube_edgeSampleIndices(edge, sampleIndices);
         for (int l = 0; l < 2; ++l) {
           unsigned int pos[3];
-          mcCube_vertexRelativePosition(vertexIndices[l], pos);
+          mcCube_sampleRelativePosition(sampleIndices[l], pos);
           vertices[l].x = pos[0] ? 1.0f : 0.0f;
           vertices[l].y = pos[1] ? 1.0f : 0.0f;
           vertices[l].z = pos[2] ? 1.0f : 0.0f;
@@ -561,13 +561,13 @@ void computeWindingTable(int *table)
   for (int edge = 0; edge < MC_CUBE_NUM_EDGES; ++edge) {
     /* Iterate over all voxel cube configurations */
     for (int cube = 0; cube <= 0xff; ++cube) {
-      unsigned int vertices[2], values[2];
+      unsigned int sampleIndices[2], values[2];
       /* TODO: Determine the sign of this edge */
-      /* NOTE: The edge vertices are always given from least to greatest vertex
+      /* NOTE: The edge samples are always given from least to greatest sample
        * index. */
-      mcCube_edgeVertices(edge, vertices);
+      mcCube_edgeSampleIndices(edge, sampleIndices);
       for (int i = 0; i < 2; ++i) {
-        values[i] = mcCube_vertexValue(vertices[i], cube);
+        values[i] = mcCube_sampleValue(sampleIndices[i], cube);
       }
       if (values[0] == values[1]) {
         /* No isosurface intersection at this edge */

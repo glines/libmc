@@ -8,6 +8,9 @@ build:
 	mkdir -p ./build
 	cd ./build && cmake -DBUILD_SCREENSHOTS=OFF .. && make -j $(num_threads)
 
+test: build
+	cd ./build && make test
+
 .PHONY: build-html
 build-html: lua-js
 	mkdir -p ./build-html

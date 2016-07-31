@@ -23,6 +23,7 @@
 
 #include <assert.h>
 #include <math.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -150,12 +151,12 @@ void mcSimple_isosurfaceFromField(
         /* Determine the cube configuration index by iterating over the eight
          * cube vertices */
         unsigned int cube = 0;
-        for (unsigned int vertex = 0; vertex < 8; ++vertex) {
+        for (unsigned int sampleIndex = 0; sampleIndex < 8; ++sampleIndex) {
           unsigned int pos[3];
           unsigned int i;
-          /* Determine this vertex's relative position in the cube and sample
+          /* Determine this sample's relative position in the cube and sample
            * buffer */
-          mcCube_vertexRelativePosition(vertex, pos);
+          mcCube_sampleRelativePosition(sampleIndex, pos);
           i = x + pos[0]
               + (y + pos[1]) * x_res
               + ((sampleSliceIndex + pos[2]) % 4) * x_res * y_res;
@@ -167,9 +168,10 @@ void mcSimple_isosurfaceFromField(
                                   min->z + (z + pos[2]) * delta_z,
                                   args));
 #endif
-          /* Add the bit this vertex contributes to the cube */
-          cube |= (samples[i] >= 0.0f ? 0 : 1) << vertex;
+          /* Add the bit this sample contributes to the cube */
+          cube |= (samples[i] >= 0.0f ? 0 : 1) << sampleIndex;
         }
+        fprintf(stderr, "simple cube: 0x%02x\n", cube);
         /* Look in the edge table for the edges that intersect the
          * isosurface */
         int vertexIndices[MC_CUBE_NUM_EDGES];
@@ -259,16 +261,16 @@ void mcSimple_isosurfaceFromField(
             }
             if (vertexIndices[edge] == -1) {
               /* The mesh vertex for this edge intersection has not been generated yet */
-              unsigned int vertices[2];
+              unsigned int sampleIndices[2];
               float values[2];
               mcVec3 latticePos[2];
               mcVec3 gradients[2];
-              /* Find the cube vertices on this edge */
-              mcCube_edgeVertices(edge, vertices);
+              /* Find the cube samples on this edge */
+              mcCube_edgeSampleIndices(edge, sampleIndices);
               for (unsigned int i = 0; i < 2; ++i) {
                 unsigned int pos[3], abs[3];
                 int j;
-                mcCube_vertexRelativePosition(vertices[i], pos);
+                mcCube_sampleRelativePosition(sampleIndices[i], pos);
                 abs[0] = x + pos[0];
                 abs[1] = y + pos[1];
                 abs[2] = z + pos[2];
@@ -293,7 +295,7 @@ void mcSimple_isosurfaceFromField(
 #endif
                 values[i] = samples[j];
                 /* Calculate the surface normal by estimating the gradient of
-                 * the scalar field at the cube vertices, and then
+                 * the scalar field at the cube samples, and then
                  * interpolating between the two gradients. (see Lorensen,
                  * "Marching Cubes: A High Resolution 3D Surface Construction
                  * Algorihm") */

@@ -108,14 +108,14 @@ namespace mc { namespace samples { namespace terrain {
     // Iterate over the cube vertices
     WireframeVertex vertices[8];
     unsigned int pos[3];
-    for (int vertex = 0; vertex < 8; ++vertex) {
-      mcCube_vertexRelativePosition(vertex, pos);
-      vertices[vertex].pos[0] = pos[0] ? 1.0f : 0.0f;
-      vertices[vertex].pos[1] = pos[1] ? 1.0f : 0.0f;
-      vertices[vertex].pos[2] = pos[2] ? 1.0f : 0.0f;
-      vertices[vertex].color[0] = 0.0f;
-      vertices[vertex].color[1] = 0.0f;
-      vertices[vertex].color[2] = 1.0f;
+    for (int sampleIndex = 0; sampleIndex < 8; ++sampleIndex) {
+      mcCube_sampleRelativePosition(sampleIndex, pos);
+      vertices[sampleIndex].pos[0] = pos[0] ? 1.0f : 0.0f;
+      vertices[sampleIndex].pos[1] = pos[1] ? 1.0f : 0.0f;
+      vertices[sampleIndex].pos[2] = pos[2] ? 1.0f : 0.0f;
+      vertices[sampleIndex].color[0] = 0.0f;
+      vertices[sampleIndex].color[1] = 0.0f;
+      vertices[sampleIndex].color[2] = 1.0f;
     }
     // Send the vertices to the GL
     glGenBuffers(1, &m_cubeWireframeVertices);
@@ -132,10 +132,10 @@ namespace mc { namespace samples { namespace terrain {
     // Iterate over cube edges to make edge lines
     unsigned int indices[MC_CUBE_NUM_EDGES * 2];
     for (int edge = 0; edge < MC_CUBE_NUM_EDGES; ++edge) {
-      unsigned int vertices[2];
-      mcCube_edgeVertices(edge, vertices);
-      indices[edge * 2] = vertices[0];
-      indices[edge * 2 + 1] = vertices[1];
+      unsigned int sampleIndices[2];
+      mcCube_edgeSampleIndices(edge, sampleIndices);
+      indices[edge * 2] = sampleIndices[0];
+      indices[edge * 2 + 1] = sampleIndices[1];
     }
     // Send the indices to the GL
     glGenBuffers(1, &m_cubeWireframeIndices);

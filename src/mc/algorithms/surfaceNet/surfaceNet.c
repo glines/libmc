@@ -72,11 +72,11 @@ void mcSurfaceNet_isosurfaceFromField(
          * NOTE: Copied from mc/algorithms/simple/simple.c
          */
         unsigned int cube = 0;
-        for (unsigned int vertex = 0; vertex < 8; ++vertex) {
-          /* Determine this vertex's relative position in the cube */
+        for (unsigned int sampleIndex = 0; sampleIndex < 8; ++sampleIndex) {
+          /* Determine this sample's relative position in the cube */
           unsigned int pos[3];
           float sample;
-          mcCube_vertexRelativePosition(vertex, pos);
+          mcCube_sampleRelativePosition(sampleIndex, pos);
           /* TODO: Many of these sample values can be stored/retrieved from a
            * cache */
           sample = sf(
@@ -85,8 +85,8 @@ void mcSurfaceNet_isosurfaceFromField(
               min->z + (z + pos[2]) * delta_z,
               args);
           fprintf(stderr, "sample: %g\n", sample);  /* XXX */
-          /* Add the bit this vertex contributes to the cube */
-          cube |= (sample >= 0.0f ? 1 : 0) << vertex;
+          /* Add the bit this sample contributes to the cube */
+          cube |= (sample >= 0.0f ? 1 : 0) << sampleIndex;
         }
         fprintf(stderr, "cube: 0x%02x\n", cube);  /* XXX */
         assert(cube <= 0xff);

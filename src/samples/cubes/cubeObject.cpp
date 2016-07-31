@@ -58,6 +58,7 @@ namespace mc {namespace samples { namespace cubes {
     // Initialize the cube and send isosurface triangles, etc. to the GL
     glGenBuffers(1, &m_pointBuffer);
     FORCE_ASSERT_GL_ERROR();
+    this->setDrawWinding(true);
     this->setCube(cube);
   }
 
@@ -65,14 +66,14 @@ namespace mc {namespace samples { namespace cubes {
     // Iterate over the cube vertices
     WireframeVertex vertices[8];
     unsigned int pos[3];
-    for (int vertex = 0; vertex < 8; ++vertex) {
-      mcCube_vertexRelativePosition(vertex, pos);
-      vertices[vertex].pos[0] = pos[0] ? 2.0f : 0.0f;
-      vertices[vertex].pos[1] = pos[1] ? 2.0f : 0.0f;
-      vertices[vertex].pos[2] = pos[2] ? 2.0f : 0.0f;
-      vertices[vertex].color[0] = 0.0f;
-      vertices[vertex].color[1] = 0.0f;
-      vertices[vertex].color[2] = 1.0f;
+    for (int sampleIndex = 0; sampleIndex < 8; ++sampleIndex) {
+      mcCube_sampleRelativePosition(sampleIndex, pos);
+      vertices[sampleIndex].pos[0] = pos[0] ? 2.0f : 0.0f;
+      vertices[sampleIndex].pos[1] = pos[1] ? 2.0f : 0.0f;
+      vertices[sampleIndex].pos[2] = pos[2] ? 2.0f : 0.0f;
+      vertices[sampleIndex].color[0] = 0.0f;
+      vertices[sampleIndex].color[1] = 0.0f;
+      vertices[sampleIndex].color[2] = 1.0f;
     }
     // Send the vertices to the GL
     glBindBuffer(GL_ARRAY_BUFFER, m_cubeWireframeVertices);
@@ -87,10 +88,10 @@ namespace mc {namespace samples { namespace cubes {
     // Iterate over cube edges to make edge lines
     unsigned int indices[MC_CUBE_NUM_EDGES * 2];
     for (int edge = 0; edge < MC_CUBE_NUM_EDGES; ++edge) {
-      unsigned int vertices[2];
-      mcCube_edgeVertices(edge, vertices);
-      indices[edge * 2] = vertices[0];
-      indices[edge * 2 + 1] = vertices[1];
+      unsigned int sampleIndices[2];
+      mcCube_edgeSampleIndices(edge, sampleIndices);
+      indices[edge * 2] = sampleIndices[0];
+      indices[edge * 2 + 1] = sampleIndices[1];
     }
     // Send the indices to the GL
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_cubeWireframeIndices);
@@ -125,12 +126,12 @@ namespace mc {namespace samples { namespace cubes {
               points[i].pos[1] - 1.0f,
               points[i].pos[2] - 1.0f);
           if (value >= 0.0f) {
-            points[i].color[0] = 0.0f;
-            points[i].color[1] = 1.0f;
-            points[i].color[2] = 0.0f;
-          } else {
             points[i].color[0] = 1.0f;
             points[i].color[1] = 0.0f;
+            points[i].color[2] = 0.0f;
+          } else {
+            points[i].color[0] = 0.0f;
+            points[i].color[1] = 1.0f;
             points[i].color[2] = 0.0f;
           }
         }
@@ -373,8 +374,8 @@ namespace mc {namespace samples { namespace cubes {
     for (unsigned int z_index = 0; z_index <= 1; ++z_index) {
       for (unsigned int y_index = 0; y_index <= 1; ++y_index) {
         for (unsigned int x_index = 0; x_index <= 1; ++x_index) {
-          unsigned int i = mcCube_vertexIndex(x_index, y_index, z_index);
-          float value = mcCube_vertexValue(i, m_cube) ? -m_intensity : 1.0f;
+          unsigned int i = mcCube_sampleIndex(x_index, y_index, z_index);
+          float value = mcCube_sampleValue(i, m_cube) ? -m_intensity : 1.0f;
           result +=
             (x_index ? x : 1.0f - x) *
             (y_index ? y : 1.0f - y) *

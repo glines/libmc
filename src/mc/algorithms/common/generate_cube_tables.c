@@ -43,34 +43,34 @@ void computeRotationTable(int axis, unsigned int *table) {
     /* Rotate the cube about the appropriate axis */
     switch (axis) {
       case X_AXIS:
-        rotated |= (cube & (1 << 0)) ? (1 << 4) : 0;
-        rotated |= (cube & (1 << 1)) ? (1 << 5) : 0;
-        rotated |= (cube & (1 << 2)) ? (1 << 1) : 0;
-        rotated |= (cube & (1 << 3)) ? (1 << 0) : 0;
-        rotated |= (cube & (1 << 4)) ? (1 << 7) : 0;
-        rotated |= (cube & (1 << 5)) ? (1 << 6) : 0;
-        rotated |= (cube & (1 << 6)) ? (1 << 2) : 0;
-        rotated |= (cube & (1 << 7)) ? (1 << 3) : 0;
+        rotated |= (cube & (1 << 0)) ? (1 << 2) : 0;
+        rotated |= (cube & (1 << 1)) ? (1 << 3) : 0;
+        rotated |= (cube & (1 << 2)) ? (1 << 6) : 0;
+        rotated |= (cube & (1 << 3)) ? (1 << 7) : 0;
+        rotated |= (cube & (1 << 4)) ? (1 << 0) : 0;
+        rotated |= (cube & (1 << 5)) ? (1 << 1) : 0;
+        rotated |= (cube & (1 << 6)) ? (1 << 4) : 0;
+        rotated |= (cube & (1 << 7)) ? (1 << 5) : 0;
         break;
       case Y_AXIS:
-        rotated |= (cube & (1 << 0)) ? (1 << 3) : 0;
+        rotated |= (cube & (1 << 0)) ? (1 << 4) : 0;
         rotated |= (cube & (1 << 1)) ? (1 << 0) : 0;
-        rotated |= (cube & (1 << 2)) ? (1 << 1) : 0;
+        rotated |= (cube & (1 << 2)) ? (1 << 6) : 0;
         rotated |= (cube & (1 << 3)) ? (1 << 2) : 0;
-        rotated |= (cube & (1 << 4)) ? (1 << 7) : 0;
-        rotated |= (cube & (1 << 5)) ? (1 << 4) : 0;
-        rotated |= (cube & (1 << 6)) ? (1 << 5) : 0;
-        rotated |= (cube & (1 << 7)) ? (1 << 6) : 0;
+        rotated |= (cube & (1 << 4)) ? (1 << 5) : 0;
+        rotated |= (cube & (1 << 5)) ? (1 << 1) : 0;
+        rotated |= (cube & (1 << 6)) ? (1 << 7) : 0;
+        rotated |= (cube & (1 << 7)) ? (1 << 3) : 0;
         break;
       case Z_AXIS:
         rotated |= (cube & (1 << 0)) ? (1 << 1) : 0;
-        rotated |= (cube & (1 << 1)) ? (1 << 5) : 0;
-        rotated |= (cube & (1 << 2)) ? (1 << 6) : 0;
+        rotated |= (cube & (1 << 1)) ? (1 << 3) : 0;
+        rotated |= (cube & (1 << 2)) ? (1 << 0) : 0;
         rotated |= (cube & (1 << 3)) ? (1 << 2) : 0;
-        rotated |= (cube & (1 << 4)) ? (1 << 0) : 0;
-        rotated |= (cube & (1 << 5)) ? (1 << 4) : 0;
-        rotated |= (cube & (1 << 6)) ? (1 << 7) : 0;
-        rotated |= (cube & (1 << 7)) ? (1 << 3) : 0;
+        rotated |= (cube & (1 << 4)) ? (1 << 5) : 0;
+        rotated |= (cube & (1 << 5)) ? (1 << 7) : 0;
+        rotated |= (cube & (1 << 6)) ? (1 << 4) : 0;
+        rotated |= (cube & (1 << 7)) ? (1 << 6) : 0;
         break;
     }
     /* Add the rotated cube to the table */

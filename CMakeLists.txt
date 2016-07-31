@@ -3,6 +3,7 @@ set(CMAKE_DISABLE_SOURCE_CHANGES ON)
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 project(libmc)
 set(CMAKE_BUILD_TYPE debug)
+enable_testing()
 
 option(BUILD_SAMPLES "Build the sample programs" ON)
 option(BUILD_DOCUMENTATION "Build the documentation" OFF)

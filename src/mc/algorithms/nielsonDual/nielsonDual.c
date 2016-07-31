@@ -107,14 +107,14 @@ void mcNielsonDual_isosurfaceFromField(
         /* Determine the cube configuration index by iterating over the eight
          * cube vertices */
         unsigned int cube = 0;
-        for (unsigned int vertex = 0; vertex < 8; ++vertex) {
+        for (unsigned int sampleIndex = 0; sampleIndex < 8; ++sampleIndex) {
           int pos[3];
           float sample;
-          /* Determine this vertex's relative position in the cube and sample
+          /* Determine this sample's relative position in the cube and sample
            * that point */
           /* TODO: Cache these sample values (see
            * src/mc/algorihms/patch/patch.c for example). */
-          mcCube_vertexRelativePosition(vertex, (unsigned int*)pos);
+          mcCube_sampleRelativePosition(sampleIndex, (unsigned int*)pos);
           if ((x + pos[0] < 0) || (y + pos[1] < 0) || (z + pos[2] < 0)
               || (x + pos[0] >= x_res) || (y + pos[1] >= y_res) || (z + pos[2] >= z_res))
           {
@@ -137,8 +137,8 @@ void mcNielsonDual_isosurfaceFromField(
                 min->z + (z + pos[2]) * delta_z,
                 args);
           }
-          /* Add the bit this vertex contributes to the cube */
-          cube |= (sample >= 0.0f ? 1 : 0) << vertex;
+          /* Add the bit this sample contributes to the cube */
+          cube |= (sample >= 0.0f ? 1 : 0) << sampleIndex;
         }
         /* Store this cube configuration in our buffers */
         currentVoxel->cube = cube;

@@ -31,6 +31,7 @@
 #include <mc/algorithms/transvoxel/canonical.h>
 #include <mc/algorithms/transvoxel/common.h>
 #include <mc/algorithms/transvoxel/transform.h>
+#include <mc/algorithms/common/cube.h>
 
 #define get_byte(num, byte) (((num) & (0xff << (8 * byte))) >> (8 * byte))
 
@@ -65,7 +66,121 @@ void mcTransvoxel_computeRegularCellTriangulationTable(
          * triangles are needed. */
         break;
       case MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_1:
+        /* This case has a single sample below the isosurface, which generates
+         * a single triangle in one corner. There are no ambiguous faces. */
+        MAKE_TRIANGLE(0, 8, 3);
         break;
+      case MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_2:
+        /* This case has two samples next to each other below the isosurface,
+         * which generates a quad along one edge. There are no ambiguous faces. */
+        MAKE_TRIANGLE(1, 8, 3);
+        MAKE_TRIANGLE(1, 9, 8);
+        break;
+      case MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_3:
+        /* This case has two samples across from each other below the
+         * isosurface on the same face. This generates two separate triangles
+         * on each of these corners. The face these samples are on is an
+         * ambiguous face. */
+        MAKE_TRIANGLE(0, 8, 3);
+        MAKE_TRIANGLE(1, 2, 11);
+        break;
+      case MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_4:
+        /* This case corresponds to equivalence class #5 in \cite Lengyel:2010. */
+        MAKE_TRIANGLE(2, 11, 3);
+        MAKE_TRIANGLE(3, 11, 8);
+        MAKE_TRIANGLE(8, 11, 9);
+        break;
+      case MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_5:
+        MAKE_TRIANGLE(8, 10, 11);
+        MAKE_TRIANGLE(8, 11, 9);
+        break;
+      case MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_6:
+        MAKE_TRIANGLE(1, 2, 11);
+        MAKE_TRIANGLE(4, 7, 8);
+        break;
+      case MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_7:
+        MAKE_TRIANGLE(0, 4, 3);
+        MAKE_TRIANGLE(3, 4, 7);
+        MAKE_TRIANGLE(1, 2, 11);
+        break;
+      case MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_8:
+        MAKE_TRIANGLE(2, 11, 9);
+        MAKE_TRIANGLE(2, 7, 3);
+        MAKE_TRIANGLE(4, 7, 9);
+        MAKE_TRIANGLE(2, 9, 7);
+        break;
+      case MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_9:
+        MAKE_TRIANGLE(1, 9, 0);
+        MAKE_TRIANGLE(2, 3, 10);
+        MAKE_TRIANGLE(4, 7, 8);
+        break;
+      case MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_10:
+        MAKE_TRIANGLE(2, 7, 10);
+        MAKE_TRIANGLE(1, 9, 2);
+        MAKE_TRIANGLE(4, 7, 9);
+        MAKE_TRIANGLE(2, 9, 7);
+        break;
+      case MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_11:
+        MAKE_TRIANGLE(7, 10, 11);
+        MAKE_TRIANGLE(0, 11, 1);
+        MAKE_TRIANGLE(0, 4, 7);
+        MAKE_TRIANGLE(0, 7, 11);
+        break;
+      case MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_12:
+        MAKE_TRIANGLE(0, 3, 10);
+        MAKE_TRIANGLE(0, 10, 9);
+        MAKE_TRIANGLE(9, 10, 11);
+        MAKE_TRIANGLE(4, 7, 8);
+        break;
+      case MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_13:
+        MAKE_TRIANGLE(3, 10, 11);
+        MAKE_TRIANGLE(1, 3, 11);
+        MAKE_TRIANGLE(5, 7, 8);
+        MAKE_TRIANGLE(5, 8, 9);
+        break;
+      case MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_14:
+        MAKE_TRIANGLE(0, 1, 9);
+        MAKE_TRIANGLE(2, 3, 10);
+        MAKE_TRIANGLE(4, 7, 8);
+        MAKE_TRIANGLE(5, 11, 6);
+        break;
+      case MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_15:
+        break;
+      case MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_16:
+        break;
+      case MC_TRANSVOXEL_CANONICAL_REGULAR_CELL_17:
+        break;
+    }
+    /* Rotate the canonical triangles back into our cell's orientation */
+    for (int i = 0; i < MC_TRANSVOXEL_MAX_REGULAR_CELL_TRIANGLES; ++i) {
+      mcTransvoxel_Triangle *triangle = &list->triangles[i];
+      if (triangle->edgeIntersections[0] == -1)
+        break;  /* No more triangles to consider */
+      /* Iterate over each triangle edge intersection */
+      for (int j = 0; j < 3; ++j) {
+        /* Rotate the triangle edge intersection about the y-axis */
+        for (int k = 0; k < get_byte(sequence, 2); ++k) {
+          triangle->edgeIntersections[j]
+          = mcCube_rotateEdgeReverseY(triangle->edgeIntersections[j]);
+        }
+        /* Rotate the triangle edge intersection about the x-axis */
+        for (int k = 0; k < get_byte(sequence, 1); ++k) {
+          triangle->edgeIntersections[j]
+          = mcCube_rotateEdgeReverseX(triangle->edgeIntersections[j]);
+        }
+        /* Rotate the triangle edge intersection about the z-axis */
+        for (int k = 0; k < get_byte(sequence, 0); ++k) {
+          triangle->edgeIntersections[j]
+          = mcCube_rotateEdgeReverseZ(triangle->edgeIntersections[j]);
+        }
+      }
+      /* Cube inversion affects triangle winding order */
+      if (get_byte(sequence, 3)) {
+        /* Reverse triangle winding order to get correct front/back faces */
+        int temp = triangle->edgeIntersections[0];
+        triangle->edgeIntersections[0] = triangle->edgeIntersections[2];
+        triangle->edgeIntersections[2] = temp;
+      }
     }
   }
 }
@@ -1260,6 +1375,40 @@ void mcTransvoxel_computeTransitionCellTriangulationTable(
   }
 }
 
+void mcTransvoxel_printRegularCellTriangulationTable(
+    mcTransvoxel_RegularCellTriangleList *table,
+    FILE *fp)
+{
+  fprintf(fp,
+      "const mcTransvoxel_RegularCellTriangleList\n"
+      "mcTransvoxel_regularCellTriangulationTable[] = {\n");
+  /* Loop through all of the regular cell configurations */
+  for (int cell = 0; cell < MC_TRANSVOXEL_NUM_REGULAR_CELLS; ++cell) {
+    mcTransvoxel_RegularCellTriangleList *list = &table[cell];
+    fprintf(fp,
+        "  {  /* Regular Cell 0x%03x */ \n"
+        "    .triangles = {\n",
+        cell);
+    /* Loop through the list of triangles for this cell */
+    for (int i = 0; i < MC_TRANSVOXEL_MAX_REGULAR_CELL_TRIANGLES; ++i) {
+      mcTransvoxel_Triangle *triangle = &list->triangles[i];
+      fprintf(fp,
+          "      { .edgeIntersections = { ");
+      /* Loop and output the edge intersections for this triangle */
+      for (int j = 0; j < 3; ++j) {
+        int edge = triangle->edgeIntersections[j];
+        fprintf(fp, "%d, ", edge);
+      }
+      fprintf(fp,
+          "}, },\n");
+    }
+    fprintf(fp,
+        "    },\n"
+        "  },\n");
+  }
+  fprintf(fp, "};\n");
+}
+
 void mcTransvoxel_printTransitionCellTriangulationTable(
     mcTransvoxel_TransitionCellTriangleList *table,
     FILE *fp)
@@ -1308,6 +1457,7 @@ int main(int argc, char **argv) {
     TRANSVOXEL_TRIANGULATION_TABLES_C,
   } output;
 
+  mcTransvoxel_RegularCellTriangleList *regularCellTriangulationTable;
   mcTransvoxel_TransitionCellTriangleList *transitionCellTriangulationTable;
 
   /* Parse the arguments to determine which file we are generating */
@@ -1323,12 +1473,18 @@ int main(int argc, char **argv) {
   }
 
   /* Allocate memory for each of our tables */
+  regularCellTriangulationTable = 
+    (mcTransvoxel_RegularCellTriangleList *)malloc(
+        sizeof(mcTransvoxel_RegularCellTriangleList)
+        * MC_TRANSVOXEL_NUM_REGULAR_CELLS);
   transitionCellTriangulationTable = 
     (mcTransvoxel_TransitionCellTriangleList *)malloc(
         sizeof(mcTransvoxel_TransitionCellTriangleList)
         * MC_TRANSVOXEL_NUM_TRANSITION_CELLS);
 
   /* Compute the tables */
+  mcTransvoxel_computeRegularCellTriangulationTable(
+      regularCellTriangulationTable);
   mcTransvoxel_computeTransitionCellTriangulationTable(
       transitionCellTriangulationTable);
 
@@ -1337,6 +1493,8 @@ int main(int argc, char **argv) {
    * fopen() difficult */
   switch (output) {
     case TRANSVOXEL_TRIANGULATION_TABLES_C:
+      mcTransvoxel_printRegularCellTriangulationTable(
+          regularCellTriangulationTable, stdout);
       mcTransvoxel_printTransitionCellTriangulationTable(
           transitionCellTriangulationTable, stdout);
       break;

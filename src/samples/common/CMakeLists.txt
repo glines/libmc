@@ -1,5 +1,6 @@
 add_library(samples_common STATIC
     arcballCamera.cpp
+    axisObject.cpp
     camera.cpp
     demo.cpp
     glError.cpp

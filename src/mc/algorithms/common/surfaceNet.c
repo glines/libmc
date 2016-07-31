@@ -119,11 +119,11 @@ void mcSurfaceNet_build(mcSurfaceNet *self,
         float samples[8];
         /* Gather a sample from each of the cube's eight vertices */
         /* TODO: Many of these samples can be stored/retrieved from a cache */
-        for (unsigned int vertex = 0; vertex < 8; ++vertex) {
-          /* Determine this vertex's relative position in the cube */
+        for (unsigned int sampleIndex = 0; sampleIndex < 8; ++sampleIndex) {
+          /* Determine this sample's relative position in the cube */
           unsigned int pos[3];
-          mcCube_vertexRelativePosition(vertex, pos);
-          samples[vertex] = sf(
+          mcCube_sampleRelativePosition(sampleIndex, pos);
+          samples[sampleIndex] = sf(
               min->x + (x + pos[0]) * delta_x,
               min->y + (y + pos[1]) * delta_y,
               min->z + (z + pos[2]) * delta_z,

@@ -116,6 +116,13 @@ namespace mc { namespace samples {
       int height() const { return m_height; }
 
       /**
+       * Computes and returns the aspect ratio of the demo window, which is
+       * window width over window height.
+       * \return The current aspect ratio of the demo window.
+       */
+      float aspect() const { return (float)m_width / (float)m_height; }
+
+      /**
        * \return Pointer to the graphics scene for this demo.
        */
       Scene *scene() { return m_scene; }

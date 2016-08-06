@@ -63,6 +63,8 @@ namespace mc { namespace samples {
           const glm::quat &orientation = glm::quat());
       virtual ~PerspectiveCamera();
 
+      void setFar(float far) { m_far = far; }
+
       /**
        * Implements a perspective projection for this camera object.
        *
@@ -74,6 +76,10 @@ namespace mc { namespace samples {
        * projection settings.
        */
       glm::mat4 projection(float aspect, float alpha = 1.0f) const;
+
+      float focalLength() const;
+
+      float fovy() const { return m_fovy; }
   };
 } }
 

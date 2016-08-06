@@ -21,33 +21,37 @@
  * IN THE SOFTWARE.
  */
 
-#include <cmath>
-#include <glm/gtc/matrix_transform.hpp>
+#ifndef MC_SAMPLES_TRANSVOXEL_TRANSVOXEL_TREE_H_
+#define MC_SAMPLES_TRANSVOXEL_TRANSVOXEL_TREE_H_
 
-#include "perspectiveCamera.h"
+#include <glm/glm.hpp>
 
-namespace mc { namespace samples {
-  PerspectiveCamera::PerspectiveCamera(float fovy, float near, float far,
-      const glm::vec3 &position, const glm::quat &orientation)
-    : Camera(position, orientation),
-      m_fovy(fovy), m_prevFovy(fovy),
-      m_near(near), m_far(far)
-  {
-  }
+#include "../common/octree.h"
 
-  PerspectiveCamera::~PerspectiveCamera() {
-  }
+namespace mc { namespace samples { namespace transvoxel {
+  class Frustum;
+  class TransvoxelNode : public OctreeNode<TransvoxelNode> {
+    private:
+      bool m_isVisible;
+    public:
+      TransvoxelNode(TransvoxelNode *parent, int index);
 
-  glm::mat4 PerspectiveCamera::projection(
-      float aspect, float alpha) const
-  {
-    // Linearly interpolate changes in FOV between ticks
-    float fovy = (1.0f - alpha) * m_prevFovy + alpha * m_fovy;
+      float projectedSize(const glm::mat4 &frustum);
 
-    return glm::perspective(fovy, aspect, m_near, m_far);
-  }
+      bool isVisible() const { return m_isVisible; }
+      void setVisible(bool flag) { m_isVisible = flag; }
 
-  float PerspectiveCamera::focalLength() const {
-    return 1.0f / tan(0.5f * m_fovy);
-  }
-} }
+      glm::vec3 worldSpacePos() const;
+      glm::vec3 worldSpaceCenter() const;
+      float size() const;
+
+      bool contains(const glm::vec3 &point) const;
+  };
+
+  class TransvoxelTree : public Octree<TransvoxelNode> {
+    public:
+      TransvoxelTree();
+  };
+} } }
+
+#endif

@@ -27,6 +27,7 @@
 #include <getopt.h>
 #include <png.h>
 
+#include "debug.h"
 #include "glError.h"
 #include "scene.h"
 
@@ -291,6 +292,7 @@ namespace mc { namespace samples {
 
   void Demo::m_initScene() {
     m_scene = new Scene();
+    m_scene->addObject(Debug::instance());
   }
 
   void Demo::drawScreenshot() {

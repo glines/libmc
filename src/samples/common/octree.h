@@ -231,6 +231,7 @@ namespace mc { namespace samples {
         void m_grow(
             const OctreeCoordinates &pos,
             int level);
+        void m_growRoot();
         void m_alignPosToLevel(
             const OctreeCoordinates &pos,
             int level,
@@ -241,6 +242,10 @@ namespace mc { namespace samples {
          * Constructs an empty octree structure.
          */
         Octree();
+
+        std::shared_ptr<N> root() const { return m_root; }
+
+        void growRoot() { m_growRoot(); }
 
         /**
          * This method looks for an octree node that is located at the given
@@ -468,6 +473,7 @@ namespace mc { namespace samples {
     std::shared_ptr<N> OctreeNode<N>::getChild(
         int index)
     {
+      assert(m_level != 0);
       auto child = m_children[index];
       if (!child) {
         // Create children as necessary
@@ -581,6 +587,36 @@ namespace mc { namespace samples {
     }
 
   template <class N>
+    void Octree<N>::m_growRoot() {
+      // FIXME: This is the most ugly code in the Octree class, because it
+      // heavily alters the internal structure of the root node and its
+      // immediate children.
+      assert(m_root->level() < 31);  // Don't get carried away
+      // We double the size of the root node along each dimension. Since the
+      // root node divides the octants of 3D space at the origin, no child of
+      // the root node can occupy more than one octant. Thus, Growing the
+      // root node is as simple as adding the root node's children to even
+      // larger children and decreasing the LOD of the root node.
+      m_root->setLevel(m_root->level() + 1);
+      OctreeCoordinates newRootPos;
+      newRootPos.x = newRootPos.y = newRootPos.z
+        = -(1 << (m_root->level() - 1));
+      m_root->setPos(newRootPos);
+      for (int i = 0; i < 8; ++i) {
+        auto oldChild = m_root->child(i);
+        if (!oldChild)
+          continue;
+        auto newChild = std::shared_ptr<N>(
+            new N(m_root.get(), i));
+        m_root->setChild(i, newChild);
+        int index = newChild->m_childIndexContainingPos(oldChild->pos());
+        newChild->setChild(index, oldChild);
+        oldChild->setParent(newChild.get());
+        oldChild->setIndex(index);
+      }
+    }
+
+  template <class N>
     void Octree<N>::m_grow(
         const OctreeCoordinates &pos,
         int level)
@@ -601,32 +637,7 @@ namespace mc { namespace samples {
       // Just dobule check that we actually need to grow
       assert(!m_root->contains(pos, level));
       do {
-        // FIXME: This is the most ugly code in the Octree class, because it
-        // heavily alters the internal structure of the root node and its
-        // immediate children.
-        assert(m_root->level() < 31);  // Don't get carried away
-        // We double the size of the root node along each dimension. Since the
-        // root node divides the octants of 3D space at the origin, no child of
-        // the root node can occupy more than one octant. Thus, Growing the
-        // root node is as simple as adding the root node's children to even
-        // larger children and decreasing the LOD of the root node.
-        m_root->setLevel(m_root->level() + 1);
-        OctreeCoordinates newRootPos;
-        newRootPos.x = newRootPos.y = newRootPos.z
-          = -(1 << (m_root->level() - 1));
-        m_root->setPos(newRootPos);
-        for (int i = 0; i < 8; ++i) {
-          auto oldChild = m_root->child(i);
-          if (!oldChild)
-            continue;
-          auto newChild = std::shared_ptr<N>(
-              new N(m_root.get(), i));
-          m_root->setChild(i, newChild);
-          int index = newChild->m_childIndexContainingPos(oldChild->pos());
-          newChild->setChild(index, oldChild);
-          oldChild->setParent(newChild.get());
-          oldChild->setIndex(index);
-        }
+        m_growRoot();
       } while (!m_root->contains(pos, level));
     }
 

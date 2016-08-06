@@ -2,6 +2,7 @@ add_library(samples_common STATIC
     arcballCamera.cpp
     axisObject.cpp
     camera.cpp
+    debug.cpp
     demo.cpp
     glError.cpp
     isosurfaceObject.cpp

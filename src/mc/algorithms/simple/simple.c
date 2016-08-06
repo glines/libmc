@@ -171,7 +171,6 @@ void mcSimple_isosurfaceFromField(
           /* Add the bit this sample contributes to the cube */
           cube |= (samples[i] >= 0.0f ? 0 : 1) << sampleIndex;
         }
-        fprintf(stderr, "simple cube: 0x%02x\n", cube);
         /* Look in the edge table for the edges that intersect the
          * isosurface */
         int vertexIndices[MC_CUBE_NUM_EDGES];

@@ -105,7 +105,6 @@ namespace mc { namespace samples {
           case SDL_SCANCODE_A:
           case SDL_SCANCODE_S:
           case SDL_SCANCODE_D:
-            fprintf(stderr, "WASD press event\n");
             m_depressed[event.key.keysym.scancode] = true;
             break;
           case SDL_SCANCODE_SPACE:
@@ -125,7 +124,6 @@ namespace mc { namespace samples {
           case SDL_SCANCODE_A:
           case SDL_SCANCODE_S:
           case SDL_SCANCODE_D:
-            fprintf(stderr, "WASD release event\n");
             m_depressed[event.key.keysym.scancode] = false;
             break;
           default:
@@ -139,29 +137,25 @@ namespace mc { namespace samples {
   }
 
   void WasdCamera::tick(float dt) {
-#define CAMERA_MAX_VELOCITY 0.000005f
+#define CAMERA_MAX_VELOCITY 0.05f
 #define CAMERA_ACCELERATION 0.0001f
 #define CAMERA_FRICTION 0.0001f
     m_accel = glm::vec3(0.0f, 0.0f, 0.0f);
     if (m_depressed[SDL_SCANCODE_UP] || m_depressed[SDL_SCANCODE_W]) {
       // Move the camera forward
       m_accel += glm::vec3(0.0f, 0.0f, -1.0f);
-      fprintf(stderr, "camera forward\n");
     }
     if (m_depressed[SDL_SCANCODE_DOWN] || m_depressed[SDL_SCANCODE_S]) {
       // Move the camera backward
       m_accel += glm::vec3(0.0f, 0.0f, 1.0f);
-      fprintf(stderr, "camera backward\n");
     }
     if (m_depressed[SDL_SCANCODE_LEFT] || m_depressed[SDL_SCANCODE_A]) {
       // Strafe the camera left
       m_accel += glm::vec3(-1.0f, 0.0f, 0.0f);
-      fprintf(stderr, "camera left\n");
     }
     if (m_depressed[SDL_SCANCODE_RIGHT] || m_depressed[SDL_SCANCODE_D]) {
       // Strafe the camera right
       m_accel += glm::vec3(1.0f, 0.0f, 0.0f);
-      fprintf(stderr, "camera right\n");
     }
     m_accel = glm::mat3_cast(this->orientation()) * m_accel;
     if (length(m_accel) > 0.0f) {

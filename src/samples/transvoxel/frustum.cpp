@@ -55,7 +55,7 @@ namespace mc { namespace samples { namespace transvoxel {
     canonicalVertex.y = pos[1] ? 1.0 : -1.0;
     canonicalVertex.z = pos[2] ? 1.0 : -1.0;
     /* FIXME: Compute the near and far planes? */
-    float n = 0.1f, f = 1000.0f;
+    float n = 0.1f, f = 1000000.0f;
     float depth = pos[2] ? f : n;
     glm::vec3 vertex = glm::vec3(m_pvw * glm::vec4(canonicalVertex * depth, depth));
     return vertex;
@@ -64,7 +64,7 @@ namespace mc { namespace samples { namespace transvoxel {
   bool Frustum::testVisibility(const TransvoxelNode &node) const {
     /* Calculate the center point of the node */
     glm::vec3 nodeCenter = node.worldSpaceCenter();
-    float n = 0.1f, f = 1000.0f;
+    float n = 0.1f, f = 1000000.0f;
     /* Iterate over all frustum planes */
     bool result = true;
     for (int plane = 0; plane < 6; ++plane) {
@@ -178,5 +178,21 @@ namespace mc { namespace samples { namespace transvoxel {
         result ? glm::vec3(0.0f, 1.0f, 0.0f)
                  : glm::vec3(1.0f, 0.0f, 0.0f));
     return result;
+  }
+
+  float Frustum::projectedSize(const TransvoxelNode &node) const {
+    glm::vec3 a = glm::vec3(m_worldView * glm::vec4(node.worldSpacePos(), 1.0f))
+      + glm::vec3(0.5f * node.size(), 0.0f, 0.0f);
+    glm::vec3 b = glm::vec3(m_worldView * glm::vec4(node.worldSpacePos(), 1.0f))
+      - glm::vec3(0.5f * node.size(), 0.0f, 0.0f);
+    glm::vec4 a_proj = m_projection * glm::vec4(a, 1.0f);
+    glm::vec4 b_proj = m_projection * glm::vec4(b, 1.0f);
+    glm::vec2 a_norm, b_norm;
+    a_norm.x = a_proj.x / a_proj.w;
+    a_norm.y = a_proj.y / a_proj.w;
+    b_norm.x = b_proj.x / b_proj.w;
+    b_norm.y = b_proj.y / b_proj.w;
+    /* FIXME: This length does not account for the aspect ratio */
+    return glm::length(b_norm - a_norm);
   }
 } } }

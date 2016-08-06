@@ -139,8 +139,11 @@ namespace mc { namespace samples { namespace transvoxel {
     }
     /* TODO: Stop recursing once the node's size projected on the near plane is
      * below some threshold. */
-    static const float threshold = 0.05f;
-//    if (node->projectedSize(frustum) < threshold) {}
+    static const float threshold = 0.4f;
+    float projectedSize = frustum.projectedSize(*node);
+    fprintf(stderr, "\e[1mprojectedSize: %g\e[0m\n", projectedSize);
+    if (projectedSize < threshold)
+      return newVisibility;
     if (node->level() == 0)  // XXX
       return newVisibility;
     for (int i = 0; i < 8; ++i) {

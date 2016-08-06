@@ -46,7 +46,7 @@ class TransvoxelDemo : public Demo {
           new WasdCamera(
             20.0f * ((float)M_PI / 180.0f),  // fovy
             0.1f,  // near
-            1000.0f,  // far
+            10000.0f,  // far
             glm::vec3(0.0f, 0.0f, 15.0f),  // position
             glm::angleAxis(
               (float)M_PI / 4.0f,
@@ -54,7 +54,7 @@ class TransvoxelDemo : public Demo {
             ));
       m_stationaryCamera = std::shared_ptr<WasdCamera>(
           new WasdCamera(*m_camera));
-      m_camera->setFar(10000.0);
+      m_camera->setFar(10000000.0);
       this->scene()->addObject(m_camera);
       this->setCamera(m_camera);
       m_terrain = std::shared_ptr<TransvoxelTerrain>(

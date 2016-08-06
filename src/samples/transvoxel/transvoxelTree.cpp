@@ -30,15 +30,6 @@ namespace mc { namespace samples { namespace transvoxel {
   {
   }
 
-  float TransvoxelNode::projectedSize(const glm::mat4 &frustum) {
-    /* TODO: Project the volume onto the near plane of the view frustum */
-    /* TODO: Compute the center point of this node */
-    auto projected = frustum * glm::vec4(this->worldSpacePos(), 1.0f);
-    projected.x = projected.x / projected.w;
-    projected.y = projected.y / projected.w;
-    projected.z = projected.z / projected.w;
-  }
-
   glm::vec3 TransvoxelNode::worldSpacePos() const {
     /* Compute the world space position of this node */
     glm::vec3 result;

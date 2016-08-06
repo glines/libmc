@@ -36,8 +36,6 @@ namespace mc { namespace samples { namespace transvoxel {
     public:
       TransvoxelNode(TransvoxelNode *parent, int index);
 
-      float projectedSize(const glm::mat4 &frustum);
-
       bool isVisible() const { return m_isVisible; }
       void setVisible(bool flag) { m_isVisible = flag; }
 

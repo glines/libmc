@@ -60,6 +60,7 @@ namespace mc { namespace samples {
         glm::vec3 vertexPosition(int index) const;
 
         bool testVisibility(const TransvoxelNode &node) const;
+        float projectedSize(const TransvoxelNode &node) const;
     };
   }
 } }

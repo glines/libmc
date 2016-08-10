@@ -57,6 +57,7 @@ namespace mc { namespace samples {
 
       void m_dispatchLoop();
     public:
+      WorkerPool();
       WorkerPool(int numWorkers);
       ~WorkerPool();
 

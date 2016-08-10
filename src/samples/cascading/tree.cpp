@@ -42,6 +42,7 @@ namespace mc { namespace samples { namespace cascading {
     result.x = (float)this->pos().x;
     result.y = (float)this->pos().y;
     result.z = 0.0f;
+    return result;
   }
 
   float TreeNode::size() const {
@@ -97,15 +98,27 @@ namespace mc { namespace samples { namespace cascading {
         /* Project the mouse click as a ray in world space */
         float aspect = (float)w / (float)h;
         Ray r;
-        r.p = glm::normalize(glm::vec3(
-            glm::inverse(m_camera->projection(aspect))
-          * glm::vec4(x_norm, y_norm, -1.0f, 0.0f)));
+        r.p = glm::vec3(
+            glm::inverse(m_camera->projection(aspect) * m_camera->worldView())
+          * glm::vec4(x_norm, y_norm, -1.0f, 1.0f));
         fprintf(stderr,
             "r.p: (%g, %g, %g)\n",
             r.p.x, r.p.y, r.p.z);
         r.v = glm::vec3(0.0f, 0.0f, -1.0f);
-        QuadtreeCoordinates result;
-        m_intersectRay(r, &result);
+        QuadtreeCoordinates pos;
+        pos.x = (int)floor(r.p.x);
+        pos.y = (int)floor(r.p.y);
+        fprintf(stderr,
+            "pos: (%d, %d)\n",
+            pos.x,
+            pos.y);
+        auto node = this->getNode(pos, 0);
+        fprintf(stderr,
+            "node world pos: (%g, %g, %g)\n",
+            node->worldSpacePos().x,
+            node->worldSpacePos().y,
+            node->worldSpacePos().z);
+//        m_intersectRay(r, &result);
         break;
     }
   }
@@ -206,11 +219,6 @@ namespace mc { namespace samples { namespace cascading {
 
     // Traverse the quadtree and draw a square for each node
     for (auto node : *this) {
-      fprintf(stderr,
-          "drawing node at: (%d, %d, %d)\n",
-          node.worldSpacePos().x,
-          node.worldSpacePos().y,
-          node.worldSpacePos().z);
       glm::mat4 localModel;
       // Translate the square wireframe to this node's position
       localModel = glm::translate(localModel,

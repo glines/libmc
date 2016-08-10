@@ -25,9 +25,11 @@
 #define MC_SAMPLES_TRANSVOXEL_TRANSVOXEL_TERRAIN_H_
 
 #include <GL/glew.h>
+#include <mcxx/scalarField.h>
 #include <memory>
 
 #include "../common/sceneObject.h"
+#include "../common/workerPool.h"
 #include "transvoxelTree.h"
 
 namespace mc { namespace samples {
@@ -47,9 +49,13 @@ namespace mc { namespace samples {
         } WireframeVertex;
 
         TransvoxelTree m_tree;
+        mc::ScalarField m_sf;
+        WorkerPool m_workers;
         std::shared_ptr<PerspectiveCamera> m_camera;
+
         GLuint m_cubeWireframeVertices, m_cubeWireframeIndices;
         GLuint m_frustumWireframeVertices, m_frustumWireframeIndices;
+
         float m_aspect;
         int m_minimumLod;
 

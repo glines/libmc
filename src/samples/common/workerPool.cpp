@@ -36,6 +36,16 @@ namespace mc { namespace samples {
     return left->priority() < right->priority();
   }
 
+  WorkerPool::WorkerPool()
+    : m_readyWorkers(), m_ready(), m_readyMutex(),
+    m_tasks(&m_compareTasks),
+    m_dispatchThread([this] { this->m_dispatchLoop(); })
+  {
+    int numWorkers = std::thread::hardware_concurrency();
+    for (int i = 0; i < numWorkers; ++i)
+      m_workers.push_back(std::shared_ptr<Worker>(new Worker(this)));
+  }
+
   WorkerPool::WorkerPool(int numWorkers)
     : m_readyWorkers(), m_ready(), m_readyMutex(),
     m_tasks(&m_compareTasks),

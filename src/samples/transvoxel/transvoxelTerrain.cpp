@@ -21,6 +21,7 @@
  * IN THE SOFTWARE.
  */
 
+#include <cmath>
 #include <cstdio>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -38,9 +39,16 @@ extern "C" {
 #include "transvoxelTerrain.h"
 
 namespace mc { namespace samples { namespace transvoxel {
+  float terrain(float x, float y, float z) {
+    static const float PERIOD = 1000.0f;
+    static const float AMPLITUDE = 1000.0f;
+    return z - cos(x / PERIOD) * sin(y / PERIOD) * AMPLITUDE;
+  }
+
   TransvoxelTerrain::TransvoxelTerrain(
       std::shared_ptr<PerspectiveCamera> camera, float aspect, int minimumLod)
-    : m_camera(camera), m_minimumLod(minimumLod), m_aspect(aspect)
+    : m_camera(camera), m_minimumLod(minimumLod), m_aspect(aspect),
+      m_sf(terrain)
   {
     /* Send buffers to the GL for drawing the octree wireframe */
     m_generateCubeWireframe();

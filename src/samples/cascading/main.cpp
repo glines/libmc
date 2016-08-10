@@ -43,10 +43,10 @@ namespace mc { namespace samples { namespace cascading {
         // Populate the graphics scene
         m_camera = std::shared_ptr<OrthographicCamera>(
             new OrthographicCamera(
-              -100.0f,  // left
-              100.0f,  // right
-              -100.0f,  // top
-              100.0f,  // bottom
+              -10.0f,  // left
+              10.0f,  // right
+              -10.0f,  // top
+              10.0f,  // bottom
               0.1f,  // near
               1000.0f,  // far
               glm::vec3(0.0f, 0.0f, 15.0f)  // position
@@ -60,7 +60,7 @@ namespace mc { namespace samples { namespace cascading {
               glm::vec3(0.0f, 0.0f, 15.0f),  // position
               glm::quat()  // orientation
               ));
-        this->scene()->addObject(m_wasdCamera);
+//        this->scene()->addObject(m_wasdCamera);
         this->setCamera(m_camera);
         m_tree = std::shared_ptr<Tree>(
             new Tree(m_camera));

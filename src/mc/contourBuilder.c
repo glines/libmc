@@ -21,17 +21,41 @@
  * IN THE SOFTWARE.
  */
 
-#include <mcxx/vector.h>
+#include <stdlib.h>
 
-namespace mc {
-  Vec3::Vec3(float x, float y, float z) {
-    m_internal.x = x;
-    m_internal.y = y;
-    m_internal.z = z;
-  }
+#include <mc/contourBuilder.h>
 
-  Vec2::Vec2(float x, float y) {
-    m_internal.x = x;
-    m_internal.y = y;
-  }
+struct mcContourBuilderInternal {
+  mcContour *contours;
+  int contoursSize;
+  int numContours;
+};
+
+void mcContourBuilder_init(mcContourBuilder *self) {
+  static const int INIT_NUM_CONTOURS = 4;
+
+  /* Allocate memory for the internal data structures */
+  self->internal =
+    (mcContourBuilderInternal*)malloc(sizeof(mcContourBuilderInternal));
+  self->internal->contours =
+    (mcContour*)malloc(sizeof(mcContour) * INIT_NUM_CONTOURS);
+  self->internal->contoursSize = INIT_NUM_CONTOURS;
+  self->internal->numContours = 0;
+}
+
+void mcContourBuilder_destroy(mcContourBuilder *self) {
+  /* Free internal data structure memory */
+  free(self->internal->contours);
+  free(self->internal);
+}
+
+const mcContour *mcContourBuilder_contourFromFieldWithArgs(
+    mcContourBuilder *self,
+    mcScalarFieldWithArgs sf,
+    const void *args,
+    mcAlgorithmFlag algorithm,
+    unsigned int x_res, unsigned int y_res,
+    const mcVec2 *min, const mcVec2 *max)
+{
+  // TODO
 }

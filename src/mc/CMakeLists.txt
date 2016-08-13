@@ -1,5 +1,6 @@
 add_library(mc
     algorithms.c
+    contourBuilder.c
     isosurfaceBuilder.c
     )
 target_include_directories(mc SYSTEM

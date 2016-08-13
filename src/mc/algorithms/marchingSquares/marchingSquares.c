@@ -21,17 +21,31 @@
  * IN THE SOFTWARE.
  */
 
-#include <mcxx/vector.h>
+#include <mc/algorithms/common/square.h>
 
-namespace mc {
-  Vec3::Vec3(float x, float y, float z) {
-    m_internal.x = x;
-    m_internal.y = y;
-    m_internal.z = z;
-  }
-
-  Vec2::Vec2(float x, float y) {
-    m_internal.x = x;
-    m_internal.y = y;
+void mcMarchingSquares_isolineFromField(
+    mcScalarFieldWithArgs sf, const void *args,
+    unsigned int x_res, unsigned int y_res,
+    const mcVec3 *min, const mcVec3 *max,
+    mcLines *lines)
+{
+  /* TODO: Make a cache of sample values */
+  /* Loop over the sample lattice */
+  for (int y = 0; y < y_res - 1; ++y) {
+    for (int x = 0; x < x_res - 1; ++x) {
+      /* TODO: Determine the configuration of this square */
+      int square = 0;
+      for (int sampleIndex = 0; sampleIndex < 4; ++sampleIndex) {
+        int pos[2];
+        mcSquare_sampleRelativePosition(i, pos);
+        /* TODO: Retrieve the sample value from a buffer */
+        float sample = sf(min->x + (float)(x + pos[0]) * delta_x,
+                          min->y + (float)(y + pos[1]) * delta_y,
+                          0.0f,
+                          args);
+        square |= (samples >= 0.0f ? 0 : 1) << sampleIndex;
+      }
+      fprintf(stderr, "square: 0x%01x\n", square);
+    }
   }
 }

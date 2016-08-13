@@ -21,17 +21,13 @@
  * IN THE SOFTWARE.
  */
 
-#include <mcxx/vector.h>
+#ifndef MC_ALGORITHMS_COMMON_SQUARE_H_
+#define MC_ALGORITHMS_COMMON_SQUARE_H_
 
-namespace mc {
-  Vec3::Vec3(float x, float y, float z) {
-    m_internal.x = x;
-    m_internal.y = y;
-    m_internal.z = z;
-  }
+/**
+ * This routine determines the XY-Position of the given sample index relative
+ * to the square.
+ */
+void mcSquare_sampleRelativePosition(int sampleIndex, int *pos);
 
-  Vec2::Vec2(float x, float y) {
-    m_internal.x = x;
-    m_internal.y = y;
-  }
-}
+#endif

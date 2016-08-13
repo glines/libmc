@@ -114,6 +114,7 @@ typedef enum mcAlgorithmFlag {
   /** The original marching cubes as described by Lorensen. \cite Lorensen:1987 */
   MC_ORIGINAL_MARCHING_CUBES,
   MC_TRANSVOXEL,
+  MC_MARCHING_SQUARES,
 } mcAlgorithmFlag;
 
 /**

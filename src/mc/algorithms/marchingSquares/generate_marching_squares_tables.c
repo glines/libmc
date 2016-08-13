@@ -21,17 +21,6 @@
  * IN THE SOFTWARE.
  */
 
-#include <mcxx/vector.h>
-
-namespace mc {
-  Vec3::Vec3(float x, float y, float z) {
-    m_internal.x = x;
-    m_internal.y = y;
-    m_internal.z = z;
-  }
-
-  Vec2::Vec2(float x, float y) {
-    m_internal.x = x;
-    m_internal.y = y;
-  }
+int main(int argc, char **argv) {
+  mcMarchingSquares_computeTables();
 }

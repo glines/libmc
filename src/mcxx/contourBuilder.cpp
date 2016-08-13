@@ -21,17 +21,45 @@
  * IN THE SOFTWARE.
  */
 
+#include <mcxx/contour.h>
+#include <mcxx/scalarField.h>
 #include <mcxx/vector.h>
 
+#include <mcxx/contourBuilder.h>
+
 namespace mc {
-  Vec3::Vec3(float x, float y, float z) {
-    m_internal.x = x;
-    m_internal.y = y;
-    m_internal.z = z;
+  ContourBuilder::ContourBuilder() {
+    mcContourBuilder_init(&m_internal);
   }
 
-  Vec2::Vec2(float x, float y) {
-    m_internal.x = x;
-    m_internal.y = y;
+  ContourBuilder::~ContourBuilder() {
+    for (auto contour : m_contours) {
+      delete contour;
+    }
+    mcContourBuilder_destroy(&m_internal);
+  }
+
+  float wrapScalarField(float x, float y, float z, ScalarField *sf) {
+    return (*sf)(x, y, z);
+  }
+
+  const Contour *ContourBuilder::buildContour(
+      ScalarField &sf,
+      mcAlgorithmFlag algorithm,
+      int x_res, int y_res,
+      const Vec2 &min, const Vec2 &max)
+  {
+    // Pass the scalar field functor as an argument
+    const mcContour *c = mcContourBuilder_contourFromFieldWithArgs(
+        &m_internal,
+        (mcScalarFieldWithArgs)wrapScalarField,
+         &sf,
+         algorithm,
+         x_res, y_res,
+         &min.to_mcVec2(), &max.to_mcVec2()
+         );
+    auto contour = new Contour(c);
+    m_contours.push_back(contour);
+    return contour;
   }
 }

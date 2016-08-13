@@ -1,4 +1,6 @@
 add_library(mcxx
+    contour.cpp
+    contourBuilder.cpp
     isosurfaceBuilder.cpp
     mesh.cpp
     scalarField.cpp

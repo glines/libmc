@@ -21,7 +21,7 @@
  * IN THE SOFTWARE.
  */
 
-#include "../../include/mcxx/mesh.h"
+#include <mcxx/mesh.h>
 
 namespace mc {
   Mesh::Mesh() : m_internal(nullptr) {

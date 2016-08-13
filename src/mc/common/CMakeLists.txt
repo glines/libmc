@@ -1,4 +1,5 @@
 add_library(mc_common STATIC
+    contour.c
     mesh.c
     vector.c
     )

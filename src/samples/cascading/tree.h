@@ -32,13 +32,24 @@
 
 namespace mc { namespace samples {
   class Camera;
+  class ShaderProgram;
   namespace cascading {
+    class Tree;
     class TreeNode : public QuadtreeNode<TreeNode> {
+      friend Tree;
+      private:
+        float m_points[4];
+
+        bool m_containsPoint(const QuadtreeCoordinates &point);
+        bool m_hasPoint(const QuadtreeCoordinates &point);
+        void m_setPoint(const QuadtreeCoordinates &point, float value);
       public:
         TreeNode(TreeNode *parent, int index);
 
         glm::vec3 worldSpacePos() const;
         float size() const;
+
+        float point(int i) const { return m_points[i]; }
     };
 
     class Tree :
@@ -59,9 +70,14 @@ namespace mc { namespace samples {
           float pos[3];
           float color[3];
         } WireframeVertex;
+        typedef struct {
+          float pos[3];
+          float tex[3];
+        } BillboardVertex;
 
         std::shared_ptr<Camera> m_camera;
         GLuint m_squareVertexBuffer, m_squareIndexBuffer;
+        GLuint m_billboardVertices, m_billboardIndices;
 
         /**
          * Follow the given ray in world space and intersect it with this
@@ -70,11 +86,25 @@ namespace mc { namespace samples {
          */
         bool m_intersectRay(const Ray &ray, QuadtreeCoordinates *result);
 
+        void m_setPoint(const QuadtreeCoordinates &pos, float value);
+
         void m_generateSquare();
+        void m_generateBillboard();
 
         void m_drawNodes(
             const glm::mat4 &modelView,
-            const glm::mat4 &projection);
+            const glm::mat4 &projection) const;
+        void m_drawNodePoint(
+            const QuadtreeCoordinates &point,
+            float value,
+            std::shared_ptr<ShaderProgram> shader,
+            const glm::mat4 &modelWorld,
+            const glm::mat4 &worldView,
+            const glm::mat4 &projection) const;
+        void m_drawNodePoints(
+            const glm::mat4 &modelWorld,
+            const glm::mat4 &worldView,
+            const glm::mat4 &projection) const;
 
       public:
         Tree(std::shared_ptr<Camera> camera);

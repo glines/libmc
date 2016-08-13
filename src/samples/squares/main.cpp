@@ -21,17 +21,54 @@
  * IN THE SOFTWARE.
  */
 
-#include <mcxx/vector.h>
+#include "../common/demo.h"
+#include "squareObject.h"
 
-namespace mc {
-  Vec3::Vec3(float x, float y, float z) {
-    m_internal.x = x;
-    m_internal.y = y;
-    m_internal.z = z;
+using namespace mc::samples;
+using namespace mc::samples::squares;
+
+class Squares : public Demo {
+  private:
+    std::shared_ptr<SquareObject> m_squareObject;
+  public:
+    Squares(int argc, char **argv)
+      : Demo(argc, argv, "Marching Squares Demo")
+    {
+      if (this->argError())
+        return;
+
+      // TODO: Populate the graphics scene
+    }
+};
+
+Squares *demo;
+
+void main_loop() {
+  demo->mainLoop();
+}
+
+int main(int argc, char **argv) {
+  demo = new Squares(argc, argv);
+  if (demo->argError()) {
+    delete demo;
+    return EXIT_FAILURE;
   }
 
-  Vec2::Vec2(float x, float y) {
-    m_internal.x = x;
-    m_internal.y = y;
+  if (demo->isScreenshot()) {
+    demo->drawScreenshot();
+  } else {
+#ifdef __EMSCRIPTEN__
+    emscripten_set_main_loop(main_loop, 0, 1);
+#else
+    while (1) {
+      main_loop();
+      // TODO: Wait for VSync? Or should we poll input faster than that?
+    }
+#endif
   }
+
+  // FIXME: This can never be reached if the demo object calls exit()
+  delete demo;
+
+  return EXIT_SUCCESS;
 }

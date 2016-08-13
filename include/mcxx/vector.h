@@ -60,6 +60,18 @@ namespace mc {
       float y() const { return m_internal.y; }
       float z() const { return m_internal.z; }
   };
+
+  class Vec2 {
+    private:
+      mcVec2 m_internal;
+    public:
+      Vec2(float x, float y);
+
+      const mcVec2 &to_mcVec2() const { return m_internal; }
+
+      float x() const { return m_internal.x; }
+      float y() const { return m_internal.y; }
+  };
 }
 
 #endif

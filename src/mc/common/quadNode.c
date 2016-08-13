@@ -21,17 +21,6 @@
  * IN THE SOFTWARE.
  */
 
-#include <mcxx/vector.h>
+#include "quadNode.h"
 
-namespace mc {
-  Vec3::Vec3(float x, float y, float z) {
-    m_internal.x = x;
-    m_internal.y = y;
-    m_internal.z = z;
-  }
-
-  Vec2::Vec2(float x, float y) {
-    m_internal.x = x;
-    m_internal.y = y;
-  }
-}
+DEFINE_Z_ORDER_NODE(Quad, 2)

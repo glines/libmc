@@ -21,17 +21,10 @@
  * IN THE SOFTWARE.
  */
 
-#include <mcxx/vector.h>
+#ifndef MC_COMMON_TREE_H_
+#define MC_COMMON_TREE_H_
 
-namespace mc {
-  Vec3::Vec3(float x, float y, float z) {
-    m_internal.x = x;
-    m_internal.y = y;
-    m_internal.z = z;
-  }
+typedef struct {
+} Tree;
 
-  Vec2::Vec2(float x, float y) {
-    m_internal.x = x;
-    m_internal.y = y;
-  }
-}
+#endif

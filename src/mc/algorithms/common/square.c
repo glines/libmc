@@ -21,17 +21,9 @@
  * IN THE SOFTWARE.
  */
 
-#include <mcxx/vector.h>
+#include <mc/algorithms/common/square.h>
 
-namespace mc {
-  Vec3::Vec3(float x, float y, float z) {
-    m_internal.x = x;
-    m_internal.y = y;
-    m_internal.z = z;
-  }
-
-  Vec2::Vec2(float x, float y) {
-    m_internal.x = x;
-    m_internal.y = y;
-  }
+void mcSquare_sampleRelativePosition(int sampleIndex, int *pos) {
+  pos[0] = (sampleIndex & (1 << 0)) >> 0;
+  pos[1] = (sampleIndex & (1 << 1)) >> 1;
 }

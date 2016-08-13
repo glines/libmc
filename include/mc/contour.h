@@ -21,17 +21,26 @@
  * IN THE SOFTWARE.
  */
 
-#include <mcxx/vector.h>
+#ifndef MC_CONTOUR_H_
+#define MC_CONTOUR_H_
 
-namespace mc {
-  Vec3::Vec3(float x, float y, float z) {
-    m_internal.x = x;
-    m_internal.y = y;
-    m_internal.z = z;
-  }
+#include <mc/vertex.h>
 
-  Vec2::Vec2(float x, float y) {
-    m_internal.x = x;
-    m_internal.y = y;
-  }
-}
+typedef struct {
+  int a, b;
+} mcLine;
+
+typedef struct {
+  mcVertex *vertices;
+  mcLine *lines;
+  int numVertices, numLines;
+  int sizeVertices, sizeLines;
+} mcContour;
+
+void mcContour_init(mcContour *self);
+
+int mcContour_addVertex(mcContour *self, const mcVertex *vertex);
+
+void mcContour_addLine(mcContour *self, const mcLine *line);
+
+#endif

@@ -21,17 +21,30 @@
  * IN THE SOFTWARE.
  */
 
-#include <mcxx/vector.h>
+#ifndef MCXX_CONTOUR_H_
+#define MCXX_CONTOUR_H_
+
+extern "C" {
+#include <mc/contour.h>
+}
 
 namespace mc {
-  Vec3::Vec3(float x, float y, float z) {
-    m_internal.x = x;
-    m_internal.y = y;
-    m_internal.z = z;
-  }
+  class Contour {
+    private:
+      const mcContour *m_internal;
+    public:
+      Contour(const mcContour *contour);
 
-  Vec2::Vec2(float x, float y) {
-    m_internal.x = x;
-    m_internal.y = y;
-  }
+      const mcVertex &vertex(int i) const { return m_internal->vertices[i]; }
+
+      const mcLine &line(int i) const { return m_internal->lines[i]; }
+
+      int numVertices() const { return m_internal->numVertices; }
+
+      int numLines() const { return m_internal->numLines; }
+
+      int numIndices() const { return 2 * m_internal->numLines; }
+  };
 }
+
+#endif

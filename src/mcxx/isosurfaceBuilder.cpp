@@ -35,6 +35,7 @@ namespace mc {
     for (auto mesh : m_meshes) {
       delete mesh;
     }
+    mcIsosurfaceBuilder_destroy(&m_internal);
   }
 
   /*

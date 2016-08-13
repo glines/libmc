@@ -21,17 +21,29 @@
  * IN THE SOFTWARE.
  */
 
-#include <mcxx/vector.h>
+#ifndef MC_CONTOUR_BUILDER_H_
+#define MC_CONTOUR_BUILDER_H_
 
-namespace mc {
-  Vec3::Vec3(float x, float y, float z) {
-    m_internal.x = x;
-    m_internal.y = y;
-    m_internal.z = z;
-  }
+#include <mc/algorithms.h>
+#include <mc/contour.h>
+#include <mc/scalarField.h>
 
-  Vec2::Vec2(float x, float y) {
-    m_internal.x = x;
-    m_internal.y = y;
-  }
-}
+typedef struct mcContourBuilderInternal mcContourBuilderInternal;
+
+typedef struct {
+  mcContourBuilderInternal *internal;
+} mcContourBuilder;
+
+void mcContourBuilder_init(mcContourBuilder *self);
+
+void mcContourBuilder_destroy(mcContourBuilder *self);
+
+const mcContour *mcContourBuilder_contourFromFieldWithArgs(
+    mcContourBuilder *self,
+    mcScalarFieldWithArgs sf,
+    const void *args,
+    mcAlgorithmFlag algorithm,
+    unsigned int x_res, unsigned int y_res,
+    const mcVec2 *min, const mcVec2 *max);
+
+#endif

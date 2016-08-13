@@ -83,4 +83,9 @@ void mcVec3_cross(const mcVec3 *u, const mcVec3 *v, mcVec3 *w);
  */
 float mcVec3_dot(const mcVec3 *u, const mcVec3 *v);
 
+typedef struct mcVec2 {
+  float x;
+  float y;
+} mcVec2;
+
 #endif

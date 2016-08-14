@@ -38,11 +38,22 @@ namespace mc { namespace samples { namespace squares {
   SquareObject::SquareObject(
       const glm::vec3 &position,
       const glm::quat &orientation)
-    : SceneObject(position, orientation)
+    : SceneObject(position, orientation),
+    m_square(0x1), m_resolution(8)
   {
     // Create buffers for the contour wireframe in the GL
     m_initWireframe();
     m_initSquareWireframe();
+    m_update();
+  }
+
+  void SquareObject::setSquare(int square) {
+    m_square = square;
+    m_update();
+  }
+
+  void SquareObject::setResolution(int resolution) {
+    m_resolution = resolution;
     m_update();
   }
 
@@ -104,13 +115,13 @@ namespace mc { namespace samples { namespace squares {
   }
 
   void SquareObject::m_update() {
-    SquareScalarField sf(0x1);
+    SquareScalarField sf(m_square);
 
     ContourBuilder cb;
     auto contour = cb.buildContour(
         sf,  // scalar field
         MC_MARCHING_SQUARES,  // algorithm
-        10, 10,  // resolution
+        m_resolution, m_resolution,  // resolution
         Vec2(0.0f, 0.0f),  // min
         Vec2(1.0f, 1.0f)  // max
         );

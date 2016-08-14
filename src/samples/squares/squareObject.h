@@ -50,6 +50,7 @@ namespace mc { namespace samples { namespace squares {
       GLuint m_wireframeVertices, m_wireframeIndices,
              m_squareWireframeVertices, m_squareWireframeIndices;
       int m_numWireframeIndices;
+      int m_square, m_resolution;
 
       void m_initWireframe();
       void m_initSquareWireframe();
@@ -68,6 +69,12 @@ namespace mc { namespace samples { namespace squares {
       SquareObject(
           const glm::vec3 &position = glm::vec3(0.0f, 0.0f, 0.0f),
           const glm::quat &orientation = glm::quat());
+
+      int square() const { return m_square; }
+      void setSquare(int square);
+
+      int resolution() const { return m_resolution; }
+      void setResolution(int resolution);
 
       void draw(const glm::mat4 &modelWorld,
           const glm::mat4 &worldView, const glm::mat4 &projection,

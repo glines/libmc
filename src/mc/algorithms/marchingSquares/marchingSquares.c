@@ -100,24 +100,10 @@ void mcMarchingSquares_contourFromField(
           vertexIndices[edge] = mcContour_addVertex(contour, &vertex);
           fprintf(stderr, "added mesh vertex: %d\n",
               vertexIndices[edge]);
-          /* XXX: Draw a cross mark for debugging purposes */
-          mcLine lines[2];
-          static const float alpha = 0.2f;
-          vertex.pos.x -= alpha * 0.5f * delta_x;
-          vertex.pos.y -= alpha * 0.5f * delta_y;
-          lines[0].a = mcContour_addVertex(contour, &vertex);
-          vertex.pos.x += alpha * delta_x;
-          lines[1].a = mcContour_addVertex(contour, &vertex);
-          vertex.pos.y += alpha * delta_y;
-          lines[0].b = mcContour_addVertex(contour, &vertex);
-          vertex.pos.x -= alpha * delta_x;
-          lines[1].b = mcContour_addVertex(contour, &vertex);
-          mcContour_addLine(contour, &lines[0]);
-          mcContour_addLine(contour, &lines[1]);
           intersectionIndex += 1;
         }
       }
-      /* TODO: Look in the line table for the lines corresponding to this
+      /* Look in the line table for the lines corresponding to this
        * square configuration */
       for (int i = 0; i < MC_MARCHING_SQUARES_MAX_NUM_LINES; ++i) {
         mcLine line;

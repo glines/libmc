@@ -26,6 +26,9 @@
 #include "../common/orthographicCamera.h"
 #include "squareObject.h"
 
+#define min(a, b) ((a) < (b) ? (a) : (b))
+#define max(a, b) ((a) > (b) ? (a) : (b))
+
 using namespace mc::samples;
 using namespace mc::samples::squares;
 
@@ -43,10 +46,10 @@ class Squares : public Demo {
       // Populate the graphics scene
       m_camera = std::shared_ptr<OrthographicCamera>(
           new OrthographicCamera(
-            -1.0f,  // left
-            2.0f,  // right
-            -1.0f,  // bottom
-            2.0f,  // top
+            -0.5f,  // left
+            1.5f,  // right
+            -0.5f,  // bottom
+            1.5f,  // top
             0.1f,  // near
             1000.0f,  // far
             glm::vec3(0.0f, 0.0f, 15.0f)  // position
@@ -56,6 +59,33 @@ class Squares : public Demo {
       m_squareObject = std::shared_ptr<SquareObject>(
           new SquareObject());
       this->scene()->addObject(m_squareObject);
+    }
+
+    bool handleEvent(const SDL_Event &event) {
+      switch (event.type) {
+        case SDL_KEYDOWN:
+          switch (event.key.keysym.scancode) {
+            case SDL_SCANCODE_UP:
+              {
+                int res = m_squareObject->resolution();
+                m_squareObject->setResolution(min(max(res * 2, 2), 64));
+              }
+              return true;
+            case SDL_SCANCODE_DOWN:
+              {
+                int res = m_squareObject->resolution();
+                m_squareObject->setResolution(min(max(res / 2, 2), 64));
+              }
+              return true;
+            case SDL_SCANCODE_RIGHT:
+              m_squareObject->setSquare((m_squareObject->square() + 1) % 16);
+              break;
+            case SDL_SCANCODE_LEFT:
+              m_squareObject->setSquare((m_squareObject->square() - 1) % 16);
+              break;
+          }
+          break;
+      }
     }
 };
 

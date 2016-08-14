@@ -39,6 +39,8 @@ typedef struct {
 
 void mcContour_init(mcContour *self);
 
+void mcContour_destroy(mcContour *self);
+
 int mcContour_addVertex(mcContour *self, const mcVertex *vertex);
 
 void mcContour_addLine(mcContour *self, const mcLine *line);

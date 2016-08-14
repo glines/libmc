@@ -1554,4 +1554,6 @@ int main(int argc, char **argv) {
           transitionCellTriangulationTable, stdout);
       break;
   }
+
+  return EXIT_SUCCESS;
 }

@@ -21,6 +21,24 @@
  * IN THE SOFTWARE.
  */
 
-int main(int argc, char **argv) {
-  mcMarchingSquares_computeTables();
+#include <assert.h>
+
+#include <mc/algorithms/marchingSquares/common.h>
+
+#include <mc/algorithms/marchingSquares/canonical.h>
+
+#include "marching_squares_tables.c"
+
+int mcMarchingSquares_canonicalSquare(int square) {
+  assert(square >= 0);
+  assert(square <= 0xf);
+  int canonical = mcMarchingSquares_canonicalSquareTable[square];
+  return canonical;
+}
+
+int mcMarchingSquares_canonicalSquareSequence(int square) {
+  assert(square >= 0);
+  assert(square <= 0xf);
+  int sequence = mcMarchingSquares_canonicalSquareSequenceTable[square];
+  return sequence;
 }

@@ -13,6 +13,7 @@ target_link_libraries(mc
     mc_algorithms_delaunay
     mc_algorithms_dualMarchingCubes
     mc_algorithms_elasticSurfaceNet
+    mc_algorithms_marchingSquares
     mc_algorithms_nielsonDual
     mc_algorithms_patch
     mc_algorithms_simple

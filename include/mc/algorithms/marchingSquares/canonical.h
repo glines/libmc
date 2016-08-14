@@ -21,24 +21,11 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef MC_ALGORITHMS_COMMON_SQUARE_H_
-#define MC_ALGORITHMS_COMMON_SQUARE_H_
+#ifndef MC_ALGORITHMS_MARCHING_SQUARES_CANONICAL_H_
+#define MC_ALGORITHMS_MARCHING_SQUARES_CANONICAL_H_
 
-/**
- * This routine determines the XY-Position of the given sample index relative
- * to the square.
- */
-void mcSquare_sampleRelativePosition(int sampleIndex, int *pos);
+int mcMarchingSquares_canonicalSquare(int square);
 
-void mcSquare_edgeSampleIndices(int edgeIndex, int *sampleIndices);
-
-int mcSquare_sampleValue(int square, int sampleIndex);
-
-int mcSquare_rotateSquare(int square);
-
-int mcSquare_invertSquare(int square);
-
-int mcSquare_rotateEdge(int edge);
-int mcSquare_rotateEdgeReverse(int edge);
+int mcMarchingSquares_canonicalSquareSequence(int square);
 
 #endif

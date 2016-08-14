@@ -42,6 +42,7 @@ namespace mc { namespace samples { namespace squares {
   {
     // Create buffers for the contour wireframe in the GL
     m_initWireframe();
+    m_initSquareWireframe();
     m_update();
   }
 
@@ -49,6 +50,56 @@ namespace mc { namespace samples { namespace squares {
     glGenBuffers(1, &m_wireframeVertices);
     FORCE_ASSERT_GL_ERROR();
     glGenBuffers(1, &m_wireframeIndices);
+    FORCE_ASSERT_GL_ERROR();
+  }
+
+  void SquareObject::m_initSquareWireframe() {
+    /* Send the vertices to the GL */
+    static const WireframeVertex vertices[] = {
+      {
+        .pos = { 0.0f, 0.0f, 0.0f },
+        .color = { 0.0f, 0.0f, 1.0f },
+      },
+      {
+        .pos = { 1.0f, 0.0f, 0.0f },
+        .color = { 0.0f, 0.0f, 1.0f },
+      },
+      {
+        .pos = { 0.0f, 1.0f, 0.0f },
+        .color = { 0.0f, 0.0f, 1.0f },
+      },
+      {
+        .pos = { 1.0f, 1.0f, 0.0f },
+        .color = { 0.0f, 0.0f, 1.0f },
+      },
+    };
+    glGenBuffers(1, &m_squareWireframeVertices);
+    FORCE_ASSERT_GL_ERROR();
+    glBindBuffer(GL_ARRAY_BUFFER, m_squareWireframeVertices);
+    FORCE_ASSERT_GL_ERROR();
+    glBufferData(
+        GL_ARRAY_BUFFER,  // target
+        sizeof(vertices),  // size
+        vertices,  // data
+        GL_STATIC_DRAW  // usage
+        );
+    FORCE_ASSERT_GL_ERROR();
+    static const unsigned int indices[] = {
+      0, 1,
+      1, 3,
+      3, 2,
+      2, 0,
+    };
+    glGenBuffers(1, &m_squareWireframeIndices);
+    FORCE_ASSERT_GL_ERROR();
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_squareWireframeIndices);
+    FORCE_ASSERT_GL_ERROR();
+    glBufferData(
+        GL_ELEMENT_ARRAY_BUFFER,  // target
+        sizeof(indices),  // size
+        indices,  // data
+        GL_STATIC_DRAW  // usage
+        );
     FORCE_ASSERT_GL_ERROR();
   }
 
@@ -71,6 +122,7 @@ namespace mc { namespace samples { namespace squares {
   void SquareObject::m_updateWireframe(const mc::Contour &contour) {
     // Copy the contour vertices into a buffer
     auto vertices = new WireframeVertex[contour.numVertices()];
+    fprintf(stderr, "numVertices: %d\n", contour.numVertices());
     for (int i = 0; i < contour.numVertices(); ++i) {
       auto vertex = contour.vertex(i);
       vertices[i].pos[0] = vertex.pos.x;
@@ -178,12 +230,79 @@ namespace mc { namespace samples { namespace squares {
     ASSERT_GL_ERROR();
   }
 
+  void SquareObject::m_drawSquareWireframe(
+      const glm::mat4 &modelView,
+      const glm::mat4 &projection)
+  {
+    // Use the wireframe shader
+    auto shader = Shaders::wireframeShader();
+    shader->use();
+
+    // Prepare the uniform values
+    assert(shader->modelViewLocation() != -1);
+    glUniformMatrix4fv(
+        shader->modelViewLocation(),  // location
+        1,  // count
+        0,  // transpose
+        glm::value_ptr(modelView)  // value
+        );
+    ASSERT_GL_ERROR();
+    assert(shader->projectionLocation() != -1);
+    glUniformMatrix4fv(
+        shader->projectionLocation(),  // location
+        1,  // count
+        0,  // transpose
+        glm::value_ptr(projection)  // value
+        );
+    ASSERT_GL_ERROR();
+
+    // Prepare the vertex attributes
+    glBindBuffer(GL_ARRAY_BUFFER, m_squareWireframeVertices);
+    ASSERT_GL_ERROR();
+    assert(shader->vertPositionLocation() != -1);
+    glEnableVertexAttribArray(shader->vertPositionLocation());
+    ASSERT_GL_ERROR();
+    glVertexAttribPointer(
+        shader->vertPositionLocation(),  // index
+        3,  // size
+        GL_FLOAT,  // type
+        0,  // normalized
+        sizeof(WireframeVertex),  // stride
+        &(((WireframeVertex *)0)->pos[0])  // pointer
+        );
+    ASSERT_GL_ERROR();
+    assert(shader->vertColorLocation() != -1);
+    glEnableVertexAttribArray(shader->vertColorLocation());
+    ASSERT_GL_ERROR();
+    glVertexAttribPointer(
+        shader->vertColorLocation(),  // index
+        3,  // size
+        GL_FLOAT,  // type
+        0,  // normalized
+        sizeof(WireframeVertex),  // stride
+        &(((WireframeVertex *)0)->color[0])  // pointer
+        );
+    ASSERT_GL_ERROR();
+
+    // Draw the contour lines
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_squareWireframeIndices);
+    ASSERT_GL_ERROR();
+    glDrawElements(
+        GL_LINES,  // mode
+        4 * 2,  // count
+        GL_UNSIGNED_INT,  // type
+        0  // indices
+        );
+    ASSERT_GL_ERROR();
+  }
+
   void SquareObject::draw(const glm::mat4 &modelWorld,
       const glm::mat4 &worldView, const glm::mat4 &projection,
       float alpha, bool debug)
   {
     auto modelView = worldView * modelWorld;
     m_drawWireframe(modelView, projection);
+    m_drawSquareWireframe(modelView, projection);
   }
 
   SquareObject::SquareScalarField::SquareScalarField(

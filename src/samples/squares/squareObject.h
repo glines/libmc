@@ -47,15 +47,20 @@ namespace mc { namespace samples { namespace squares {
         float pos[3], color[3];
       } WireframeVertex;
 
-      GLuint m_wireframeVertices, m_wireframeIndices;
+      GLuint m_wireframeVertices, m_wireframeIndices,
+             m_squareWireframeVertices, m_squareWireframeIndices;
       int m_numWireframeIndices;
 
       void m_initWireframe();
+      void m_initSquareWireframe();
 
       void m_update();
       void m_updateWireframe(const mc::Contour &contour);
 
       void m_drawWireframe(
+          const glm::mat4 &modelView,
+          const glm::mat4 &projection);
+      void m_drawSquareWireframe(
           const glm::mat4 &modelView,
           const glm::mat4 &projection);
 

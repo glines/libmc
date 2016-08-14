@@ -21,8 +21,11 @@
  * IN THE SOFTWARE.
  */
 
+#include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 
+#include <mc/algorithms/marchingSquares.h>
 #include <mc/contourBuilder.h>
 
 struct mcContourBuilderInternal {
@@ -44,9 +47,28 @@ void mcContourBuilder_init(mcContourBuilder *self) {
 }
 
 void mcContourBuilder_destroy(mcContourBuilder *self) {
+  /* Destroy all initialized contours */
+  for (int i = 0; i < self->internal->numContours; ++i) {
+    mcContour_destroy(&self->internal->contours[i]);
+  }
+
   /* Free internal data structure memory */
   free(self->internal->contours);
   free(self->internal);
+}
+
+void mcContourBuilder_growContours(mcContourBuilder *self) {
+  /* Double the size of the contours buffer */
+  mcContour *newContours =
+    (mcContour*)malloc(sizeof(mcContour) * self->internal->contoursSize * 2);
+  memcpy(
+      newContours,
+      self->internal->contours,
+      sizeof(mcContour) * self->internal->contoursSize);
+  free(self->internal->contours);
+  self->internal->contours = newContours;
+  self->internal->contoursSize *= 2;
+  assert(self->internal->numContours < self->internal->contoursSize);
 }
 
 const mcContour *mcContourBuilder_contourFromFieldWithArgs(
@@ -57,5 +79,23 @@ const mcContour *mcContourBuilder_contourFromFieldWithArgs(
     unsigned int x_res, unsigned int y_res,
     const mcVec2 *min, const mcVec2 *max)
 {
-  // TODO
+  /* Make sure we have enough memory to store this contour */
+  if (self->internal->numContours >= self->internal->contoursSize) {
+    mcContourBuilder_growContours(self);
+  }
+  mcContour *contour = &self->internal->contours[self->internal->numContours++];
+  mcContour_init(contour);
+  /* Extract the contour using the given algorithm */
+  switch (algorithm) {
+    case MC_MARCHING_SQUARES:
+      mcMarchingSquares_contourFromField(
+          sf, args,
+          x_res, y_res,
+          min, max,
+          contour);
+      break;
+    default:
+      assert(0);
+  }
+  return contour;
 }

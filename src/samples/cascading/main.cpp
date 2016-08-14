@@ -50,7 +50,7 @@ namespace mc { namespace samples { namespace cascading {
               0.1f,  // near
               1000.0f,  // far
               glm::vec3(0.0f, 0.0f, 15.0f)  // position
-            ));
+              ));
         this->scene()->addObject(m_camera);
         m_wasdCamera = std::shared_ptr<WasdCamera>(
             new WasdCamera(

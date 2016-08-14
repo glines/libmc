@@ -38,6 +38,12 @@ void mcContour_init(mcContour *self) {
   self->lines = (mcLine*)malloc(sizeof(mcLine) * self->sizeLines);
 }
 
+void mcContour_destroy(mcContour *self) {
+  /* Free the contour data structures */
+  free(self->lines);
+  free(self->vertices);
+}
+
 void mcContour_growVertices(mcContour *self) {
   /* Double the size of our vertices buffer */
   mcVertex *newVertices =

@@ -22,6 +22,8 @@
  */
 
 #include "../common/demo.h"
+#include "../common/scene.h"
+#include "../common/orthographicCamera.h"
 #include "squareObject.h"
 
 using namespace mc::samples;
@@ -29,6 +31,7 @@ using namespace mc::samples::squares;
 
 class Squares : public Demo {
   private:
+    std::shared_ptr<OrthographicCamera> m_camera;
     std::shared_ptr<SquareObject> m_squareObject;
   public:
     Squares(int argc, char **argv)
@@ -37,7 +40,22 @@ class Squares : public Demo {
       if (this->argError())
         return;
 
-      // TODO: Populate the graphics scene
+      // Populate the graphics scene
+      m_camera = std::shared_ptr<OrthographicCamera>(
+          new OrthographicCamera(
+            -1.0f,  // left
+            2.0f,  // right
+            -1.0f,  // bottom
+            2.0f,  // top
+            0.1f,  // near
+            1000.0f,  // far
+            glm::vec3(0.0f, 0.0f, 15.0f)  // position
+            ));
+      this->scene()->addObject(m_camera);
+      this->setCamera(m_camera);
+      m_squareObject = std::shared_ptr<SquareObject>(
+          new SquareObject());
+      this->scene()->addObject(m_squareObject);
     }
 };
 

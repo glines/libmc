@@ -24,33 +24,38 @@
 #ifndef MC_COMMON_Z_ORDER_NODE_H_
 #define MC_COMMON_Z_ORDER_NODE_H_
 
+#include <assert.h>
 #include <stdlib.h>
 
 #define DECLARE_Z_ORDER_NODE(PREFIX, DIMENSION) \
-typedef struct PREFIX ## Node PREFIX ## Node; \
-struct PREFIX ## Node { \
-  struct PREFIX ## Node *children[1 << DIMENSION]; \
-  struct PREFIX ## Node *parent; \
+typedef struct mc ## PREFIX ## Node mc ## PREFIX ## Node; \
+struct mc ## PREFIX ## Node { \
+  mc ## PREFIX ## Node *children[1 << DIMENSION]; \
+  mc ## PREFIX ## Node *parent; \
   int level; \
 }; \
 \
-void PREFIX ## Node_init(PREFIX ## Node *self); \
-\
 typedef struct { \
-  PREFIX ## Node *current; \
-} PREFIX ## NodeIterator; \
+  mc ## PREFIX ## Node *current; \
+} mc ## PREFIX ## NodeIterator; \
 \
-void PREFIX ## NodeIterator_next(PREFIX ## NodeIterator *self);
+void mc ## PREFIX ## Node_init(mc ## PREFIX ## Node *self); \
+void mc ## PREFIX ## Node_destroy(mc ## PREFIX ## Node *self); \
+mc ## PREFIX ## NodeIterator mc ## PREFIX ## Node_begin( \
+    mc ## PREFIX ## Node *self); \
+\
+void mc ## PREFIX ## NodeIterator_next(mc ## PREFIX ## NodeIterator *self);
 
 #define DEFINE_Z_ORDER_NODE(PREFIX, DIMENSION) \
   DEFINE_Z_ORDER_NODE_init(PREFIX, DIMENSION) \
+  DEFINE_Z_ORDER_NODE_destroy(PREFIX, DIMENSION) \
   DEFINE_Z_ORDER_NODE_begin(PREFIX, DIMENSION) \
   DEFINE_Z_ORDER_NODE_end(PREFIX, DIMENSION) \
   DEFINE_Z_ORDER_NODE_nextSibling(PREFIX, DIMENSION) \
-  DEFINE_Z_ORDER_NODE_ITERATOR_next(PREFIX, DIMENSION) \
+  DEFINE_Z_ORDER_NODE_ITERATOR_next(PREFIX, DIMENSION)
 
 #define DEFINE_Z_ORDER_NODE_init(PREFIX, DIMENSION) \
-  void PREFIX ## Node_init(PREFIX ## Node *self) { \
+  void mc ## PREFIX ## Node_init(mc ## PREFIX ## Node *self) { \
     self->level = -1; \
     self->parent = NULL; \
     for (int i = 0; i < (1 << DIMENSION); ++i) { \
@@ -58,22 +63,38 @@ void PREFIX ## NodeIterator_next(PREFIX ## NodeIterator *self);
     } \
   }
 
+#define DEFINE_Z_ORDER_NODE_destroy(PREFIX, DIMENSION) \
+  void mc ## PREFIX ## Node_destroy(mc ## PREFIX ## Node *self) { \
+    /* Recursively destroy all children nodes */ \
+    for (int i = 0; i < (1 << DIMENSION); ++i) { \
+      if (self->children[i]) { \
+        mc ## PREFIX ## Node_destroy(self->children[i]); \
+      } \
+    } \
+  }
+
 #define DEFINE_Z_ORDER_NODE_begin(PREFIX, DIMENSION) \
-  PREFIX ## NodeIterator PREFIX ## Node_begin(PREFIX ## Node *self) { \
-    PREFIX ## NodeIterator i; \
+  mc ## PREFIX ## NodeIterator mc ## PREFIX ## Node_begin( \
+      mc ## PREFIX ## Node *self) \
+  { \
+    mc ## PREFIX ## NodeIterator i; \
     i.current = self; \
     return i; \
   }
 
 #define DEFINE_Z_ORDER_NODE_end(PREFIX, DIMENSION) \
-  PREFIX ## NodeIterator PREFIX ## Node_end(PREFIX ## Node *self) { \
-    PREFIX ## NodeIterator i; \
+  mc ## PREFIX ## NodeIterator PREFIX ## Node_end( \
+      mc ## PREFIX ## Node *self) \
+  { \
+    mc ## PREFIX ## NodeIterator i; \
     i.current = self->parent; \
     return i; \
   }
 
 #define DEFINE_Z_ORDER_NODE_nextSibling(PREFIX, DIMENSION) \
-  PREFIX ## Node *PREFIX ## Node_nextSibling(PREFIX ## Node *self) { \
+  mc ## PREFIX ## Node *mc ## PREFIX ## Node_nextSibling( \
+      mc ## PREFIX ## Node *self) \
+  { \
     if (!self->parent) \
       return NULL; /* The root node has no siblings */ \
     /* Determine this node's index in its parent's children array */ \
@@ -96,19 +117,19 @@ void PREFIX ## NodeIterator_next(PREFIX ## NodeIterator *self);
   }
 
 #define DEFINE_Z_ORDER_NODE_ITERATOR_next(PREFIX, DIMENSION) \
-  void PREFIX ## NodeIterator_next( \
-      PREFIX ## NodeIterator self) \
+  void mc ## PREFIX ## NodeIterator_next( \
+      mc ## PREFIX ## NodeIterator *self) \
   { \
     /* Look for our first child */ \
     for (int i = 0; i < (1 << DIMENSION); ++i) { \
-      PREFIX ## Node *child = self->current->children[i]; \
+      mc ## PREFIX ## Node *child = self->current->children[i]; \
       if (child) { \
-        m_current = child; \
+        self->current = child; \
         return; \
       } \
     } \
     /* Check for a parent */ \
-    PREFIX ## Node *parent = self->current->parent; \
+    mc ## PREFIX ## Node *parent = self->current->parent; \
     if (!parent) { \
       /* We're done */ \
       /* NOTE: This only happens with a tree consisting of a single node */ \
@@ -116,14 +137,16 @@ void PREFIX ## NodeIterator_next(PREFIX ## NodeIterator *self);
       return; \
     } \
     /* Look for our next sibling */ \
-    PREFIX ## Node *sibling = PREFIX ## Node_nextSibling(self->current); \
+    mc ## PREFIX ## Node *sibling = \
+        mc ## PREFIX ## Node_nextSibling(self->current); \
     if (sibling) { \
       self->current = sibling; \
       return; \
     } \
     /* Recursively look for siblings of our parent */ \
     do { \
-      PREFIX ## Node *uncle = parent->nextSibling(); \
+      mc ## PREFIX ## Node *uncle = \
+          mc ## PREFIX ## Node_nextSibling(parent); \
       if (uncle) { \
         self->current = uncle; \
         return; \

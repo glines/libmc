@@ -21,7 +21,9 @@
  * IN THE SOFTWARE.
  */
 
+extern "C" {
 #include <mc/common/quadNode.h>
+}
 
 #include "../common/demo.h"
 #include "../common/orthographicCamera.h"
@@ -30,8 +32,17 @@
 #include "tree.h"
 
 namespace mc { namespace samples { namespace cascading {
+  /** This routine generates a libmc quadtree that approximates a circle */
   void generateQuadtree() {
-    /* This routine generates a libmc quadtree that approximates a circle */
+    mcQuadNode root;
+    mcQuadNode_init(&root);
+    /*
+    mcQuadNodeCoordinates c;
+    c.pos[0] = 10;
+    c.pos[1] = 42;
+    mcQuadNode_getNode();
+    */
+    mcQuadNode_destroy(&root);
   }
 
   class CascadingDemo : public Demo {

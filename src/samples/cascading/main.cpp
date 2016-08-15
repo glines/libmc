@@ -36,12 +36,11 @@ namespace mc { namespace samples { namespace cascading {
   void generateQuadtree() {
     mcQuadNode root;
     mcQuadNode_init(&root);
-    /*
-    mcQuadNodeCoordinates c;
-    c.pos[0] = 10;
-    c.pos[1] = 42;
-    mcQuadNode_getNode();
-    */
+    mcQuadNodeCoordinates pos;
+    pos.coord[0] = 10;
+    pos.coord[1] = 42;
+    int level = 4;
+    mcQuadNode *node = mcQuadNode_getNode(&root, &pos, level);
     mcQuadNode_destroy(&root);
   }
 
@@ -95,6 +94,7 @@ void main_loop() {
 }
 
 int main(int argc, char **argv) {
+  generateQuadtree();  /* XXX */
   demo = new CascadingDemo(argc, argv);
   if (demo->argError()) {
     delete demo;

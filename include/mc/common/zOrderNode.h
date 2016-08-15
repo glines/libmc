@@ -25,9 +25,13 @@
 #define MC_COMMON_Z_ORDER_NODE_H_
 
 #include <assert.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #define DECLARE_Z_ORDER_NODE(PREFIX, DIMENSION) \
+typedef struct { \
+  int coord[DIMENSION]; \
+} mc ## PREFIX ## NodeCoordinates; \
 typedef struct mc ## PREFIX ## Node mc ## PREFIX ## Node; \
 struct mc ## PREFIX ## Node { \
   mc ## PREFIX ## Node *children[1 << DIMENSION]; \
@@ -43,16 +47,37 @@ void mc ## PREFIX ## Node_init(mc ## PREFIX ## Node *self); \
 void mc ## PREFIX ## Node_destroy(mc ## PREFIX ## Node *self); \
 mc ## PREFIX ## NodeIterator mc ## PREFIX ## Node_begin( \
     mc ## PREFIX ## Node *self); \
+mc ## PREFIX ## NodeIterator mc ## PREFIX ## Node_end( \
+    mc ## PREFIX ## Node *self); \
+mc ## PREFIX ## Node *mc ## PREFIX ## Node_getNode( \
+    mc ## PREFIX ## Node *self, \
+    const mc ## PREFIX ## NodeCoordinates *pos, \
+    int level); \
 \
 void mc ## PREFIX ## NodeIterator_next(mc ## PREFIX ## NodeIterator *self);
 
 #define DEFINE_Z_ORDER_NODE(PREFIX, DIMENSION) \
+  DEFINE_Z_ORDER_alignPosToLevel(PREFIX, DIMENSION) \
   DEFINE_Z_ORDER_NODE_init(PREFIX, DIMENSION) \
   DEFINE_Z_ORDER_NODE_destroy(PREFIX, DIMENSION) \
   DEFINE_Z_ORDER_NODE_begin(PREFIX, DIMENSION) \
   DEFINE_Z_ORDER_NODE_end(PREFIX, DIMENSION) \
   DEFINE_Z_ORDER_NODE_nextSibling(PREFIX, DIMENSION) \
+  DEFINE_Z_ORDER_NODE_getNode(PREFIX, DIMENSION) \
   DEFINE_Z_ORDER_NODE_ITERATOR_next(PREFIX, DIMENSION)
+
+#define DEFINE_Z_ORDER_alignPosToLevel(PREFIX, DIMENSION) \
+  void mc ## PREFIX ## _alignPosToLevel( \
+      const mc ## PREFIX ## NodeCoordinates *pos, \
+      int level, \
+      mc ## PREFIX ## NodeCoordinates *alignedPos) \
+  { \
+    assert(level >= 0); \
+    assert(level < sizeof(int) * 8 - 1); \
+    for (int i = 0; i < (1 << DIMENSION); ++i) { \
+      alignedPos->coord[i] = (pos->coord[i] >> level) << level; \
+    } \
+  }
 
 #define DEFINE_Z_ORDER_NODE_init(PREFIX, DIMENSION) \
   void mc ## PREFIX ## Node_init(mc ## PREFIX ## Node *self) { \
@@ -114,6 +139,29 @@ void mc ## PREFIX ## NodeIterator_next(mc ## PREFIX ## NodeIterator *self);
     } \
     /* This node is the last sibling; it has no next sibling */ \
     return NULL; \
+  }
+
+#define DEFINE_Z_ORDER_NODE_getNode(PREFIX, DIMENSION) \
+  mc ## PREFIX ## Node *mc ## PREFIX ## Node_getNode( \
+      mc ## PREFIX ## Node *self, \
+      const mc ## PREFIX ## NodeCoordinates *pos, \
+      int level) \
+  { \
+    /* Make sure the position is aligned to the coordinate lattice for the
+     * given level */ \
+    mc ## PREFIX ## NodeCoordinates alignedPos; \
+    mc ## PREFIX ## _alignPosToLevel(pos, level, &alignedPos); \
+    fprintf(stderr, /* XXX */ \
+        "level: %d\n" \
+        "pos: (0x%08x, 0x%08x)\n" \
+        "alignedPos: (0x%08x, 0x%08x)\n", \
+        level, \
+        pos->coord[0], \
+        pos->coord[1], \
+        alignedPos.coord[0], \
+        alignedPos.coord[1]); \
+    /* Make sure the root node contains the node */ \
+    /* FIXME: In the old quadtree design, the root node straddles the origin */ \
   }
 
 #define DEFINE_Z_ORDER_NODE_ITERATOR_next(PREFIX, DIMENSION) \

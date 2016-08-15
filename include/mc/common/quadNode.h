@@ -21,6 +21,11 @@
  * IN THE SOFTWARE.
  */
 
-#include <mc/common/quadNode.h>
+#ifndef MC_COMMON_QUAD_NODE_H_
+#define MC_COMMON_QUAD_NODE_H_
 
-DEFINE_Z_ORDER_NODE(Quad, 2)
+#include <mc/common/zOrderNode.h>
+
+DECLARE_Z_ORDER_NODE(Quad, 2)
+
+#endif

@@ -21,6 +21,6 @@
  * IN THE SOFTWARE.
  */
 
-#include "octNode.h"
+#include <mc/common/octNode.h>
 
 DEFINE_Z_ORDER_NODE(Oct, 3)

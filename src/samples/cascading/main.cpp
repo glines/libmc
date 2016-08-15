@@ -21,6 +21,8 @@
  * IN THE SOFTWARE.
  */
 
+#include <mc/common/quadNode.h>
+
 #include "../common/demo.h"
 #include "../common/orthographicCamera.h"
 #include "../common/scene.h"
@@ -28,6 +30,10 @@
 #include "tree.h"
 
 namespace mc { namespace samples { namespace cascading {
+  void generateQuadtree() {
+    /* This routine generates a libmc quadtree that approximates a circle */
+  }
+
   class CascadingDemo : public Demo {
     private:
       std::shared_ptr<OrthographicCamera> m_camera;

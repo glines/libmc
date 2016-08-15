@@ -26,11 +26,14 @@
 void mc_cascadingSquares(
     const QuadNode *root)
 {
-  /* TODO: Traverse the quadtree and do something about it */
+  /* Traverse the entire quadtree */
   QuadNodeIterator i;
   for (i = QuadNode_begin(root);
       i != QuadNode_end(root);
       QuadNodeIterator_next(&i))
   {
+    /* TODO: Adjust lattice positions to make room for transition cells */
+    /* TODO: If this node is a leaf, make lines using the ordinary marching
+     * squares algorithm */
   }
 }

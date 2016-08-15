@@ -21,11 +21,27 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef MC_COMMON_OCT_NODE_H_
-#define MC_COMMON_OCT_NODE_H_
+#include <stdlib.h>
 
-#include "zOrderNode.h"
+#include <mc/algorithms/cascadingSquares/common.h>
 
-DECLARE_Z_ORDER_NODE(Oct, 3)
+void mcCascadingSquares_computeEdgeIntersectionTable(
+    mcCascadingSquares_EdgeIntersectionList *table)
+{
+  /* Iterate over all possible transition squares */
+  for (int transition = 0; transition <= 0x7; ++transition) {
+  }
+}
 
-#endif
+void mcCascadingSquares_computeCanonicalTransitionSquares(
+    int *table,
+    int *sequenceTable)
+{
+  /* Iterate over all possible transition squares */
+  for (int transition = 0; transition <= 0x7; ++transition) {
+  }
+}
+
+int main(int argc, char **argv) {
+  return EXIT_SUCCESS;
+}

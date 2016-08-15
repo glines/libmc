@@ -21,14 +21,11 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef MC_COMMON_Z_ORDER_NODE_H_
-#define MC_COMMON_Z_ORDER_NODE_H_
+#ifndef MC_COMMON_OCT_NODE_H_
+#define MC_COMMON_OCT_NODE_H_
 
-#define Z_ORDER_NODE(PREFIX, DIMENSION)
-typedef struct {
-  int children[1 << DIMENSION];
-  int level;
-  int parent;
-} PREFIX ## Node;
+#include <mc/common/zOrderNode.h>
+
+DECLARE_Z_ORDER_NODE(Oct, 3)
 
 #endif

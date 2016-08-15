@@ -21,11 +21,11 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef MC_COMMON_QUAD_NODE_H_
-#define MC_COMMON_QUAD_NODE_H_
+#ifndef MC_ALGORITHMS_CASCADING_SQUARES_COMMON_H_
+#define MC_ALGORITHMS_CASCADING_SQUARES_COMMON_H_
 
-#include "zOrderNode.h"
-
-DECLARE_Z_ORDER_NODE(Quad, 2)
+typedef struct {
+  int edges[3];
+} mcCascadingSquares_EdgeIntersectionList;
 
 #endif

@@ -21,6 +21,30 @@
  * IN THE SOFTWARE.
  */
 
-#include <mc/common/quadNode.h>
+#ifndef MC_COLORED_MARCHING_SQUARES_H_
+#define MC_COLORED_MARCHING_SQUARES_H_
 
-MC_DEFINE_Z_ORDER_NODE(Quad, 2)
+#include <mc/algorithms/marchingSquares/common.h>
+
+#define MC_COLORED_MARCHING_SQUARES_NUM_SQUARES 256
+/* FIXME: This is not the number of canonical squares */
+#define MC_COLORED_MARCHING_SQUARES_NUM_CANONICAL_SQUARES 7
+#define MC_COLORED_MARCHING_SQUARES_MAX_COLORS 16
+#define MC_COLORED_MARCHING_SQUARES_MAX_NUM_LINES 4
+
+typedef mcMarchingSquares_EdgeIntersectionList
+mcColoredMarchingSquares_EdgeIntersectionList;
+
+typedef struct {
+  /* FIXME: mcLine defined in mc/contour.h is intended to be used with vertex
+   * indices, while mcLine here is used with edge intersections... */
+  mcLine lines[MC_COLORED_MARCHING_SQUARES_MAX_NUM_LINES];
+} mcColoredMarchingSquares_LineList;
+
+int mcColoredMarchingSquares_sampleValue(int square, int sampleIndex);
+
+int mcColoredMarchingSquares_rotateSquare(int square);
+
+int mcColoredMarchingSquares_mirrorSquare(int square);
+
+#endif

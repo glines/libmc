@@ -23,4 +23,4 @@
 
 #include <mc/common/octNode.h>
 
-DEFINE_Z_ORDER_NODE(Oct, 3)
+MC_DEFINE_Z_ORDER_NODE(Oct, 3)

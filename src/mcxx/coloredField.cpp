@@ -21,6 +21,26 @@
  * IN THE SOFTWARE.
  */
 
-#include <mc/common/quadNode.h>
+#include <assert.h>
 
-MC_DEFINE_Z_ORDER_NODE(Quad, 2)
+#include <mcxx/coloredField.h>
+
+namespace mc {
+  ColoredField::ColoredField()
+    : m_cf(nullptr)
+  {
+  }
+
+  ColoredField::ColoredField(mcColoredField cf)
+    : m_cf(cf)
+  {
+  }
+
+  ColoredField::~ColoredField() {
+  }
+
+  int ColoredField::operator()(float x, float y, float z) {
+    assert(m_cf != nullptr);
+    return m_cf(x, y, z);
+  }
+}

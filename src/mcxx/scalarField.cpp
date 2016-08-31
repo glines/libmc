@@ -36,6 +36,9 @@ namespace mc {
   {
   }
 
+  ScalarField::~ScalarField() {
+  }
+
   float ScalarField::operator()(float x, float y, float z) {
     assert(m_sf != nullptr);
     return m_sf(x, y, z);

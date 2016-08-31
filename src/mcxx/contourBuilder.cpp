@@ -62,4 +62,28 @@ namespace mc {
     m_contours.push_back(contour);
     return contour;
   }
+
+  int wrapColoredField(float x, float y, float z, ColoredField *cf) {
+    return (*cf)(x, y, z);
+  }
+
+  const Contour *ContourBuilder::buildContour(
+      ColoredField &cf,
+      mcAlgorithmFlag algorithm,
+      int x_res, int y_res,
+      const Vec2 &min, const Vec2 &max)
+  {
+    // Pass the scalar field functor as an argument
+    const mcContour *c = mcContourBuilder_contourFromColoredFieldWithArgs(
+        &m_internal,
+        (mcColoredFieldWithArgs)wrapColoredField,
+         &cf,
+         algorithm,
+         x_res, y_res,
+         &min.to_mcVec2(), &max.to_mcVec2()
+         );
+    auto contour = new Contour(c);
+    m_contours.push_back(contour);
+    return contour;
+  }
 }

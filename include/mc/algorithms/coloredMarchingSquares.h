@@ -21,6 +21,10 @@
  * IN THE SOFTWARE.
  */
 
-#include <mc/common/quadNode.h>
 
-MC_DEFINE_Z_ORDER_NODE(Quad, 2)
+#ifndef MC_ALGORITHMS_COLORED_MARCHING_SQUARES_H_
+#define MC_ALGORITHMS_COLORED_MARCHING_SQUARES_H_
+
+#include <mc/algorithms/coloredMarchingSquares/coloredMarchingSquares.h>
+
+#endif

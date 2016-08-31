@@ -115,6 +115,7 @@ typedef enum mcAlgorithmFlag {
   MC_ORIGINAL_MARCHING_CUBES,
   MC_TRANSVOXEL,
   MC_MARCHING_SQUARES,
+  MC_COLORED_MARCHING_SQUARES,
 } mcAlgorithmFlag;
 
 /**

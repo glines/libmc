@@ -25,6 +25,7 @@
 #define MC_CONTOUR_BUILDER_H_
 
 #include <mc/algorithms.h>
+#include <mc/coloredField.h>
 #include <mc/contour.h>
 #include <mc/scalarField.h>
 
@@ -41,6 +42,14 @@ void mcContourBuilder_destroy(mcContourBuilder *self);
 const mcContour *mcContourBuilder_contourFromFieldWithArgs(
     mcContourBuilder *self,
     mcScalarFieldWithArgs sf,
+    const void *args,
+    mcAlgorithmFlag algorithm,
+    unsigned int x_res, unsigned int y_res,
+    const mcVec2 *min, const mcVec2 *max);
+
+const mcContour *mcContourBuilder_contourFromColoredFieldWithArgs(
+    mcContourBuilder *self,
+    mcColoredFieldWithArgs cf,
     const void *args,
     mcAlgorithmFlag algorithm,
     unsigned int x_res, unsigned int y_res,

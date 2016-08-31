@@ -21,6 +21,12 @@
  * IN THE SOFTWARE.
  */
 
-#include <mc/common/quadNode.h>
+#ifndef MC_COLORED_FIELD_H_
+#define MC_COLORED_FIELD_H_
 
-MC_DEFINE_Z_ORDER_NODE(Quad, 2)
+typedef int (*mcColoredField)(float x, float y, float z);
+
+typedef int (*mcColoredFieldWithArgs)(
+    float x, float y, float z, const void *args);
+
+#endif

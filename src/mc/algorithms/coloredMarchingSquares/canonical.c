@@ -21,6 +21,20 @@
  * IN THE SOFTWARE.
  */
 
-#include <mc/common/quadNode.h>
+#include <assert.h>
 
-MC_DEFINE_Z_ORDER_NODE(Quad, 2)
+#include <mc/algorithms/coloredMarchingSquares/common.h>
+
+#include "colored_marching_squares_tables.c"
+
+int mcColoredMarchingSquares_canonicalSquare(int square) {
+  assert(square >= 0);
+  assert(square < MC_COLORED_MARCHING_SQUARES_NUM_SQUARES);
+  return mcColoredMarchingSquares_canonicalSquareTable[square];
+}
+
+int mcColoredMarchingSquares_canonicalSquareSequence(int square) {
+  assert(square >= 0);
+  assert(square < MC_COLORED_MARCHING_SQUARES_NUM_SQUARES);
+  return mcColoredMarchingSquares_canonicalSequenceTable[square];
+}

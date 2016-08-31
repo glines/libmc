@@ -41,4 +41,6 @@ int mcSquare_invertSquare(int square);
 int mcSquare_rotateEdge(int edge);
 int mcSquare_rotateEdgeReverse(int edge);
 
+int mcSquare_mirrorEdge(int edge);
+
 #endif

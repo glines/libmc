@@ -7,6 +7,7 @@ target_include_directories(mc SYSTEM
     PUBLIC "${CMAKE_SOURCE_DIR}/include"
     )
 target_link_libraries(mc
+    mc_algorithms_coloredMarchingSquares
     mc_algorithms_common
     mc_algorithms_cuberille
     mc_algorithms_cubes33

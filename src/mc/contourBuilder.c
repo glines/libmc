@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <mc/algorithms/coloredMarchingSquares.h>
 #include <mc/algorithms/marchingSquares.h>
 #include <mc/contourBuilder.h>
 
@@ -90,6 +91,35 @@ const mcContour *mcContourBuilder_contourFromFieldWithArgs(
     case MC_MARCHING_SQUARES:
       mcMarchingSquares_contourFromField(
           sf, args,
+          x_res, y_res,
+          min, max,
+          contour);
+      break;
+    default:
+      assert(0);
+  }
+  return contour;
+}
+
+const mcContour *mcContourBuilder_contourFromColoredFieldWithArgs(
+    mcContourBuilder *self,
+    mcColoredFieldWithArgs cf,
+    const void *args,
+    mcAlgorithmFlag algorithm,
+    unsigned int x_res, unsigned int y_res,
+    const mcVec2 *min, const mcVec2 *max)
+{
+  /* Make sure we have enough memory to store this contour */
+  if (self->internal->numContours >= self->internal->contoursSize) {
+    mcContourBuilder_growContours(self);
+  }
+  mcContour *contour = &self->internal->contours[self->internal->numContours++];
+  mcContour_init(contour);
+  /* Extract the contour using the given algorithm */
+  switch (algorithm) {
+    case MC_COLORED_MARCHING_SQUARES:
+      mcColoredMarchingSquares_contourFromColoredField(
+          cf, args,
           x_res, y_res,
           min, max,
           contour);

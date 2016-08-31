@@ -35,12 +35,19 @@ namespace mc { namespace samples { namespace cascading {
   /** This routine generates a libmc quadtree that approximates a circle */
   void generateQuadtree() {
     mcQuadNode root;
-    mcQuadNode_init(&root);
+    mcQuadNode_initRoot(&root);
     mcQuadNodeCoordinates pos;
-    pos.coord[0] = 10;
-    pos.coord[1] = 42;
     int level = 4;
-    mcQuadNode *node = mcQuadNode_getNode(&root, &pos, level);
+    while (level >= 0) {
+      for (int y = 0; y < 30; ++y) {
+        for (int x = 0; x < 30; ++x) {
+          pos.coord[0] = x - 15;
+          pos.coord[1] = y - 15;
+          mcQuadNode *node = mcQuadNode_getNode(&root, &pos, level);
+        }
+      }
+      level--;
+    }
     mcQuadNode_destroy(&root);
   }
 

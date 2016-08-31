@@ -21,73 +21,50 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef MC_SAMPLES_COMMON_DEBUG_H_
-#define MC_SAMPLES_COMMON_DEBUG_H_
+#include <mcxx/coloredField.h>
+#include <mcxx/contour.h>
 
-#include <GL/glew.h>
-#include <memory>
-#include <vector>
+#include "../common/sceneObject.h"
 
-#include "sceneObject.h"
-
-namespace mc { namespace samples {
-  class Debug : public SceneObject {
+namespace mc { namespace samples { namespace coloredSquares {
+  class ColoredSquareObject : public SceneObject {
     private:
+      class SquareColoredField : public mc::ColoredField {
+        private:
+          int m_square;
+          float m_intensity;
+        public:
+          SquareColoredField(
+              int square,
+              float intensity = 1.0f);
+          int operator()(float x, float y, float z);
+      };
       typedef struct {
         float pos[3], color[3];
-      } LineVertex;
-      typedef struct {
-        LineVertex vertices[2];
-      } Line;
-      typedef struct {
-        float pos[3], color[3];
-      } Point;
-      std::vector<Line> m_lines;
-      std::vector<Point> m_points;
-      bool m_linesChanged;
+      } WireframeVertex;
 
-      GLuint m_lineBuffer, m_pointBuffer;
+      GLuint m_wireframeVertices, m_wireframeIndices,
+             m_squareWireframeVertices, m_squareWireframeIndices;
+      int m_square, m_numWireframeIndices;
 
-      Debug();
+      void m_initWireframe();
+      void m_initSquareWireframe();
 
-      void m_updateLines();
-      void m_updatePoints();
-      void m_drawLines(
+      void m_updateWireframe(const mc::Contour &contour);
+      void m_update();
+
+      void m_drawWireframe(
           const glm::mat4 &modelView,
-          const glm::mat4 &projection) const;
-      void m_drawPoints(
+          const glm::mat4 &projection);
+      void m_drawSquareWireframe(
           const glm::mat4 &modelView,
-          const glm::mat4 &projection) const;
+          const glm::mat4 &projection);
 
-      void m_drawLine(
-          const glm::vec3 &a,
-          const glm::vec3 &b,
-          const glm::vec3 &color);
-      void m_drawPoint(
-          const glm::vec3 &pos,
-          const glm::vec3 &color);
     public:
-      static std::shared_ptr<Debug> instance();
-
-      static void drawLine(
-          const glm::vec3 &a,
-          const glm::vec3 &b,
-          const glm::vec3 &color)
-      {
-        instance()->m_drawLine(a, b, color);
-      }
-
-      static void drawPoint(
-          const glm::vec3 &pos,
-          const glm::vec3 &color)
-      {
-        instance()->m_drawPoint(pos, color);
-      }
+      ColoredSquareObject();
 
       void draw(const glm::mat4 &modelWorld,
           const glm::mat4 &worldView, const glm::mat4 &projection,
           float alpha, bool debug);
   };
-} }
-
-#endif
+} } }

@@ -21,6 +21,35 @@
  * IN THE SOFTWARE.
  */
 
-#include <mc/common/quadNode.h>
+#include <assert.h>
 
-MC_DEFINE_Z_ORDER_NODE(Quad, 2)
+#include <mc/algorithms/coloredMarchingSquares/common.h>
+
+int mcColoredMarchingSquares_sampleValue(int square, int sampleIndex) {
+  assert(square >= 0);
+  assert(square < MC_COLORED_MARCHING_SQUARES_NUM_SQUARES);
+  assert(sampleIndex >= 0);
+  assert(sampleIndex < 4);
+  /* Return the nibble at the given index */
+  return (square & (0x3 << (2 * sampleIndex))) >> (2 * sampleIndex);
+}
+
+#define SWAP_SQUARE_COLOR(a, b) \
+  ((square & (0x3 << (2 * a))) >> (2 * a)) << (2 * b)
+int mcColoredMarchingSquares_rotateSquare(int square) {
+  int rotated = 0;
+  rotated |= SWAP_SQUARE_COLOR(0, 1);
+  rotated |= SWAP_SQUARE_COLOR(1, 3);
+  rotated |= SWAP_SQUARE_COLOR(3, 2);
+  rotated |= SWAP_SQUARE_COLOR(2, 0);
+  return rotated;
+}
+
+int mcColoredMarchingSquares_mirrorSquare(int square) {
+  int mirrored = 0;
+  mirrored |= SWAP_SQUARE_COLOR(0, 1);
+  mirrored |= SWAP_SQUARE_COLOR(1, 0);
+  mirrored |= SWAP_SQUARE_COLOR(2, 3);
+  mirrored |= SWAP_SQUARE_COLOR(3, 2);
+  return mirrored;
+}

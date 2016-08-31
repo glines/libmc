@@ -99,7 +99,7 @@ namespace mc { namespace samples { namespace terrain {
       float alpha, bool debug)
   {
     // Draw a wireframe representation of the LOD octree
-    m_drawLodOctree(modelWorld, worldView, projection);
+//    m_drawLodOctree(modelWorld, worldView, projection);
   }
 
   void Terrain::m_generateCubeWireframe() {

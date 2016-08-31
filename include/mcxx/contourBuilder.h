@@ -27,6 +27,9 @@ extern "C" {
 #include <mc/contourBuilder.h>
 }
 
+#include <mcxx/coloredField.h>
+#include <mcxx/scalarField.h>
+
 namespace mc {
   class Contour;
   class ScalarField;
@@ -42,6 +45,11 @@ namespace mc {
 
       const Contour *buildContour(
           ScalarField &sf,
+          mcAlgorithmFlag algorithm,
+          int x_res, int y_res,
+          const Vec2 &min, const Vec2 &max);
+      const Contour *buildContour(
+          ColoredField &cf,
           mcAlgorithmFlag algorithm,
           int x_res, int y_res,
           const Vec2 &min, const Vec2 &max);

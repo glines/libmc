@@ -21,6 +21,25 @@
  * IN THE SOFTWARE.
  */
 
-#include <mc/common/quadNode.h>
+#ifndef MCXX_COLORED_FIELD_H_
+#define MCXX_COLORED_FIELD_H_
 
-MC_DEFINE_Z_ORDER_NODE(Quad, 2)
+extern "C" {
+#include <mc/coloredField.h>
+}
+
+namespace mc {
+  class ColoredField {
+    private:
+      mcColoredField m_cf;
+    protected:
+      ColoredField();
+    public:
+      ColoredField(mcColoredField cf);
+      virtual ~ColoredField();
+
+      virtual int operator()(float x, float y, float z);
+  };
+}
+
+#endif

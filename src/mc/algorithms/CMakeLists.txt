@@ -49,6 +49,7 @@ endfunction(take_screenshots)
 add_subdirectory("./common")
 
 add_subdirectory("./cascadingSquares")
+add_subdirectory("./coloredMarchingSquares")
 add_subdirectory("./cuberille")
 add_subdirectory("./cubes33")
 add_subdirectory("./delaunay")

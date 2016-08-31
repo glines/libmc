@@ -1,4 +1,5 @@
 add_library(mcxx
+    coloredField.cpp
     contour.cpp
     contourBuilder.cpp
     isosurfaceBuilder.cpp

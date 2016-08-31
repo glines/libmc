@@ -26,45 +26,36 @@
 #include <mcxx/vector.h>
 
 extern "C" {
-#include <mc/algorithms.h>
+#include <mc/vector.h>
 }
 
 #include "../common/glError.h"
 #include "../common/shaderProgram.h"
 #include "../common/shaders.h"
-#include "squareObject.h"
 
-namespace mc { namespace samples { namespace squares {
-  SquareObject::SquareObject(
-      const glm::vec3 &position,
-      const glm::quat &orientation)
-    : SceneObject(position, orientation),
-    m_square(0x1), m_resolution(8)
+#include "coloredSquareObject.h"
+
+namespace mc { namespace samples { namespace coloredSquares {
+  ColoredSquareObject::ColoredSquareObject()
+    : SceneObject(
+        glm::vec3(0.0f, 0.0f, 0.0f), // position
+        glm:: quat()  // orientation
+        ),
+    m_square(0x1)
   {
-    // Create buffers for the contour wireframe in the GL
     m_initWireframe();
     m_initSquareWireframe();
     m_update();
   }
 
-  void SquareObject::setSquare(int square) {
-    m_square = square;
-    m_update();
-  }
-
-  void SquareObject::setResolution(int resolution) {
-    m_resolution = resolution;
-    m_update();
-  }
-
-  void SquareObject::m_initWireframe() {
+  void ColoredSquareObject::m_initWireframe() {
     glGenBuffers(1, &m_wireframeVertices);
     FORCE_ASSERT_GL_ERROR();
     glGenBuffers(1, &m_wireframeIndices);
     FORCE_ASSERT_GL_ERROR();
   }
 
-  void SquareObject::m_initSquareWireframe() {
+  void ColoredSquareObject::m_initSquareWireframe() {
     /* Send the vertices to the GL */
     static const WireframeVertex vertices[] = {
       {
@@ -114,23 +105,7 @@ namespace mc { namespace samples { namespace squares {
     FORCE_ASSERT_GL_ERROR();
   }
 
-  void SquareObject::m_update() {
-    SquareScalarField sf(m_square);
-
-    ContourBuilder cb;
-    auto contour = cb.buildContour(
-        sf,  // scalar field
-        MC_MARCHING_SQUARES,  // algorithm
-        m_resolution, m_resolution,  // resolution
-        Vec2(0.0f, 0.0f),  // min
-        Vec2(1.0f, 1.0f)  // max
-        );
-
-    // Upload the new contour wireframe data to the GL
-    m_updateWireframe(*contour);
-  }
-
-  void SquareObject::m_updateWireframe(const mc::Contour &contour) {
+  void ColoredSquareObject::m_updateWireframe(const mc::Contour &contour) {
     // Copy the contour vertices into a buffer
     auto vertices = new WireframeVertex[contour.numVertices()];
     fprintf(stderr, "numVertices: %d\n", contour.numVertices());
@@ -176,7 +151,23 @@ namespace mc { namespace samples { namespace squares {
     m_numWireframeIndices = contour.numLines() * 2;
   }
 
-  void SquareObject::m_drawWireframe(
+  void ColoredSquareObject::m_update() {
+    SquareColoredField cf(m_square);
+
+    ContourBuilder cb;
+    auto contour = cb.buildContour(
+        cf,  // colored field
+        MC_COLORED_MARCHING_SQUARES,  // algorithms
+        10, 10,  // resolution
+        mc::Vec2(0.0f, 0.0f),  // min
+        mc::Vec2(1.0f, 1.0f)  // max
+        );
+
+    /* Send new contour vertices and lines to the GL */
+    m_updateWireframe(*contour);
+  }
+
+  void ColoredSquareObject::m_drawWireframe(
       const glm::mat4 &modelView,
       const glm::mat4 &projection)
   {
@@ -242,7 +233,7 @@ namespace mc { namespace samples { namespace squares {
     ASSERT_GL_ERROR();
   }
 
-  void SquareObject::m_drawSquareWireframe(
+  void ColoredSquareObject::m_drawSquareWireframe(
       const glm::mat4 &modelView,
       const glm::mat4 &projection)
   {
@@ -308,35 +299,55 @@ namespace mc { namespace samples { namespace squares {
     ASSERT_GL_ERROR();
   }
 
-  void SquareObject::draw(const glm::mat4 &modelWorld,
+  void ColoredSquareObject::draw(const glm::mat4 &modelWorld,
       const glm::mat4 &worldView, const glm::mat4 &projection,
       float alpha, bool debug)
   {
-    auto modelView = worldView * modelWorld;
+    glm::mat4 modelView = worldView * modelWorld;
+
     m_drawWireframe(modelView, projection);
     m_drawSquareWireframe(modelView, projection);
   }
 
-  SquareObject::SquareScalarField::SquareScalarField(
-      int square,
-      float intensity)
+  ColoredSquareObject::SquareColoredField::SquareColoredField(
+      int square, float intensity)
     : m_square(square), m_intensity(intensity)
   {
   }
 
-  float SquareObject::SquareScalarField::operator()(float x, float y, float z) {
-    /* Bi-linear interpolation along x and y */
-    float result = 0.0f;
-    for (int j = 0; j < 2; ++j) {
-      for (int i = 0; i < 2; ++i) {
-        int sampleIndex = (i << 0) | (j << 1);;
-        float sample = m_square & (1 << sampleIndex) ? -m_intensity : 1.0f;
-        result +=
-          (i ? x : 1.0f - x) *
-          (j ? y : 1.0f - y) *
-          sample;
+  int ColoredSquareObject::SquareColoredField::operator()(
+      float x, float y, float z)
+  {
+    /* TODO: Determine which of the four sample points is closest to the given
+     * point */
+    struct {
+      float dist;
+      int sampleIndex;
+    } closest;
+    closest.dist = 90000.0;
+    closest.sampleIndex = -1;
+    mcVec3 pos;
+    pos.x = x;
+    pos.y = y;
+    pos.z = 0.0f;
+    for (int y_index = 0; y_index < 2; ++y_index) {
+      for (int x_index = 0; x_index < 2; ++x_index) {
+        float sampleIndex = x_index | (y_index << 1);
+        mcVec3 samplePos, v;
+        samplePos.x = (float)x_index;
+        samplePos.y = (float)y_index;
+        samplePos.z = 0.0f;
+        mcVec3_subtract(&samplePos, &pos, &v);
+        float dist = mcVec3_length(&v);
+        if (dist < closest.dist) {
+          fprintf(stderr, "closest dist: %g\n", dist);
+          closest.dist = dist;
+          closest.sampleIndex = sampleIndex;
+        }
       }
     }
-    return result;
+    assert(closest.sampleIndex != -1);
+    fprintf(stderr, "color: %d\n", closest.sampleIndex);
+    return closest.sampleIndex;
   }
 } } }

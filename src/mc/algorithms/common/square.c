@@ -97,3 +97,15 @@ int mcSquare_rotateEdgeReverse(int edge) {
   };
   return table[edge];
 }
+
+int mcSquare_mirrorEdge(int edge) {
+  assert(edge >= 0);
+  assert(edge < 4);
+  static const int table[] = {
+    0,  /* Edge 0 */
+    3,  /* Edge 1 */
+    2,  /* Edge 2 */
+    1,  /* Edge 3 */
+  };
+  return table[edge];
+}

@@ -26,6 +26,6 @@
 
 #include <mc/common/zOrderNode.h>
 
-DECLARE_Z_ORDER_NODE(Oct, 3)
+MC_DECLARE_Z_ORDER_NODE(Oct, 3)
 
 #endif

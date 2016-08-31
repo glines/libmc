@@ -45,6 +45,7 @@ endif()
 add_subdirectory("./common")
 
 add_subdirectory("./cascading")
+add_subdirectory("./coloredSquares")
 add_subdirectory("./cubes")
 add_subdirectory("./implicit")
 add_subdirectory("./scan")

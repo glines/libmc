@@ -52,6 +52,7 @@ namespace mc {
        * field we are constructing.
        */
       ScalarField(mcScalarField sf);
+      virtual ~ScalarField();
 
       /**
        * Method that defines the scalar field function of this scalar field

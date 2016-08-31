@@ -21,6 +21,17 @@
  * IN THE SOFTWARE.
  */
 
-#include <mc/common/quadNode.h>
+#ifndef MC_ALGORITHMS_COLORED_MARCHING_SQUARES_COLORED_MARCHING_SQUARES_H_
+#define MC_ALGORITHMS_COLORED_MARCHING_SQUARES_COLORED_MARCHING_SQUARES_H_
 
-MC_DEFINE_Z_ORDER_NODE(Quad, 2)
+#include <mc/coloredField.h>
+#include <mc/contour.h>
+#include <mc/vector.h>
+
+void mcColoredMarchingSquares_contourFromColoredField(
+    mcColoredFieldWithArgs cf, const void *args,
+    unsigned int x_res, unsigned int y_res,
+    const mcVec2 *min, const mcVec2 *max,
+    mcContour *contour);
+
+#endif

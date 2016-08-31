@@ -26,6 +26,6 @@
 
 #include <mc/common/zOrderNode.h>
 
-DECLARE_Z_ORDER_NODE(Quad, 2)
+MC_DECLARE_Z_ORDER_NODE(Quad, 2)
 
 #endif

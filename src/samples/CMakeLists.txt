@@ -44,6 +44,7 @@ endif()
 
 add_subdirectory("./common")
 
+# add_subdirectory("./adaptiveSquares")  # FIXME
 add_subdirectory("./cascading")
 add_subdirectory("./coloredSquares")
 add_subdirectory("./cubes")

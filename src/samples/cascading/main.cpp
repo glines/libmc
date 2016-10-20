@@ -21,6 +21,10 @@
  * IN THE SOFTWARE.
  */
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
+
 extern "C" {
 #include <mc/common/quadNode.h>
 }

@@ -21,58 +21,50 @@
  * IN THE SOFTWARE.
  */
 
-#include <cstdlib>
-
-#ifdef __EMSCRIPTEN__
-#include <emscripten.h>
-#endif
-
 #include "../common/demo.h"
 #include "../common/orthographicCamera.h"
 #include "../common/scene.h"
-#include "coloredSquareObject.h"
+#include "adaptiveShape.h"
 
-using namespace mc::samples;
-using namespace mc::samples::coloredSquares;
+namespace mc { namespace samples { namespace adaptiveSquares {
+  class AdaptiveSquaresDemo : public Demo {
+    private:
+      std::shared_ptr<OrthographicCamera> m_camera;
+      std::shared_ptr<AdaptiveShape> m_shape;
+    public:
+      AdaptiveSquaresDemo(int argc, char **argv)
+        : Demo(argc, argv, "Adaptive Squares Demo")
+      {
+        // Populate the graphics scene
+        m_camera = std::shared_ptr<OrthographicCamera>(
+            new OrthographicCamera(
+              -10.0f,  // left
+              10.0f,  // right
+              -10.0f,  // top
+              10.0f,  // bottom
+              0.1f,  // near
+              1000.0f,  // far
+              glm::vec3(0.0f, 0.0f, 15.0f)  // position
+              ));
+        this->scene()->addObject(m_camera);
+        this->setCamera(m_camera);
+        m_shape = std::shared_ptr<AdaptiveShape>(
+            new AdaptiveShape());
+        this->scene()->addObject(m_shape);
+      }
+  };
+} } }
 
-class ColoredSquares : public Demo {
-  private:
-    std::shared_ptr<OrthographicCamera> m_camera;
-    std::shared_ptr<ColoredSquareObject> m_coloredSquareObject;
-  public:
-    ColoredSquares(int argc, char **argv)
-      : Demo(argc, argv, "Colored Marching Squares Demo")
-    {
-      if (this->argError())
-        return;
+using namespace mc::samples::adaptiveSquares;
 
-      // Populate the graphics scene
-      m_camera = std::shared_ptr<OrthographicCamera>(
-          new OrthographicCamera(
-            -0.5f,  // left
-            1.5f,  // right
-            -0.5f,  // bottom
-            1.5f,  // top
-            0.1f,  // near
-            1000.0f,  // far
-            glm::vec3(0.0f, 0.0f, 15.0f)  // position
-            ));
-      this->scene()->addObject(m_camera);
-      this->setCamera(m_camera);
-      m_coloredSquareObject = std::shared_ptr<ColoredSquareObject>(
-          new ColoredSquareObject());
-      this->scene()->addObject(m_coloredSquareObject);
-    }
-};
-
-ColoredSquares *demo;
+AdaptiveSquaresDemo *demo;
 
 void main_loop() {
   demo->mainLoop();
 }
 
 int main(int argc, char **argv) {
-  demo = new ColoredSquares(argc, argv);
+  demo = new AdaptiveSquaresDemo(argc, argv);
   if (demo->argError()) {
     delete demo;
     return EXIT_FAILURE;
@@ -95,4 +87,5 @@ int main(int argc, char **argv) {
   delete demo;
 
   return EXIT_SUCCESS;
+
 }

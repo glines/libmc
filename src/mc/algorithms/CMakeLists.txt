@@ -48,6 +48,7 @@ endfunction(take_screenshots)
 
 add_subdirectory("./common")
 
+add_subdirectory("./adaptiveMarchingSquares")
 add_subdirectory("./cascadingSquares")
 add_subdirectory("./coloredMarchingSquares")
 add_subdirectory("./cuberille")

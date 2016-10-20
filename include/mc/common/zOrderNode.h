@@ -39,6 +39,7 @@ struct mc ## PREFIX ## Node { \
   mc ## PREFIX ## Node *parent; \
   mc ## PREFIX ## NodeCoordinates pos; \
   int level; \
+  float value; \
 }; \
 \
 typedef struct { \

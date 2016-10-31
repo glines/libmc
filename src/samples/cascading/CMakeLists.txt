@@ -1,4 +1,5 @@
 add_executable(cascading
+    coloredQuadTree.cpp
     main.cpp
     tree.cpp
     )

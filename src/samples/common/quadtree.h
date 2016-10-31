@@ -516,8 +516,10 @@ namespace mc { namespace samples {
           return false;
         if (pos.y < m_pos.y)
           return false;
+        /* FIXME: Bug here, should probably be pos.x + (1 << level) */
         if (pos.x >= m_pos.x + (1 << m_level))
           return false;
+        /* FIXME: Bug here, should probably be pos.y + (1 << level) */
         if (pos.y >= m_pos.y + (1 << m_level))
           return false;
       }

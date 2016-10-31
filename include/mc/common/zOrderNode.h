@@ -85,7 +85,10 @@ mc ## PREFIX ## Node *mc ## PREFIX ## Node_createChild( \
     mc ## PREFIX ## Node *self, \
     int index); \
 \
-void mc ## PREFIX ## NodeIterator_next(mc ## PREFIX ## NodeIterator *self);
+void mc ## PREFIX ## NodeIterator_next(mc ## PREFIX ## NodeIterator *self); \
+int mc ## PREFIX ## NodeIterator_equals( \
+    const mc ## PREFIX ## NodeIterator *self, \
+    mc ## PREFIX ## NodeIterator other);
 
 #define MC_DEFINE_Z_ORDER_NODE(PREFIX, DIMENSION) \
   MC_DEFINE_Z_ORDER_alignPosToLevel(PREFIX, DIMENSION) \
@@ -104,7 +107,8 @@ void mc ## PREFIX ## NodeIterator_next(mc ## PREFIX ## NodeIterator *self);
   MC_DEFINE_Z_ORDER_NODE_getDescendant(PREFIX, DIMENSION) \
   MC_DEFINE_Z_ORDER_NODE_getChild(PREFIX, DIMENSION) \
   MC_DEFINE_Z_ORDER_NODE_createChild(PREFIX, DIMENSION) \
-  MC_DEFINE_Z_ORDER_NODE_ITERATOR_next(PREFIX, DIMENSION)
+  MC_DEFINE_Z_ORDER_NODE_ITERATOR_next(PREFIX, DIMENSION) \
+  MC_DEFINE_Z_ORDER_NODE_ITERATOR_equals(PREFIX, DIMENSION)
 
 #define MC_DEFINE_Z_ORDER_alignPosToLevel(PREFIX, DIMENSION) \
   void mc ## PREFIX ## _alignPosToLevel( \
@@ -114,7 +118,7 @@ void mc ## PREFIX ## NodeIterator_next(mc ## PREFIX ## NodeIterator *self);
   { \
     assert(level >= 0); \
     assert(level < sizeof(int) * 8 - 1); \
-    for (int i = 0; i < (1 << DIMENSION); ++i) { \
+    for (int i = 0; i < DIMENSION; ++i) { \
       alignedPos->coord[i] = (pos->coord[i] >> level) << level; \
     } \
   }
@@ -164,7 +168,7 @@ void mc ## PREFIX ## NodeIterator_next(mc ## PREFIX ## NodeIterator *self);
   }
 
 #define MC_DEFINE_Z_ORDER_NODE_end(PREFIX, DIMENSION) \
-  mc ## PREFIX ## NodeIterator PREFIX ## Node_end( \
+  mc ## PREFIX ## NodeIterator mc ## PREFIX ## Node_end( \
       mc ## PREFIX ## Node *self) \
   { \
     mc ## PREFIX ## NodeIterator i; \
@@ -263,8 +267,8 @@ void mc ## PREFIX ## NodeIterator_next(mc ## PREFIX ## NodeIterator *self);
       return 0; \
     } else if (level == self->level) { \
       /* The target is the same size as this node */ \
+      fprintf(stderr, "the target is the same size as this node\n"); \
       if (memcmp(&self->pos, pos, sizeof(*pos)) != 0) { \
-        fprintf(stderr, "the target is the same size as this node\n"); \
         return 0; \
       } \
     } else { \
@@ -274,7 +278,9 @@ void mc ## PREFIX ## NodeIterator_next(mc ## PREFIX ## NodeIterator *self);
       for (int i = 0; i < DIMENSION; ++i) { \
         if (pos->coord[i] < self->pos.coord[i]) \
           return 0; \
-        if (pos->coord[i] >= self->pos.coord[i] + (1 << self->level)) \
+        /* FIXME: We probably need pos->coord[i] + (1 << level) */ \
+        if (pos->coord[i] \
+            >= self->pos.coord[i] + (1 << self->level)) \
           return 0; \
       } \
     } \
@@ -301,20 +307,25 @@ void mc ## PREFIX ## NodeIterator_next(mc ## PREFIX ## NodeIterator *self);
         assert(root->pos.coord[i] == -(1 << (root->level - 2))); \
         root->pos.coord[i] = -(1 << (root->level - 1)); \
       } \
+      /* Iterate over the root node's children */ \
       for (int i = 0; i < (1 << DIMENSION); ++i) { \
         mc ## PREFIX ## Node *oldChild = root->children[i]; \
         if (!oldChild) \
           continue; \
+        /* Create a larger new child to contain the old one */ \
         mc ## PREFIX ## Node *newChild = (mc ## PREFIX ## Node *)malloc( \
             sizeof(mc ## PREFIX ## Node)); \
         mc ## PREFIX ## Node_init(newChild); \
         newChild->level = root->level - 1; \
         newChild->parent = root; \
+        root->children[i] = newChild; \
+        /* Re-parent the old child */ \
         int oldChildNewIndex = mc ## PREFIX ## Node_childIndexContainingPos( \
             newChild, \
             &oldChild->pos); \
-        root->children[i] = newChild; \
+        fprintf(stderr, "oldChildNewindex: %d\n", oldChildNewIndex); \
         newChild->children[oldChildNewIndex] = oldChild; \
+        oldChild->parent = newChild; \
       } \
     } \
   }
@@ -363,11 +374,13 @@ void mc ## PREFIX ## Node_childIndexToPos( \
     assert(level < self->level); \
     /* Determine which of our children this descendant must belong to */ \
     int index = mc ## PREFIX ## Node_childIndexContainingPos(self, pos); \
+    fprintf(stderr, "descendant index: %d\n", index); \
     mc ## PREFIX ## Node *child = \
         mc ## PREFIX ## Node_getChild(self, index); \
     if (child->level == level) { \
       assert(memcmp(&child->pos, pos, sizeof(*pos)) == 0); \
       /* The base case, where our child is the node we are looking for */ \
+      fprintf(stderr, "We found the child: 0x%016x\n", child); \
       return child; \
     } \
     /* Recursive call to find the node */ \
@@ -446,6 +459,14 @@ void mc ## PREFIX ## Node_childIndexToPos( \
     } while (parent); \
     /* We recursed past the root node, so we're done */ \
     self->current = NULL; \
+  }
+
+#define MC_DEFINE_Z_ORDER_NODE_ITERATOR_equals(PREFIX, DIMENSION) \
+  int mc ## PREFIX ## NodeIterator_equals( \
+      const mc ## PREFIX ## NodeIterator *self, \
+      mc ## PREFIX ## NodeIterator other) \
+  { \
+    return self->current == other.current; \
   }
 
 #endif

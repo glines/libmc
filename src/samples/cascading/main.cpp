@@ -34,9 +34,10 @@ extern "C" {
 #include "../common/scene.h"
 #include "../common/wasdCamera.h"
 #include "tree.h"
+#include "coloredQuadTree.h"
 
 namespace mc { namespace samples { namespace cascading {
-  /** This routine generates a libmc quadtree that approximates a circle */
+  /** This routine generates a libmc quadtree for testing purposes */
   void generateQuadtree() {
     mcQuadNode root;
     mcQuadNode_initRoot(&root);
@@ -47,7 +48,23 @@ namespace mc { namespace samples { namespace cascading {
         for (int x = 0; x < 30; ++x) {
           pos.coord[0] = x - 15;
           pos.coord[1] = y - 15;
+          fprintf(stderr, "x: %d, y: %d, pos.coord: { %d, %d }\n", 
+              x, y, pos.coord[0], pos.coord[1]);
+          fprintf(stderr,
+              "root before:\n"
+              "  level: %d\n"
+              "  pos: { %d, %d }\n",
+              root.level,
+              root.pos.coord[0],
+              root.pos.coord[1]);
           mcQuadNode *node = mcQuadNode_getNode(&root, &pos, level);
+          fprintf(stderr,
+              "root after:\n"
+              "  level: %d\n"
+              "  pos: { %d, %d }\n",
+              root.level,
+              root.pos.coord[0],
+              root.pos.coord[1]);
         }
       }
       level--;
@@ -59,7 +76,8 @@ namespace mc { namespace samples { namespace cascading {
     private:
       std::shared_ptr<OrthographicCamera> m_camera;
       std::shared_ptr<WasdCamera> m_wasdCamera;
-      std::shared_ptr<Tree> m_tree;
+/*      std::shared_ptr<Tree> m_tree; */
+      std::shared_ptr<ColoredQuadTree> m_tree;
     public:
       CascadingDemo(int argc, char **argv)
         : Demo(argc, argv, "Cascading Transition Cell Demo")
@@ -70,10 +88,10 @@ namespace mc { namespace samples { namespace cascading {
         // Populate the graphics scene
         m_camera = std::shared_ptr<OrthographicCamera>(
             new OrthographicCamera(
-              -10.0f,  // left
-              10.0f,  // right
-              -10.0f,  // top
-              10.0f,  // bottom
+              -30.0f,  // left
+              30.0f,  // right
+              -30.0f,  // top
+              30.0f,  // bottom
               0.1f,  // near
               1000.0f,  // far
               glm::vec3(0.0f, 0.0f, 15.0f)  // position
@@ -89,8 +107,8 @@ namespace mc { namespace samples { namespace cascading {
               ));
 //        this->scene()->addObject(m_wasdCamera);
         this->setCamera(m_camera);
-        m_tree = std::shared_ptr<Tree>(
-            new Tree(m_camera));
+        m_tree = std::shared_ptr<ColoredQuadTree>(
+            new ColoredQuadTree(m_camera));
         this->scene()->addObject(m_tree);
       }
   };

@@ -48,11 +48,11 @@ namespace mc { namespace samples { namespace cascading {
 
   void ColoredQuadTree::m_addPoints() {
     ColoredPoint point;
-    point.color = 0;
     for (int y = 0; y < 10; ++y) {
       for (int x = 0; x < 10; ++x) {
         if (rand() % 10 == 0)
           continue;
+        point.color = rand() % 6;
         point.pos = glm::vec2(
             (float)x + (float)(rand() % 40 - 20),
             (float)y + (float)(rand() % 40 - 20));
@@ -187,7 +187,7 @@ namespace mc { namespace samples { namespace cascading {
     localView[2][0] = 0.0f;
     localView[2][1] = 0.0f;
     localView[2][2] = 1.0f;
-//    localView = glm::scale(localView, glm::vec3(0.16));  // XXX
+    localView = glm::scale(localView, glm::vec3(0.30));  // XXX
     // Update the model-view transform uniform
     glUniformMatrix4fv(
         shader->modelViewLocation(),  // location
@@ -225,6 +225,9 @@ namespace mc { namespace samples { namespace cascading {
       glm::vec3(1.0f, 0.0f, 0.0f),
       glm::vec3(0.0f, 1.0f, 0.0f),
       glm::vec3(0.0f, 0.0f, 1.0f),
+      glm::vec3(1.0f, 1.0f, 0.0f),
+      glm::vec3(0.0f, 1.0f, 1.0f),
+      glm::vec3(1.0f, 0.0f, 1.0f),
     };
 
     // Use the billboard point shader
